@@ -1,0 +1,217 @@
+%-------------------------
+% Resume in Latex
+% Author : Jake Gutierrez
+% Based off of: https://github.com/sb2nov/resume
+% License : MIT
+%------------------------
+
+\documentclass[letterpaper,11pt]{article}
+
+\usepackage{latexsym}
+\usepackage[empty]{fullpage}
+\usepackage{titlesec}
+\usepackage{marvosym}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{verbatim}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{fancyhdr}
+\usepackage[english]{babel}
+\usepackage{tabularx}
+\input{glyphtounicode}
+
+
+%----------FONT OPTIONS----------
+% sans-serif
+% \usepackage[sfdefault]{FiraSans}
+% \usepackage[sfdefault]{roboto}
+% \usepackage[sfdefault]{noto-sans}
+% \usepackage[default]{sourcesanspro}
+
+% serif
+% \usepackage{CormorantGaramond}
+% \usepackage{charter}
+
+
+\pagestyle{fancy}
+\fancyhf{} % clear all header and footer fields
+\fancyfoot{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+% Adjust margins
+\addtolength{\oddsidemargin}{-0.5in}
+\addtolength{\evensidemargin}{-0.5in}
+\addtolength{\textwidth}{1in}
+\addtolength{\topmargin}{-.5in}
+\addtolength{\textheight}{1.0in}
+
+\urlstyle{same}
+
+\raggedbottom
+\raggedright
+\setlength{\tabcolsep}{0in}
+
+% Sections formatting
+\titleformat{\section}{
+  \vspace{-4pt}\scshape\raggedright\large
+}{}{0em}{}[\color{black}\titlerule \vspace{-5pt}]
+
+% Ensure that generate pdf is machine readable/ATS parsable
+\pdfgentounicode=1
+
+%-------------------------
+% Custom commands
+\newcommand{\resumeItem}[1]{
+  \item\small{
+    {#1 \vspace{-2pt}}
+  }
+}
+
+\newcommand{\resumeSubheading}[4]{
+  \vspace{-2pt}\item
+    \begin{tabular*}{0.97\textwidth}[t]{l@{\extracolsep{\fill}}r}
+      \textbf{#1} & #2 \\
+      \textit{\small#3} & \textit{\small #4} \\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeSubSubheading}[2]{
+    \item
+    \begin{tabular*}{0.97\textwidth}{l@{\extracolsep{\fill}}r}
+      \textit{\small#1} & \textit{\small #2} \\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeProjectHeading}[2]{
+    \item
+    \begin{tabular*}{0.97\textwidth}{l@{\extracolsep{\fill}}r}
+      \small#1 & #2 \\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeSubItem}[1]{\resumeItem{#1}\vspace{-4pt}}
+
+\renewcommand\labelitemii{$\vcenter{\hbox{\tiny$\bullet$}}$}
+
+\newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0.15in, label={}]}
+\newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
+\newcommand{\resumeItemListStart}{\begin{itemize}}
+\newcommand{\resumeItemListEnd}{\end{itemize}\vspace{-5pt}}
+
+%-------------------------------------------
+%%%%%%  RESUME STARTS HERE  %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\begin{document}
+
+%----------HEADING----------
+% \begin{tabular*}{\textwidth}{l@{\extracolsep{\fill}}r}
+%   \textbf{\href{http://sourabhbajaj.com/}{\Large Sourabh Bajaj}} & Email : \href{mailto:sourabh@sourabhbajaj.com}{sourabh@sourabhbajaj.com}\\
+%   \href{http://sourabhbajaj.com/}{http://www.sourabhbajaj.com} & Mobile : +1-123-456-7890 \\
+% \end{tabular*}
+
+\begin{center}
+    \textbf{\Huge \scshape Swaroop Voonna} \\ \vspace{1pt}
+    \small
+    9143444501 $|$
+    \href{mailto:swaroopvoonna.2002@gmail.com}{\underline{swaroopvoonna.2002@gmail.com}} $|$
+    \href{https://www.linkedin.com/in/swaroop-voonna-4b521324a/}{\underline{linkedin.com/in/swaroop-voonna-4b521324a}} $|$
+    \href{https://github.com/swarooppppp}{\underline{github.com/swarooppppp}}
+\end{center}
+\section{Professional Summary}
+Backend engineer with 2 years at Oracle designing stateless, REST-decoupled systems and LLM-powered agents at enterprise scale across 900+ clients. Experienced in distributed systems, Java, Spring Boot, Kafka, and Redis.
+
+
+%-----------EDUCATION-----------
+\section{Education}
+  \resumeSubHeadingListStart
+    \resumeSubheading
+      {National Institute of Technology Karnataka}{Surathkal}
+      {Bachelor of Technology in Computer Science}{Nov. 2020 -- April 2024}
+  \resumeSubHeadingListEnd
+
+
+%-----------EXPERIENCE-----------
+\section{Experience}
+  \resumeSubHeadingListStart
+
+    \resumeSubheading
+      {Oracle}{June 2024 -- Present}
+      {Software Engineer}{Hyderabad, India}
+      \resumeItemListStart
+        \resumeItem{Migrated Workforce Compensation (WFC) from ADF server-side rendering to a decoupled REST architecture, eliminating UI-backend coupling and enabling independent frontend deployments across 900+ enterprise clients.}
+        \resumeItem{Drove the redesign of the WFC Worksheet from a session-based model to a stateless architecture using token-based context preservation and DB-driven state management, cutting server memory consumption by $\sim$40\% under peak concurrent load.}
+        \resumeItem{Eliminated lock contention on hierarchical compensation aggregates by replacing in-place updates with an append-only delta pattern that allows concurrent writes without blocking and computing real-time totals as a sum across base and diff rows}
+        \resumeItem{Engineered and implemented a Java-based SQL rewriter that translates dummy queries over a virtual schema into security-hardened production queries with row-level access controls at every subquery level, decoupling LLM reasoning from backend architecture across 30+ tables.}
+        \resumeItem{Designed and shipped AI Agents for managers using LLMs, generating spend summaries, detecting
+promotion biases, and surfacing workforce insights adopted by 120+ client organizations within 3 months
+of launch.}
+        \resumeItem{Implemented token optimization and context caching strategies for LLM inference pipelines, reducing token
+usage by 75\% and cutting average response latency from $\sim$15s to $\sim$5s.}
+      \resumeItemListEnd
+      
+% -----------Multiple Positions Heading-----------
+%    \resumeSubSubheading
+%     {Software Engineer I}{Oct 2014 - Sep 2016}
+%     \resumeItemListStart
+%        \resumeItem{Apache Beam}
+%          {Apache Beam is a unified model for defining both batch and streaming data-parallel processing pipelines}
+%     \resumeItemListEnd
+%    \resumeSubHeadingListEnd
+%-------------------------------------------
+
+    \resumeSubheading
+      {Oracle}{May 2023 -- July 2023}
+      {Project Intern}{Hyderabad, India}
+      \resumeItemListStart
+        \resumeItem{Built and optimized conversational workflows in Oracle Digital Assistant across 15+ HR use cases, improving bot resolution accuracy from 61\% to 88\% through intent mapping refinements and reducing manual operations by $\sim$50\% in initial deployments}
+    \resumeItemListEnd
+
+  \resumeSubHeadingListEnd
+
+
+%-----------PROJECTS-----------
+\section{Projects}
+    \resumeSubHeadingListStart
+    \resumeProjectHeading
+          {\textbf{\href{https://github.com/swarooppppp/distributed-rate-limitter}{Distributed Rate Limiter as a Service}} $|$ \emph{Java, Spring Boot, Redis, Docker}}{}
+          \resumeItemListStart
+            \resumeItem{Built a distributed rate limiting service using Redis supporting token bucket, sliding window, and fixed window algorithms, handling $\sim$1,000 requests/sec under concurrent load}
+            \resumeItem{Implemented atomic request handling using Redis primitives (INCR/EXPIRE), ensuring correctness under concurrent load with zero over-admission across 10,000+ requests}
+          \resumeItemListEnd
+  \resumeProjectHeading
+      {\textbf{\href{https://github.com/swarooppppp/onepoint}{Expense Splitter}} $|$ \emph{Spring Boot, React, PostgreSQL, Redis, Kafka, Docker}}
+{}
+      \resumeItemListStart
+        \resumeItem{Designed a distributed expense management platform with event-driven group sync using Kafka, propagating expense changes to personal dashboards with end-to-end latency under 300ms across 5,000+ concurrent users}
+        \resumeItem{Ensured data consistency under concurrent updates via JPA optimistic locking eliminating race conditions across 100+ simulated users; integrated Redis caching reducing DB read load by $\sim$60\%, JWT auth, and CI/CD pipelines}
+      \resumeItemListEnd
+%         \resumeProjectHeading
+%           {\textbf{REST API Dependency Analyzer} $|$ \emph{Python, Trie Data structures}}{}
+%           \resumeItemListStart
+%             \resumeItem{Developed a comprehensive methodology for identifying and managing dependencies in OpenAPI Specification
+% (OAS) documents using static inference methods. This included analyzing various types of dependencies such
+% as hierarchical, operational, workflow, and inter-parameter dependencies within RESTful APIs for real-time data interaction}
+%             \resumeItem{Implemented a trie-based data structure to efficiently store and manage dependencies, reducing redundant test cases and improving test coverage in API testing.}
+%           \resumeItemListEnd
+    \resumeSubHeadingListEnd
+
+
+
+%
+%-----------PROGRAMMING SKILLS-----------
+\section{Technical Skills}
+ \begin{itemize}[leftmargin=0.15in, label={}]
+    \small{\item{
+     \textbf{Languages}{: Java, Python, C/C++, SQL (PostgreSQL, MySQL), JavaScript, HTML/CSS} \\
+     \textbf{Frameworks / Libraries}{: Spring Boot, React.js, Flask, Node.js, JUnit, JPA} \\
+     \textbf{Tools \& Platforms}{: Git, Docker, Kafka, Redis, CI/CD} \\
+     \textbf{Concepts}{: API Design Patterns, Microservices, System Design, Distributed Systems, LLM Integration, Data Structures \& Algorithms, Event-Driven Architecture, Stateless Architecture, OAuth2, Concurrency \& Locking, Database Optimization}
+    }}
+ \end{itemize}
+
+
+
+%-------------------------------------------
+\end{document}

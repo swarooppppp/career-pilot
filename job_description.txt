@@ -1,0 +1,19 @@
+Key job responsibilities
+
+ Deliver high-quality platform solutions supporting diverse customer and merchant use cases for Amazon Pay
+ Develop and enhance web-based applications and web services that enable third-party merchants to integrate Amazon Pay
+ Design and build large-scale, distributed systems to handle high-volume transactions in a 24/7 environment
+ Contribute to the architecture, design, and evolution of new and existing systems focusing on reliability, scalability, and performance
+ 
+Basic Qualifications
+
+ 2+ years of non-internship professional software development experience
+ Experience programming with at least one software programming language
+ Knowledge of professional software engineering & best practices for full software development life cycle, including coding standards, software architectures, code reviews, source control management, continuous deployments, testing, and operational excellence
+ Experience contributing to the architecture and design (architecture, design patterns, reliability and scaling) of new and current systems
+
+Preferred Qualifications
+
+ Bachelor's degree in computer science or equivalent
+ Experience building complex software systems that have been successfully delivered to customers
+ Experience programming with at least one modern language such as Java, C++, or C# including object-oriented design 

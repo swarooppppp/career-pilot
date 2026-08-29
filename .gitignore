@@ -1,0 +1,8 @@
+.env
+__pycache__/
+*.pyc
+*.pdf
+Swaroop_SWE_*.tex
+Swaroop_SWE_*.json
+Deployment Plan.md
+OpenRouter.txt
