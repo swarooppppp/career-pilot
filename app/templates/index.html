@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Career Pilot</title>
+    <link rel="stylesheet" href="/static/styles.css">
+  </head>
+  <body>
+    <main class="container">
+      <h1>Career Pilot</h1>
+      <p class="intro">Check your fit first, then generate a tailored resume when it is worth pursuing.</p>
+      <form id="resume-form">
+        <label for="job-description">Job description</label>
+        <textarea id="job-description" name="job_description" required
+          placeholder="Paste the complete job description here..."></textarea>
+        <div class="actions">
+          <button type="submit" id="analyse-button">Analyse match</button>
+          <button type="button" id="generate-button" class="secondary">Generate resume</button>
+        </div>
+      </form>
+      <p id="status" role="status"></p>
+      <section id="match-details" class="match-details" hidden aria-live="polite">
+        <div class="score-row">
+          <div>
+            <p class="eyebrow">Job match</p>
+            <p id="match-score" class="score"></p>
+          </div>
+          <p id="match-summary" class="match-summary"></p>
+        </div>
+        <div class="match-columns">
+          <div>
+            <h2>Strong matches</h2>
+            <ul id="strong-matches"></ul>
+          </div>
+          <div>
+            <h2>Transferable experience</h2>
+            <ul id="transferable-matches"></ul>
+          </div>
+          <div>
+            <h2>Uncertain or missing</h2>
+            <ul id="uncertain-requirements"></ul>
+          </div>
+        </div>
+        <div id="critical-gaps-container" hidden>
+          <h2>Critical gaps</h2>
+          <ul id="critical-gaps"></ul>
+        </div>
+        <div id="recommendations-container" hidden>
+          <h2>Recommendations</h2>
+          <ul id="recommendations"></ul>
+        </div>
+      </section>
+      <a id="download-link" class="download" hidden>Download PDF</a>
+
+      <section class="dashboard" aria-labelledby="dashboard-title">
+        <div class="section-heading">
+          <div>
+            <h2 id="dashboard-title">Job dashboard</h2>
+            <p>Import jobs from a portal script, then analyse only eligible, unprocessed roles.</p>
+          </div>
+          <div class="actions compact-actions">
+            <button type="button" id="refresh-jobs" class="secondary">Refresh</button>
+            <button type="button" id="process-jobs">Analyse pending jobs</button>
+          </div>
+        </div>
+        <p id="job-status" role="status"></p>
+        <div id="job-list" class="job-list"></div>
+      </section>
+
+      <details class="master-editor">
+        <summary>Update master experience</summary>
+        <p>Your full experience is the matching source of truth. Saving it changes future analyses.</p>
+        <textarea id="master-experience" aria-label="Master experience"></textarea>
+        <button type="button" id="save-master-experience">Save master experience</button>
+        <p id="master-status" role="status"></p>
+      </details>
+    </main>
+    <script src="/static/app.js"></script>
+  </body>
+</html>

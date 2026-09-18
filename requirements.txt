@@ -1,2 +1,9 @@
 google-genai
 python-dotenv
+fastapi
+uvicorn
+langchain-text-splitters
+langgraph
+sqlalchemy
+psycopg[binary]
+kafka-python-ng

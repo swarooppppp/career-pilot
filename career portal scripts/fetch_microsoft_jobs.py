@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import html
 import json
+import math
 import sys
 import time
 from html.parser import HTMLParser
@@ -56,16 +57,43 @@ def html_to_text(value: str) -> str:
     return html.unescape(parser.text())
 
 
-def get_json(path: str, params: dict[str, str], timeout: int) -> dict[str, Any]:
+def _retry_after_seconds(error: HTTPError, fallback_seconds: float) -> float:
+    """Use Microsoft's numeric Retry-After header when it is safe to do so."""
+    value = error.headers.get("Retry-After") if error.headers else None
+    try:
+        retry_after = float(value) if value is not None else fallback_seconds
+    except ValueError:
+        retry_after = fallback_seconds
+    return retry_after if math.isfinite(retry_after) and retry_after >= 0 else fallback_seconds
+
+
+def get_json(
+    path: str,
+    params: dict[str, str],
+    timeout: int,
+    max_retries: int = 4,
+    backoff_seconds: float = 2,
+) -> dict[str, Any]:
     url = f"{BASE_URL}{path}?{urlencode(params, doseq=True)}"
     request = Request(url, headers={"Accept": "application/json", "User-Agent": "Mozilla/5.0"})
-    try:
-        with urlopen(request, timeout=timeout) as response:
-            payload = json.load(response)
-    except HTTPError as exc:
-        raise RuntimeError(f"HTTP {exc.code} from {url}") from exc
-    except URLError as exc:
-        raise RuntimeError(f"Could not reach Microsoft Careers: {exc.reason}") from exc
+    for attempt in range(max_retries + 1):
+        try:
+            with urlopen(request, timeout=timeout) as response:
+                payload = json.load(response)
+            break
+        except HTTPError as exc:
+            if exc.code != 429 or attempt == max_retries:
+                raise RuntimeError(f"HTTP {exc.code} from {url}") from exc
+            fallback_seconds = backoff_seconds * (2 ** attempt)
+            wait_seconds = _retry_after_seconds(exc, fallback_seconds)
+            print(
+                f"Microsoft Careers returned HTTP 429; retry {attempt + 1}/{max_retries} "
+                f"in {wait_seconds:g}s: {url}",
+                file=sys.stderr,
+            )
+            time.sleep(wait_seconds)
+        except URLError as exc:
+            raise RuntimeError(f"Could not reach Microsoft Careers: {exc.reason}") from exc
 
     if payload.get("status") != 200 or "data" not in payload:
         raise RuntimeError(f"Unexpected API response from {url}: {payload}")
@@ -82,7 +110,7 @@ def search_jobs(args: argparse.Namespace, start: int) -> dict[str, Any]:
         "filter_include_remote": "1" if args.include_remote else "0",
         "filter_include_relocation": "1" if args.include_relocation else "0",
     }
-    return get_json("/api/pcsx/search", params, args.timeout)
+    return get_json("/api/pcsx/search", params, args.timeout, args.max_retries, args.backoff_seconds)
 
 
 def get_job_details(job_id: int, args: argparse.Namespace) -> dict[str, Any]:
@@ -90,6 +118,8 @@ def get_job_details(job_id: int, args: argparse.Namespace) -> dict[str, Any]:
         "/api/pcsx/position_details",
         {"position_id": str(job_id), "domain": DOMAIN, "hl": args.locale},
         args.timeout,
+        args.max_retries,
+        args.backoff_seconds,
     )
 
 
@@ -102,10 +132,14 @@ def main() -> int:
     parser.add_argument("--include-relocation", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--locale", default="en")
     parser.add_argument("--max-pages", type=int, default=1, help="Use 0 to fetch every result.")
-    parser.add_argument("--delay", type=float, default=0.25, help="Seconds between detail requests.")
+    parser.add_argument("--delay", type=float, default=1, help="Seconds between search and detail requests.")
+    parser.add_argument("--max-retries", type=int, default=4, help="Additional retries after an HTTP 429 response.")
+    parser.add_argument("--backoff-seconds", type=float, default=2, help="Initial 429 retry wait when Retry-After is absent.")
     parser.add_argument("--timeout", type=int, default=30)
     parser.add_argument("--output", type=Path, default=Path("microsoft_jobs.json"))
     args = parser.parse_args()
+    if args.delay < 0 or args.max_retries < 0 or args.backoff_seconds < 0:
+        parser.error("delay, max-retries, and backoff-seconds must be non-negative")
 
     first_page = search_jobs(args, 0)
     total = int(first_page["count"])

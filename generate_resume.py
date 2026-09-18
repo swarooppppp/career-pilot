@@ -14,6 +14,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from google import genai
+from google.genai import types
 
 from convert_latex_to_pdf import compile_latex
 from phase1_experiment import EXPECTED_BULLET_COUNTS
@@ -85,7 +86,13 @@ JOB DESCRIPTION:
     print(prompt)
     print("\n===== END PROMPT =====\n")
 
-    client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+    client = genai.Client(
+        api_key=os.environ["GEMINI_API_KEY"],
+        http_options=types.HttpOptions(
+            timeout=30_000,
+            retry_options=types.HttpRetryOptions(attempts=1),
+        ),
+    )
     response = client.models.generate_content(
         model="gemini-3.6-flash",
         contents=prompt,
@@ -234,27 +241,23 @@ def replace_skills(template: str, skills: dict[str, list[str]]) -> str:
     return result
 
 
-def main() -> int:
+def generate_resume(job_description: str, output_dir: Path = ROOT, keep_tex: bool = False) -> Path:
     load_dotenv(ROOT / ".env")
-    args = parse_args()
-    jd_path = args.job_description.expanduser().resolve()
-    if not jd_path.is_file():
-        print(f"Error: job description does not exist: {jd_path}", file=sys.stderr)
-        return 1
+    if not job_description.strip():
+        raise ValueError("job description cannot be empty")
     if "GEMINI_API_KEY" not in os.environ or not os.environ["GEMINI_API_KEY"]:
-        print("Error: set GEMINI_API_KEY in .env before running.", file=sys.stderr)
-        return 1
+        raise ValueError("set GEMINI_API_KEY in .env before running")
 
     try:
-        data = request_content(jd_path.read_text(encoding="utf-8"))
+        data = request_content(job_description)
         bullets = [
             bullet
             for section in EXPECTED_BULLET_COUNTS
             for bullet in data["experience"][section]
         ]
-        args.output_dir.mkdir(parents=True, exist_ok=True)
+        output_dir.mkdir(parents=True, exist_ok=True)
         timestamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
-        output_pdf = args.output_dir.resolve() / f"Swaroop_SWE_{timestamp}.pdf"
+        output_pdf = output_dir.resolve() / f"Swaroop_SWE_{timestamp}.pdf"
         response_json = output_pdf.with_suffix(".json")
         response_json.write_text(
             json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8"
@@ -285,16 +288,31 @@ def main() -> int:
                 )
             generated_tex.write_text(generated_source, encoding="utf-8")
             result = compile_latex(generated_tex, output_pdf, "pdflatex")
-            if result == 0 and args.keep_tex:
+            if result == 0 and keep_tex:
                 kept_tex = output_pdf.with_suffix(".tex")
                 kept_tex.write_text(generated_source, encoding="utf-8")
                 print(f"Generated LaTeX kept: {kept_tex}")
             if result == 0:
                 print(f"Gemini bullets inserted: {len(bullets)}")
-            return result
+            if result != 0:
+                raise RuntimeError("LaTeX compilation failed")
+            return output_pdf
     except Exception as error:
-        print(f"Error: resume generation failed: {error}", file=sys.stderr)
+        raise RuntimeError(f"resume generation failed: {error}") from error
+
+
+def main() -> int:
+    args = parse_args()
+    jd_path = args.job_description.expanduser().resolve()
+    if not jd_path.is_file():
+        print(f"Error: job description does not exist: {jd_path}", file=sys.stderr)
         return 1
+    try:
+        generate_resume(jd_path.read_text(encoding="utf-8"), args.output_dir, args.keep_tex)
+    except Exception as error:
+        print(f"Error: {error}", file=sys.stderr)
+        return 1
+    return 0
 
 
 if __name__ == "__main__":

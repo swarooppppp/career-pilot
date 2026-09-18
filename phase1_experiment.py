@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 
 from google import genai
+from google.genai import types
 from dotenv import load_dotenv
 
 
@@ -129,7 +130,13 @@ JOB DESCRIPTION:
 """.strip()
 
     try:
-        client = genai.Client(api_key=api_key)
+        client = genai.Client(
+            api_key=api_key,
+            http_options=types.HttpOptions(
+                timeout=30_000,
+                retry_options=types.HttpRetryOptions(attempts=1),
+            ),
+        )
         response = client.models.generate_content(
             model="gemini-3.6-flash",
             contents=prompt,

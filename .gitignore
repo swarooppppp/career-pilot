@@ -6,3 +6,7 @@ Swaroop_SWE_*.tex
 Swaroop_SWE_*.json
 Deployment Plan.md
 OpenRouter.txt
+generated/
+data/match_cache/
+data/career_pilot.db
+data/*_jobs.json
