@@ -69,7 +69,7 @@ def _retry_after_seconds(error: HTTPError, fallback_seconds: float) -> float:
 
 def get_json(
     path: str,
-    params: dict[str, str],
+    params: dict[str, Any],
     timeout: int,
     max_retries: int = 4,
     backoff_seconds: float = 2,
@@ -101,7 +101,7 @@ def get_json(
 
 
 def search_jobs(args: argparse.Namespace, start: int) -> dict[str, Any]:
-    params = {
+    params: dict[str, Any] = {
         "domain": DOMAIN,
         "query": args.query,
         "location": args.location,
@@ -110,6 +110,15 @@ def search_jobs(args: argparse.Namespace, start: int) -> dict[str, Any]:
         "filter_include_remote": "1" if args.include_remote else "0",
         "filter_include_relocation": "1" if args.include_relocation else "0",
     }
+    seniorities = [value.strip() for value in args.seniority.split(",") if value.strip()]
+    if seniorities:
+        # Microsoft Careers expects one query parameter per selected level, not
+        # a comma-separated value.
+        params["filter_seniority"] = seniorities
+    if args.role_type:
+        params["filter_roletype"] = args.role_type
+    if args.employment_type:
+        params["filter_employment_type"] = args.employment_type
     return get_json("/api/pcsx/search", params, args.timeout, args.max_retries, args.backoff_seconds)
 
 
@@ -128,18 +137,22 @@ def main() -> int:
     parser.add_argument("--query", default="Software Engineer")
     parser.add_argument("--location", default="India")
     parser.add_argument("--sort-by", default="relevance")
+    parser.add_argument("--seniority", default="", help="Comma-separated seniority filters accepted by Microsoft Careers.")
+    parser.add_argument("--role-type", default="", help="Microsoft role type filter, e.g. individual contributor.")
+    parser.add_argument("--employment-type", default="", help="Microsoft employment type filter, e.g. full-time.")
     parser.add_argument("--include-remote", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--include-relocation", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--locale", default="en")
     parser.add_argument("--max-pages", type=int, default=1, help="Use 0 to fetch every result.")
+    parser.add_argument("--max-jobs", type=int, default=0, help="Fetch at most this many jobs; 0 fetches all selected pages.")
     parser.add_argument("--delay", type=float, default=1, help="Seconds between search and detail requests.")
     parser.add_argument("--max-retries", type=int, default=4, help="Additional retries after an HTTP 429 response.")
     parser.add_argument("--backoff-seconds", type=float, default=2, help="Initial 429 retry wait when Retry-After is absent.")
     parser.add_argument("--timeout", type=int, default=30)
     parser.add_argument("--output", type=Path, default=Path("microsoft_jobs.json"))
     args = parser.parse_args()
-    if args.delay < 0 or args.max_retries < 0 or args.backoff_seconds < 0:
-        parser.error("delay, max-retries, and backoff-seconds must be non-negative")
+    if args.delay < 0 or args.max_retries < 0 or args.backoff_seconds < 0 or args.max_jobs < 0:
+        parser.error("delay, max-retries, backoff-seconds, and max-jobs must be non-negative")
 
     first_page = search_jobs(args, 0)
     total = int(first_page["count"])
@@ -151,14 +164,21 @@ def main() -> int:
     for page in range(1, page_count):
         time.sleep(args.delay)
         summaries.extend(search_jobs(args, page * PAGE_SIZE).get("positions", []))
+    if args.max_jobs:
+        summaries = summaries[:args.max_jobs]
 
     jobs: list[dict[str, Any]] = []
     for index, summary in enumerate(summaries, start=1):
         print(f"Fetching {index}/{len(summaries)}: {summary['id']}", file=sys.stderr)
         details = get_job_details(int(summary["id"]), args)
         description_html = details.get("jobDescription", "")
+        position_url = str(details.get("positionUrl") or "")
+        detail_url = str(details.get("publicUrl") or "")
+        if not detail_url and position_url:
+            detail_url = f"{BASE_URL}{position_url}"
         jobs.append({
             **details,
+            "application_url": detail_url,
             "jobDescriptionHtml": description_html,
             "jobDescriptionText": html_to_text(description_html),
         })
@@ -173,6 +193,9 @@ def main() -> int:
             "query": args.query,
             "location": args.location,
             "sort_by": args.sort_by,
+            "seniority": args.seniority,
+            "role_type": args.role_type,
+            "employment_type": args.employment_type,
             "include_remote": args.include_remote,
             "include_relocation": args.include_relocation,
             "total_results_reported_by_api": total,

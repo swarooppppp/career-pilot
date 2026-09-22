@@ -38,6 +38,14 @@
 - Reduced token usage by 75%.
 - Reduced average response latency from approximately 15 seconds to approximately 5 seconds.
 
+### Market Survey Processing Pipeline
+
+- Developed a dependency-free Java concurrent processing pipeline for market-survey data using records, `CompletableFuture`, `ExecutorService`, `ConcurrentHashMap`, and atomic counters.
+- Designed deterministic, group-aware partitioning that keeps related survey rows together by business key, validates duplicate source rows, preserves row ordering, and handles oversized groups without splitting them.
+- Separated concurrent preparation/validation from bounded blocking downstream submissions with independently configured worker pools to control throughput and protect the downstream gateway.
+- Implemented per-chunk result tracking for validation, preparation, and submission failures; retained attempt counts and retried only corrected or transiently failed chunks without resubmitting successful work.
+- Built self-tests for deterministic partitioning, row accounting, bounded concurrency, failure isolation, and targeted retry behavior, plus a local serial-versus-concurrent benchmark illustration.
+
 ## Oracle — Project Intern
 
 - Employer: Oracle
@@ -71,6 +79,17 @@
 - Integrated Redis caching and reduced database read load by approximately 60%.
 - Implemented JWT authentication and CI/CD pipelines.
 - Deployed in AWS cloud
+
+### Career Pilot — AI-Powered Job Matching Platform
+
+- Built a Python job-discovery and AI-assisted resume-matching platform with FastAPI, Uvicorn, REST APIs, SQLAlchemy, SQLite, PostgreSQL, and Docker-ready infrastructure.
+- Integrated Google Careers, Microsoft Careers, and Amazon Jobs sources; normalized public job data, applied content-hash and portal-ID deduplication, and persisted job, analysis, batch, and event state transactionally.
+- Implemented concurrent portal fetching with Python ThreadPoolExecutor while retaining serial database imports for safe SQLite writes; added Microsoft HTTP 429 retry handling with Retry-After support and exponential backoff.
+- Designed a cost-controlled OpenAI Batch API workflow using structured JSON Schema outputs, one model call per job, persistent batch tracking, scheduled submission/polling, and duplicate-submission protection.
+- Built deterministic pre-LLM eligibility filtering for years of experience, seniority/title exclusions, and experience-band rules; parse verified non-internship professional experience directly from Markdown resume dates.
+- Developed evidence-grounded matching that validates cited evidence IDs, labels work experience/projects/education/skills sources, and calculates explainable weighted match scores in Python rather than trusting model-generated percentages.
+- Added Kafka-compatible asynchronous job processing with PostgreSQL transactional outbox events, partition-aware workers, rate limiting, stale-job recovery, and LangGraph job-state orchestration.
+- Generated tailored ATS-friendly resume PDFs through the OpenAI Responses API, validated structured content, and rendered deterministic LaTeX output.
 
 ## Education
 

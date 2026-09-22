@@ -1,4 +1,5 @@
 google-genai
+openai
 python-dotenv
 fastapi
 uvicorn
@@ -7,3 +8,4 @@ langgraph
 sqlalchemy
 psycopg[binary]
 kafka-python-ng
+playwright

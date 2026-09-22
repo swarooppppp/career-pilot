@@ -19,5 +19,7 @@ def analyse_match(request: MatchRequest) -> dict:
         return analyse_job(request.job_description)
     except ValueError as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
+    except RuntimeError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
     except Exception as error:
         raise HTTPException(status_code=500, detail=f"match analysis failed: {error}") from error

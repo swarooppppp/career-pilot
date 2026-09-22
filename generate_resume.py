@@ -13,17 +13,60 @@ from datetime import datetime
 from pathlib import Path
 
 from dotenv import load_dotenv
-from google import genai
-from google.genai import types
 
 from convert_latex_to_pdf import compile_latex
-from phase1_experiment import EXPECTED_BULLET_COUNTS
-
-
 ROOT = Path(__file__).resolve().parent
 TEMPLATE = ROOT / "main.tex"
 MASTER_EXPERIENCE = ROOT / "data" / "master_experience.md"
-PROMPT = ROOT / "prompts" / "jd_analyzer.md"
+RESUME_PROMPT_VERSION = "2026-09-21-match-context-v1"
+EXPECTED_BULLET_COUNTS = {
+    "oracle_software_engineer": 6,
+    "oracle_project_intern": 1,
+    "distributed_rate_limiter": 2,
+    "expense_splitter": 2,
+}
+
+RESUME_RESPONSE_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        "summary": {"type": "string"},
+        "skills": {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "languages": {"type": "array", "items": {"type": "string"}},
+                "frameworks_libraries": {"type": "array", "items": {"type": "string"}},
+                "tools_platforms": {"type": "array", "items": {"type": "string"}},
+                "concepts": {"type": "array", "items": {"type": "string"}},
+            },
+            "required": ["languages", "frameworks_libraries", "tools_platforms", "concepts"],
+        },
+        "experience": {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                key: {"type": "array", "items": {"type": "string"}, "minItems": count, "maxItems": count}
+                for key, count in EXPECTED_BULLET_COUNTS.items()
+            },
+            "required": list(EXPECTED_BULLET_COUNTS),
+        },
+    },
+    "required": ["summary", "skills", "experience"],
+}
+
+RESUME_DEVELOPER_INSTRUCTIONS = """
+Generate truthful, ATS-friendly resume content for the fixed resume template.
+Use only the supplied candidate facts and cited evidence. Never invent a skill,
+metric, employer, date, responsibility, or achievement. Do not add a keyword
+merely because it appears in a job requirement. Use the job-match terminology
+only where it is supported by the evidence. Return only the requested JSON.
+
+The output must contain exactly 11 complete, concise, plain-text experience
+bullets: 6 for oracle_software_engineer, 1 for oracle_project_intern, 2 for
+distributed_rate_limiter, and 2 for expense_splitter. Do not use Markdown or
+LaTeX commands. Keep the four skill lists truthful and concise.
+""".strip()
 
 
 def parse_args() -> argparse.Namespace:
@@ -40,77 +83,92 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def response_text(response: object) -> str:
-    """Extract normal text parts without triggering SDK thought-part warnings."""
-    candidates = getattr(response, "candidates", None) or []
-    parts = getattr(getattr(candidates[0], "content", None), "parts", []) if candidates else []
-    text_parts = [part.text for part in parts if getattr(part, "text", None)]
-    if text_parts:
-        return "".join(text_parts)
-    return getattr(response, "text", "")
+def _response_text(response: object) -> str:
+    output_text = getattr(response, "output_text", None)
+    if isinstance(output_text, str) and output_text:
+        return output_text
+    for output in getattr(response, "output", []) or []:
+        for content in getattr(output, "content", []) or []:
+            if getattr(content, "type", None) in {"output_text", "text"} and getattr(content, "text", None):
+                return content.text
+    raise ValueError("OpenAI response contains no output text")
 
 
-def request_content(job_description: str) -> dict:
-    experience = MASTER_EXPERIENCE.read_text(encoding="utf-8")
-    prompt = f"""
-{PROMPT.read_text(encoding="utf-8")}
+def _resume_context(job_description: str, match_analysis: dict | None, job_title: str | None) -> str:
+    """Use already-validated match evidence when a dashboard job is available."""
+    if match_analysis:
+        requirements = match_analysis.get("requirements")
+        if not isinstance(requirements, list):
+            raise ValueError("stored job analysis has no requirements")
+        evidence_by_id: dict[str, dict] = {}
+        compact_requirements = []
+        for requirement in requirements:
+            if not isinstance(requirement, dict):
+                continue
+            evidence = []
+            for item in requirement.get("evidence", []):
+                if not isinstance(item, dict) or not isinstance(item.get("id"), str):
+                    continue
+                resolved = {
+                    "id": item["id"], "title": item.get("title", ""),
+                    "text": item.get("text", ""), "source_type": item.get("source_type", "unverified"),
+                }
+                evidence_by_id[resolved["id"]] = resolved
+                evidence.append(resolved["id"])
+            compact_requirements.append({
+                "id": requirement.get("id"), "text": requirement.get("text"),
+                "category": requirement.get("category"), "importance": requirement.get("importance"),
+                "support_level": requirement.get("support_level"), "explanation": requirement.get("explanation", ""),
+                "evidence_ids": evidence,
+            })
+        return "\n".join((
+            "JOB MATCH CONTEXT (already extracted and evidence-validated):",
+            json.dumps({
+                "job_title": job_title or "", "summary": match_analysis.get("summary", ""),
+                "requirements": compact_requirements,
+                "recommendations": match_analysis.get("recommendations", []),
+            }, ensure_ascii=False),
+            "CITED CANDIDATE EVIDENCE (the only source for factual resume claims):",
+            json.dumps(list(evidence_by_id.values()), ensure_ascii=False),
+        ))
 
-Return only valid JSON with this exact structure:
-{{
-  "summary": "string",
-  "skills": {{
-    "languages": ["string"],
-    "frameworks_libraries": ["string"],
-    "tools_platforms": ["string"],
-    "concepts": ["string"]
-  }},
-  "experience": {{
-    "oracle_software_engineer": ["6 bullets"],
-    "oracle_project_intern": ["1 bullet"],
-    "distributed_rate_limiter": ["2 bullets"],
-    "expense_splitter": ["2 bullets"]
-  }}
-}}
+    # The standalone paste-a-JD screen has no first-pass result to reuse.
+    # Retain it as a useful direct workflow, but make that larger input explicit.
+    return "\n".join((
+        "JOB DESCRIPTION:", job_description,
+        "MASTER EXPERIENCE (source of truth):", MASTER_EXPERIENCE.read_text(encoding="utf-8"),
+    ))
 
-The output must contain exactly 11 bullets: 6, 1, 2, and 2 in the listed sections.
-Use exact JD terminology when supported by the master experience, but never invent facts.
 
-MASTER EXPERIENCE:
-{experience}
+def request_content(job_description: str, match_analysis: dict | None = None, job_title: str | None = None) -> dict:
+    try:
+        from openai import OpenAI
+    except ImportError as error:
+        raise RuntimeError("install dependencies with pip install -r requirements.txt") from error
+    if not os.getenv("OPENAI_API_KEY"):
+        raise ValueError("set OPENAI_API_KEY in .env before generating a resume")
 
-JOB DESCRIPTION:
-{job_description}
-""".strip()
-
-    print("\n===== PROMPT SENT TO GEMINI =====\n")
-    print(prompt)
-    print("\n===== END PROMPT =====\n")
-
-    client = genai.Client(
-        api_key=os.environ["GEMINI_API_KEY"],
-        http_options=types.HttpOptions(
-            timeout=30_000,
-            retry_options=types.HttpRetryOptions(attempts=1),
-        ),
+    context = _resume_context(job_description, match_analysis, job_title)
+    model = os.getenv("RESUME_OPENAI_MODEL", os.getenv("OPENAI_MODEL", "gpt-5.6-luna"))
+    response = OpenAI().responses.create(
+        model=model,
+        reasoning={"effort": os.getenv("RESUME_OPENAI_REASONING_EFFORT", "low")},
+        input=[
+            {"role": "developer", "content": RESUME_DEVELOPER_INSTRUCTIONS},
+            {"role": "user", "content": context},
+        ],
+        text={"format": {"type": "json_schema", "name": "tailored_resume", "strict": True, "schema": RESUME_RESPONSE_SCHEMA}},
     )
-    response = client.models.generate_content(
-        model="gemini-3.6-flash",
-        contents=prompt,
-        config={"response_mime_type": "application/json"},
-    )
-    raw_response = response_text(response)
-    print("\n===== RAW GEMINI RESPONSE =====\n")
-    print(raw_response)
-    print("\n===== END GEMINI RESPONSE =====\n")
+    raw_response = _response_text(response)
 
     try:
         data = json.loads(raw_response)
     except json.JSONDecodeError as error:
-        raise ValueError(f"Gemini returned invalid JSON: {error}") from error
+        raise ValueError(f"OpenAI returned invalid JSON: {error}") from error
 
     experience_data = data.get("experience") if isinstance(data, dict) else None
     if not isinstance(data.get("summary"), str) or not data["summary"].strip():
-        raise ValueError("Gemini response must contain a non-empty summary")
+        raise ValueError("OpenAI response must contain a non-empty summary")
     expected_skill_categories = {
         "languages",
         "frameworks_libraries",
@@ -119,14 +177,14 @@ JOB DESCRIPTION:
     }
     skills_data = data.get("skills")
     if not isinstance(skills_data, dict) or set(skills_data) != expected_skill_categories:
-        raise ValueError("Gemini response must contain all four skill categories")
+        raise ValueError("OpenAI response must contain all four skill categories")
     for category, skills in skills_data.items():
         if not isinstance(skills, list) or not all(
             isinstance(skill, str) and skill.strip() for skill in skills
         ):
-            raise ValueError(f"Gemini skills category '{category}' must contain strings")
+            raise ValueError(f"OpenAI skills category '{category}' must contain strings")
     if set(experience_data or {}) != set(EXPECTED_BULLET_COUNTS):
-        raise ValueError("Gemini returned unexpected experience sections")
+        raise ValueError("OpenAI returned unexpected experience sections")
     for section, count in EXPECTED_BULLET_COUNTS.items():
         bullets = experience_data[section]
         if not isinstance(bullets, list) or len(bullets) != count:
@@ -241,15 +299,18 @@ def replace_skills(template: str, skills: dict[str, list[str]]) -> str:
     return result
 
 
-def generate_resume(job_description: str, output_dir: Path = ROOT, keep_tex: bool = False) -> Path:
+def generate_resume(
+    job_description: str,
+    output_dir: Path = ROOT,
+    keep_tex: bool = False,
+    match_analysis: dict | None = None,
+    job_title: str | None = None,
+) -> Path:
     load_dotenv(ROOT / ".env")
     if not job_description.strip():
         raise ValueError("job description cannot be empty")
-    if "GEMINI_API_KEY" not in os.environ or not os.environ["GEMINI_API_KEY"]:
-        raise ValueError("set GEMINI_API_KEY in .env before running")
-
     try:
-        data = request_content(job_description)
+        data = request_content(job_description, match_analysis, job_title)
         bullets = [
             bullet
             for section in EXPECTED_BULLET_COUNTS
@@ -262,7 +323,7 @@ def generate_resume(job_description: str, output_dir: Path = ROOT, keep_tex: boo
         response_json.write_text(
             json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8"
         )
-        print(f"Gemini JSON saved: {response_json}")
+        print(f"OpenAI resume JSON saved: {response_json}")
 
         with tempfile.TemporaryDirectory(prefix="resume-generation-") as directory:
             generated_tex = Path(directory) / "resume.tex"
@@ -293,7 +354,7 @@ def generate_resume(job_description: str, output_dir: Path = ROOT, keep_tex: boo
                 kept_tex.write_text(generated_source, encoding="utf-8")
                 print(f"Generated LaTeX kept: {kept_tex}")
             if result == 0:
-                print(f"Gemini bullets inserted: {len(bullets)}")
+                print(f"OpenAI resume bullets inserted: {len(bullets)}")
             if result != 0:
                 raise RuntimeError("LaTeX compilation failed")
             return output_pdf

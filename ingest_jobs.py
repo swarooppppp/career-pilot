@@ -10,6 +10,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+from app.services.candidate_experience import experience_years_for_import
 from app.services.job_store import import_jobs
 
 
@@ -26,7 +27,10 @@ def main() -> int:
     load_dotenv(ROOT / ".env")
     candidate_years = args.candidate_years
     if candidate_years is None:
-        candidate_years = float(os.getenv("CANDIDATE_YEARS_EXPERIENCE", "2"))
+        fallback_years = float(os.getenv("CANDIDATE_YEARS_EXPERIENCE", "2"))
+        candidate_years = experience_years_for_import(
+            (ROOT / "data" / "master_experience.md").read_text(encoding="utf-8"), fallback_years
+        )
     payload = json.loads(args.input.read_text(encoding="utf-8"))
     raw_jobs = payload.get("jobs") if isinstance(payload, dict) else payload
     if not isinstance(raw_jobs, list):

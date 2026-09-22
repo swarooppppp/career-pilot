@@ -56,6 +56,23 @@ class JobMatchingTests(unittest.TestCase):
         self.assertEqual(sources["Skills explicitly present in the resume"], "skills_summary")
         self.assertEqual(sources["Facts requiring confirmation or enrichment"], "unverified")
 
+    def test_profile_adds_citeable_verified_experience_from_dated_work(self):
+        profile = build_candidate_profile("""
+## Software Engineer
+- Dates: June 2024 — Present
+- Built Java services.
+
+## Project Intern
+- Dates: May 2023 — July 2023
+- Built an internal tool.
+""".strip())
+
+        self.assertIsInstance(profile["years_of_experience"]["non_internship_professional"], float)
+        evidence = next(item for item in profile["evidence_chunks"] if item["title"] == "Verified professional experience")
+        self.assertEqual(evidence["source_type"], "work_experience")
+        prompt = job_matching.build_match_profile_context(profile)
+        self.assertIn("non_internship_professional", prompt)
+
     def test_retrieval_finds_related_experience(self):
         evidence = retrieve_evidence("Build REST APIs with Java and Spring Boot", self.profile)
         self.assertTrue(evidence)
@@ -107,97 +124,84 @@ class JobMatchingTests(unittest.TestCase):
         self.assertEqual(project_score, 85)
         self.assertEqual(education_score, 65)
 
-    def test_analysis_scores_and_caches_without_repeating_llm_work(self):
+    def test_batch_response_scores_deterministically(self):
         requirements = [
-            {
-                "id": "req-1",
-                "text": "Build Java APIs",
-                "category": "required_skill",
-                "importance": 10,
-                "is_genuine_hard_constraint": False,
-            },
-            {
-                "id": "req-2",
-                "text": "Kubernetes experience",
-                "category": "preferred_skill",
-                "importance": 4,
-                "is_genuine_hard_constraint": False,
-            },
-        ]
-        evaluations = [
-            {**requirements[0], "support_level": "direct", "support_factor": 1.0,
+            {"id": "req-1", "text": "Build Java APIs", "category": "required_skill", "importance": 10,
+             "is_genuine_hard_constraint": False, "support_level": "direct",
              "evidence_ids": ["evidence-2"], "explanation": "Java API evidence exists."},
-            {**requirements[1], "support_level": "no_evidence", "support_factor": 0.0,
+            {"id": "req-2", "text": "Kubernetes experience", "category": "preferred_skill", "importance": 4,
+             "is_genuine_hard_constraint": False, "support_level": "no_evidence",
              "evidence_ids": [], "explanation": "Not mentioned in the source."},
         ]
-        with TemporaryDirectory() as directory, patch.object(job_matching, "CACHE_DIR", Path(directory)), \
-                patch.object(job_matching, "candidate_profile", return_value=self.profile), \
-                patch.object(job_matching, "extract_requirements", return_value=requirements) as extract, \
-                patch.object(job_matching, "evaluate_requirements", return_value=(evaluations, "Good backend match.", [])):
-            first = job_matching.analyse_job("A role building Java APIs with Kubernetes preferred.")
-            second = job_matching.analyse_job("A role building Java APIs with Kubernetes preferred.")
+        with patch.object(job_matching, "candidate_profile", return_value=self.profile):
+            first = job_matching.build_analysis_result("A role building Java APIs with Kubernetes preferred.", {
+                "requirements": requirements, "summary": "Good backend match.", "recommendations": [],
+            })
 
         self.assertEqual(first["overall_score"], 86)
         self.assertFalse(first["cached"])
-        self.assertTrue(second["cached"])
-        self.assertEqual(extract.call_count, 1)
 
     def test_positive_support_without_retrieved_citation_is_downgraded(self):
-        requirements = [{
-            "id": "req-1", "text": "Java experience", "category": "required_skill",
-            "importance": 10, "is_genuine_hard_constraint": False,
-        }]
         response = {
-            "evaluations": [{
+            "requirements": [{
                 "id": "req-1", "support_level": "direct",
-                "evidence_ids": ["evidence-1", "evidence-unknown"],
+                "text": "Java experience", "category": "required_skill", "importance": 10,
+                "is_genuine_hard_constraint": False,
+                "evidence_ids": ["evidence-unknown"],
                 "explanation": "Claims support without supplied evidence.",
             }],
             "summary": "", "recommendations": [],
         }
-        with patch.object(job_matching, "_json_response", return_value=response):
-            evaluations, _, _ = job_matching.evaluate_requirements(requirements, self.profile)
+        evaluations, _, _ = job_matching.validate_match_response(response, self.profile)
 
         self.assertEqual(evaluations[0]["support_level"], "no_evidence")
         self.assertEqual(evaluations[0]["support_factor"], 0.0)
         self.assertEqual(evaluations[0]["evidence_ids"], [])
 
+    def test_duplicate_requirement_ids_fail_one_call_validation(self):
+        response = {
+            "requirements": [
+                {"id": "req-1", "text": "Java", "category": "required_skill", "importance": 5,
+                 "support_level": "no_evidence", "evidence_ids": []},
+                {"id": "req-1", "text": "Python", "category": "required_skill", "importance": 5,
+                 "support_level": "no_evidence", "evidence_ids": []},
+            ]
+        }
+        with self.assertRaisesRegex(ValueError, "invalid job requirement"):
+            job_matching.validate_match_response(response, self.profile)
+
+    def test_prompt_limits_scored_requirements_and_excludes_hiring_boilerplate(self):
+        prompt = job_matching.build_match_prompt("Build Java services.", self.profile)
+
+        self.assertIn("Return 4 to 10 scored requirements", prompt)
+        self.assertIn("employer background/security checks", prompt)
+        self.assertIn("generic soft skills", prompt)
+        self.assertEqual(job_matching.MATCH_RESPONSE_SCHEMA["properties"]["requirements"]["maxItems"], 10)
+
+    def test_candidate_material_precedes_the_job_description_for_cache_reuse(self):
+        prompt = job_matching.build_match_prompt("Build Java services.", self.profile)
+
+        self.assertLess(prompt.index("CANDIDATE PROFILE:"), prompt.index("JOB DESCRIPTION"))
+        self.assertLess(prompt.index("EVIDENCE CHUNKS:"), prompt.index("JOB DESCRIPTION"))
+
     def test_old_schema_cache_key_is_not_reused(self):
-        requirements = [{
-            "id": "req-1", "text": "Java experience", "category": "required_skill",
-            "importance": 10, "is_genuine_hard_constraint": False,
-        }]
-        evaluations = [{
-            **requirements[0], "support_level": "no_evidence", "support_factor": 0.0,
-            "evidence_ids": [], "explanation": "",
-        }]
         description = "A sufficiently detailed Java role description for cache testing."
         old_cache_key = job_matching._sha256(self.profile["source_hash"] + description)
-        with TemporaryDirectory() as directory, patch.object(job_matching, "CACHE_DIR", Path(directory)), \
-                patch.object(job_matching, "candidate_profile", return_value=self.profile), \
-                patch.object(job_matching, "extract_requirements", return_value=requirements) as extract, \
-                patch.object(job_matching, "evaluate_requirements", return_value=(evaluations, "", [])):
-            Path(directory, f"{old_cache_key}.json").write_text('{"cached": "old"}', encoding="utf-8")
-            result = job_matching.analyse_job(description)
-
-        self.assertFalse(result["cached"])
-        self.assertEqual(extract.call_count, 1)
+        new_cache_key = job_matching._sha256(job_matching.MATCHING_SCHEMA_VERSION + job_matching.MATCHING_PROMPT_VERSION + job_matching.MODEL_NAME + self.profile["source_hash"] + description)
+        self.assertNotEqual(old_cache_key, new_cache_key)
 
     def test_analysis_applies_the_strongest_valid_evidence_source(self):
-        requirements = [{
-            "id": "req-1", "text": "Java service", "category": "required_skill",
-            "importance": 10, "is_genuine_hard_constraint": False,
-        }]
         project = next(chunk for chunk in self.profile["evidence_chunks"] if chunk["source_type"] == "project")
         evaluations = [{
-            **requirements[0], "support_level": "direct", "support_factor": 1.0,
+            "id": "req-1", "text": "Java service", "category": "required_skill",
+            "importance": 10, "is_genuine_hard_constraint": False,
+            "support_level": "direct", "support_factor": 1.0,
             "evidence_ids": [project["id"]], "explanation": "Project evidence.",
         }]
-        with TemporaryDirectory() as directory, patch.object(job_matching, "CACHE_DIR", Path(directory)), \
-                patch.object(job_matching, "candidate_profile", return_value=self.profile), \
-                patch.object(job_matching, "extract_requirements", return_value=requirements), \
-                patch.object(job_matching, "evaluate_requirements", return_value=(evaluations, "", [])):
-            result = job_matching.analyse_job("A sufficiently detailed Java service role description.")
+        with patch.object(job_matching, "candidate_profile", return_value=self.profile):
+            result = job_matching.build_analysis_result("A sufficiently detailed Java service role description.", {
+                "requirements": evaluations, "summary": "", "recommendations": [],
+            })
 
         requirement = result["requirements"][0]
         self.assertEqual(result["overall_score"], 85)

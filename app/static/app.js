@@ -221,7 +221,7 @@ refreshJobsButton.addEventListener("click", loadJobs);
 
 processJobsButton.addEventListener("click", async () => {
   processJobsButton.disabled = true;
-  jobStatus.textContent = "Analysing pending jobs. This can take a few minutes.";
+  jobStatus.textContent = "Submitting pending jobs to the analysis batch...";
   try {
     const response = await fetch("/api/jobs/process", {
       method: "POST",
@@ -229,8 +229,9 @@ processJobsButton.addEventListener("click", async () => {
       body: JSON.stringify({ limit: 10 }),
     });
     const result = await readResult(response);
-    const destination = result.queue_backend === "kafka" ? "Kafka" : "the local worker";
-    jobStatus.textContent = `Queued ${result.queued} jobs for ${destination}.`;
+    jobStatus.textContent = result.submitted
+      ? `Submitted ${result.submitted} jobs to the analysis batch. Refresh after it completes.`
+      : "No eligible pending jobs were available for batch submission.";
     await loadJobs();
   } catch (error) {
     jobStatus.textContent = `Error: ${error.message}`;
@@ -269,3 +270,7 @@ saveMasterButton.addEventListener("click", async () => {
 
 loadJobs();
 loadMasterExperience();
+// The Batch scheduler persists results in the database independently of the
+// browser. Refreshing the lightweight job list makes completed scores appear
+// without requiring a manual click or a real-time socket connection.
+window.setInterval(loadJobs, 60_000);

@@ -8,17 +8,29 @@
   </head>
   <body>
     <main class="container">
-      <h1>Career Pilot</h1>
-      <p class="intro">Check your fit first, then generate a tailored resume when it is worth pursuing.</p>
-      <form id="resume-form">
-        <label for="job-description">Job description</label>
-        <textarea id="job-description" name="job_description" required
-          placeholder="Paste the complete job description here..."></textarea>
-        <div class="actions">
-          <button type="submit" id="analyse-button">Analyse match</button>
-          <button type="button" id="generate-button" class="secondary">Generate resume</button>
+      <header class="hero">
+        <p class="product-label"><span></span> Career Pilot</p>
+        <h1>Make each application<br>count.</h1>
+        <p class="intro">Assess your fit against your full experience, then tailor a resume when the opportunity is worth pursuing.</p>
+      </header>
+      <section class="composer" aria-labelledby="composer-title">
+        <div class="composer-heading">
+          <div>
+            <p class="eyebrow">Quick analysis</p>
+            <h2 id="composer-title">Evaluate a job description</h2>
+          </div>
+          <span class="composer-note">Evidence-based scoring</span>
         </div>
-      </form>
+        <form id="resume-form">
+          <label for="job-description">Job description</label>
+          <textarea id="job-description" name="job_description" required
+            placeholder="Paste the complete job description here..."></textarea>
+          <div class="actions">
+            <button type="submit" id="analyse-button">Analyse match <span aria-hidden="true">→</span></button>
+            <button type="button" id="generate-button" class="secondary">Generate resume</button>
+          </div>
+        </form>
+      </section>
       <p id="status" role="status"></p>
       <section id="match-details" class="match-details" hidden aria-live="polite">
         <div class="score-row">

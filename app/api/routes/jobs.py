@@ -5,15 +5,14 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from app.services.job_queue import publish_outbox_events, queue_backend
 from app.services.job_store import (
     get_job,
     list_jobs,
     mark_resume_generated,
     retry_analysis,
-    queue_pending_jobs,
     update_user_status,
 )
+from app.services.openai_batch import poll_openai_batches, submit_pending_batch
 from app.services.resume_generation import generate_resume
 
 
@@ -36,10 +35,15 @@ def dashboard_jobs(include_ineligible: bool = False) -> dict:
 @router.post("/process")
 def process_jobs(request: ProcessRequest) -> dict:
     try:
-        backend = queue_backend()
-        queued_job_ids = queue_pending_jobs(request.limit, create_outbox_events=backend == "kafka")
-        published = publish_outbox_events() if backend == "kafka" else 0
-        return {"queued": len(queued_job_ids), "published": published, "queue_backend": backend}
+        return submit_pending_batch(request.limit)
+    except (ValueError, RuntimeError) as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+
+
+@router.post("/batches/poll")
+def poll_batches() -> dict:
+    try:
+        return poll_openai_batches()
     except (ValueError, RuntimeError) as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
 
@@ -67,11 +71,16 @@ def generate_job_resume(job_id: str) -> dict[str, str]:
     job = get_job(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="job not found")
+    if job["analysis_status"] != "completed" or not job.get("match"):
+        raise HTTPException(status_code=422, detail="complete job matching before generating a tailored resume")
     try:
         from app.api.routes.resume import TEMP_ROOT
 
         output_dir = TEMP_ROOT / job_id
-        pdf_path = generate_resume(job["job_description"], output_dir)
+        pdf_path = generate_resume(
+            job["job_description"], output_dir,
+            match_analysis=job["match"], job_title=job["job_title"],
+        )
         mark_resume_generated(job_id)
     except Exception as error:
         raise HTTPException(status_code=500, detail=f"resume generation failed: {error}") from error

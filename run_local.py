@@ -4,12 +4,14 @@
 from __future__ import annotations
 
 import argparse
+import os
 import subprocess
 import sys
 from pathlib import Path
 
 import uvicorn
 
+from app.logging_utils import configure_logging
 from sync_jobs import sync_configured_jobs
 
 
@@ -17,6 +19,7 @@ ROOT = Path(__file__).resolve().parent
 
 
 def main() -> None:
+    configure_logging()
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--sync-jobs",
@@ -25,14 +28,23 @@ def main() -> None:
     )
     args = parser.parse_args()
     if args.sync_jobs:
+        print("[startup] Fetching and importing configured job sources...")
         sync_configured_jobs()
 
-    worker = subprocess.Popen([sys.executable, str(ROOT / "local_worker.py")], cwd=ROOT)
+    worker = None
+    if os.getenv("MATCH_EXECUTION_MODE", "batch").lower() == "worker":
+        print("[startup] Starting legacy local worker...")
+        worker = subprocess.Popen([sys.executable, str(ROOT / "local_worker.py")], cwd=ROOT)
+    else:
+        print("[startup] Job matching uses the in-app OpenAI Batch scheduler.")
     try:
+        print("[startup] Starting web application at http://127.0.0.1:8000")
         uvicorn.run("app.main:app", host="127.0.0.1", port=8000, reload=False)
     finally:
-        worker.terminate()
-        worker.wait(timeout=10)
+        if worker:
+            print("[shutdown] Stopping local worker...")
+            worker.terminate()
+            worker.wait(timeout=10)
 
 
 if __name__ == "__main__":

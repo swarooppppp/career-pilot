@@ -8,10 +8,15 @@ either the completed analysis or a retryable failure.
 from __future__ import annotations
 
 import time
+import os
+import random
+import logging
 from typing import Any, TypedDict
 
 from app.services.job_matching import analyse_job
 from app.services.job_store import save_analysis, save_analysis_error
+
+logger = logging.getLogger(__name__)
 
 try:
     from langgraph.graph import END, START, StateGraph
@@ -36,13 +41,17 @@ def check_job(state: JobState) -> JobState:
         and job["analysis_status"] == "processing"
         and job["user_status"] == "new"
     )
-    return {"next_step": "analyse" if is_ready else "skip"}
+    next_step = "analyse" if is_ready else "skip"
+    logger.info("Job %s state check: %s", job["id"], next_step)
+    return {"next_step": next_step}
 
 
 def evaluate_match(state: JobState) -> JobState:
     last_error: Exception | None = None
-    for attempt in range(2):
+    max_retries = int(os.getenv("GEMINI_MAX_RETRIES", "3"))
+    for attempt in range(max_retries + 1):
         try:
+            logger.info("Job %s Gemini analysis attempt %s/%s", state["job"]["id"], attempt + 1, max_retries + 1)
             return {
                 "analysis": analyse_job(state["job"]["job_description"]),
                 "next_step": "persist",
@@ -50,18 +59,24 @@ def evaluate_match(state: JobState) -> JobState:
         except Exception as error:
             last_error = error
             is_transient = "429" in str(error) or "503" in str(error)
-            if not is_transient or attempt == 1:
+            if not is_transient or attempt == max_retries:
+                logger.exception("Job %s analysis failed", state["job"]["id"])
                 break
-            time.sleep(3)
+            # Jitter prevents several parallel workers retrying in lockstep.
+            wait_seconds = (2 ** attempt) + random.uniform(0, 1)
+            logger.warning("Job %s received transient Gemini error; retrying in %.2fs", state["job"]["id"], wait_seconds)
+            time.sleep(wait_seconds)
     return {"error": str(last_error), "next_step": "failed"}
 
 
 def persist_match(state: JobState) -> JobState:
+    logger.info("Persisting completed analysis for job %s", state["job"]["id"])
     save_analysis(state["job"]["id"], state["analysis"])
     return {}
 
 
 def persist_failure(state: JobState) -> JobState:
+    logger.error("Persisting failed analysis for job %s: %s", state["job"]["id"], state["error"])
     save_analysis_error(state["job"]["id"], RuntimeError(state["error"]))
     return {}
 

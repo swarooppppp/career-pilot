@@ -1,15 +1,10 @@
-"""Recall-first candidate-to-job matching.
-
-The LLM extracts and evaluates requirements, while this module owns evidence
-retrieval, scoring, validation, and caching.  That separation keeps the final
-percentage explainable and prevents an absent resume keyword from becoming an
-automatic rejection.
-"""
+"""One-call, evidence-cited candidate-to-job matching."""
 
 from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import os
 import re
 from dataclasses import dataclass
@@ -18,8 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from dotenv import load_dotenv
-from google import genai
-from google.genai import types
+from app.services.candidate_experience import calculate_professional_experience
 
 try:
     from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -30,9 +24,11 @@ except ImportError:  # Allows the rest of the local app to run before pip instal
 ROOT = Path(__file__).resolve().parents[2]
 MASTER_EXPERIENCE = ROOT / "data" / "master_experience.md"
 CACHE_DIR = ROOT / "data" / "match_cache"
-MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-3.6-flash")
+MODEL_NAME = os.getenv("OPENAI_MODEL", "gpt-5.6-luna")
+logger = logging.getLogger(__name__)
 
-MATCHING_SCHEMA_VERSION = "evidence-weighted-v1"
+MATCHING_SCHEMA_VERSION = "openai-batch-one-call-evidence-weighted-v1"
+MATCHING_PROMPT_VERSION = "2026-09-21-cacheable-experience-v1"
 SUPPORT_FACTORS = {
     "direct": 1.0,
     "strong_transferable": 0.82,
@@ -145,36 +141,6 @@ def _contains_alias(text: str, alias: str) -> bool:
     return bool(re.search(rf"(?<![a-z0-9]){re.escape(alias.lower())}(?![a-z0-9])", text.lower()))
 
 
-def _response_text(response: object) -> str:
-    candidates = getattr(response, "candidates", None) or []
-    parts = getattr(getattr(candidates[0], "content", None), "parts", []) if candidates else []
-    text_parts = [part.text for part in parts if getattr(part, "text", None)]
-    return "".join(text_parts) if text_parts else getattr(response, "text", "")
-
-
-def _json_response(prompt: str) -> dict[str, Any]:
-    load_dotenv(ROOT / ".env")
-    api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key:
-        raise ValueError("set GEMINI_API_KEY in .env before analysing a job")
-    client = genai.Client(
-        api_key=api_key,
-        http_options=types.HttpOptions(
-            timeout=int(os.getenv("MATCH_GEMINI_TIMEOUT_MS", "60000")),
-            retry_options=types.HttpRetryOptions(attempts=1),
-        ),
-    )
-    response = client.models.generate_content(
-        model=os.getenv("GEMINI_MODEL", MODEL_NAME),
-        contents=prompt,
-        config={"response_mime_type": "application/json"},
-    )
-    try:
-        return json.loads(_response_text(response))
-    except json.JSONDecodeError as error:
-        raise ValueError(f"Gemini returned invalid match JSON: {error}") from error
-
-
 def build_candidate_profile(master_text: str) -> dict[str, Any]:
     """Create stable, searchable evidence passages from the master experience."""
     candidate: dict[str, str] = {}
@@ -264,9 +230,24 @@ def build_candidate_profile(master_text: str) -> dict[str, Any]:
     domains = [
         domain for domain, terms in domain_terms.items() if any(term in searchable_text for term in terms)
     ]
+    years_of_experience = calculate_professional_experience(master_text)
+    if years_of_experience:
+        experience_text = (
+            f"Verified non-internship professional experience: "
+            f"{years_of_experience['non_internship_professional']:.2f} years as of "
+            f"{years_of_experience['calculated_as_of']}. "
+            f"Basis: {years_of_experience['basis']}"
+        )
+        chunks.append(EvidenceChunk(
+            id=f"evidence-{len(chunks) + 1}", title="Verified professional experience",
+            text=experience_text, source_type="work_experience",
+        ))
     return {
         "candidate": candidate,
-        "years_of_experience": candidate.get("current_experience", "not explicitly stated"),
+        "years_of_experience": years_of_experience or {
+            "non_internship_professional": None,
+            "calculation_status": "unavailable",
+        },
         "skills": known_skills,
         "roles": roles,
         "responsibilities": responsibilities,
@@ -311,141 +292,169 @@ def retrieve_evidence(requirement: str, profile: dict[str, Any], limit: int = 3)
     return [chunk for _, chunk in scored[:limit]]
 
 
-def extract_requirements(job_description: str) -> list[dict[str, Any]]:
-    prompt = f"""
-Extract the requirements from this job description as JSON only.
+MATCHING_DEVELOPER_INSTRUCTIONS = """
+Analyse a job description against the candidate material supplied in subsequent messages.
+Return only the requested structured JSON.
 
 Return exactly this structure:
-{{"requirements": [{{
+{
+  "requirements": [{
   "id": "req-1",
   "text": "concise requirement",
   "category": "core_responsibility | required_skill | seniority_scope | preferred_skill | domain | hard_constraint | education | nice_to_have",
   "importance": 1,
-  "is_genuine_hard_constraint": false
-}}]}}
-
-Rules:
-- Include at most 20 non-duplicated requirements.
-- Importance is an integer from 1 to 10.
-- Only mark a genuine legal, operational, licensing, clearance, work-authorisation,
-  mandatory-language, or non-negotiable-location constraint as a hard constraint.
-- A technology or years-of-experience phrase is normally not a hard constraint.
-- Preserve the JD's actual meaning. Do not evaluate the candidate yet.
-
-JOB DESCRIPTION:
-{job_description}
-""".strip()
-    data = _json_response(prompt)
-    requirements = data.get("requirements") if isinstance(data, dict) else None
-    if not isinstance(requirements, list) or not requirements:
-        raise ValueError("Gemini did not return job requirements")
-    if len(requirements) > 20:
-        raise ValueError("Gemini returned too many job requirements")
-    validated = []
-    for index, item in enumerate(requirements, start=1):
-        if not isinstance(item, dict):
-            raise ValueError("a job requirement is not an object")
-        text = item.get("text")
-        category = item.get("category")
-        importance = item.get("importance")
-        if not isinstance(text, str) or not text.strip() or category not in VALID_CATEGORIES:
-            raise ValueError("Gemini returned an invalid job requirement")
-        if not isinstance(importance, int) or not 1 <= importance <= 10:
-            raise ValueError("Gemini returned an invalid requirement importance")
-        validated.append(
-            {
-                "id": f"req-{index}",
-                "text": text.strip(),
-                "category": category,
-                "importance": importance,
-                "is_genuine_hard_constraint": bool(item.get("is_genuine_hard_constraint")),
-            }
-        )
-    return validated
-
-
-def evaluate_requirements(
-    requirements: list[dict[str, Any]], profile: dict[str, Any]
-) -> tuple[list[dict[str, Any]], str, list[str]]:
-    contextual_requirements = []
-    for requirement in requirements:
-        contextual_requirements.append(
-            {
-                **requirement,
-                "evidence": retrieve_evidence(requirement["text"], profile),
-            }
-        )
-    prompt = f"""
-Evaluate the candidate against each job requirement using only the retrieved evidence.
-Return JSON only in this structure:
-{{
-  "evaluations": [{{
-    "id": "req-1",
-    "support_level": "direct | strong_transferable | weak_transferable | no_evidence | hard_contradiction",
-    "evidence_ids": ["evidence-1"],
-    "explanation": "brief explanation grounded in the evidence"
-  }}],
-  "summary": "one or two sentence recall-first assessment",
+  "is_genuine_hard_constraint": false,
+  "support_level": "direct | strong_transferable | weak_transferable | no_evidence | hard_contradiction",
+  "evidence_ids": ["evidence-1"],
+  "explanation": "brief explanation grounded in cited evidence"
+  }],
+  "summary": "one or two sentence assessment",
   "recommendations": ["up to three truthful recommendations"]
-}}
+}
 
 Rules:
-- Positive support (direct, strong_transferable, weak_transferable) MUST cite at least one
-  evidence ID supplied for that exact requirement.
-- Use no_evidence whenever the supplied evidence does not support a requirement.
-- Use hard_contradiction only if the evidence directly contradicts a genuine hard constraint.
-- Treat related technologies, roles, and responsibilities as transferable where reasonable.
-- Prefer recall: a potentially capable candidate should receive partial credit.
+- Return 4 to 10 scored requirements. Prefer 6 to 8 for a straightforward
+  role. Do not fill the limit merely because the JD has many bullets.
+- Merge overlapping statements into one requirement. Do not score backend
+  services, distributed systems, scalability, reliability, and cloud operations
+  as separate requirements when they describe the same core capability.
+- Include only concrete technical skills, domain knowledge, role
+  responsibilities, education, and explicit years-of-experience requirements.
+- Do NOT include or score generic soft skills or culture statements, including
+  communication, collaboration, teamwork, mentoring, feedback, growth mindset,
+  adaptability, or working through ambiguity.
+- Do NOT include or score administrative, legal, or hiring boilerplate,
+  including employer background/security checks, office-attendance or
+  work-location policy, equal-opportunity language, export-control paperwork,
+  citizenship/residency documentation, or application instructions.
+  Those are application eligibility notices, not evidence-based match criteria.
+- Importance is an integer from 1 to 10.
+- Only mark a genuine role-specific, evidence-based non-negotiable condition as
+  a hard constraint. Do not use hard_constraint for excluded boilerplate.
+- A technology or years-of-experience phrase is normally not a hard constraint.
+- Positive support (direct, strong_transferable, weak_transferable) MUST cite at
+  least one evidence ID from EVIDENCE CHUNKS.
+- Use no_evidence when the profile does not support a requirement. Missing
+  evidence is not a contradiction.
+- Use hard_contradiction only when cited evidence contradicts a genuine hard constraint.
 - Do not invent skills, dates, qualifications, or evidence.
+""".strip()
 
+
+def build_match_profile_context(profile: dict[str, Any]) -> str:
+    """Return the stable, cacheable candidate prefix shared by every job."""
+    return f"""
 CANDIDATE PROFILE:
 {json.dumps({
     "candidate": profile["candidate"],
+    "years_of_experience": profile.get("years_of_experience", {"calculation_status": "unavailable"}),
     "skills": profile["skills"],
     "roles": profile["roles"],
+    "projects": profile["projects"],
     "domains": profile["domains"],
     "education": profile["education"],
     "constraints": profile["constraints"],
 }, ensure_ascii=False)}
 
-REQUIREMENTS WITH RETRIEVED EVIDENCE:
-{json.dumps(contextual_requirements, ensure_ascii=False)}
+EVIDENCE CHUNKS:
+{json.dumps(profile["evidence_chunks"], ensure_ascii=False)}
 """.strip()
-    data = _json_response(prompt)
-    evaluations = data.get("evaluations") if isinstance(data, dict) else None
-    if not isinstance(evaluations, list) or len(evaluations) != len(requirements):
-        raise ValueError("Gemini did not evaluate every job requirement")
-    by_id = {item.get("id"): item for item in evaluations if isinstance(item, dict)}
-    required_ids = {item["id"] for item in requirements}
-    if len(by_id) != len(requirements) or set(by_id) != required_ids:
-        raise ValueError("Gemini did not return exactly one evaluation per job requirement")
-    result = []
-    for requirement, contextual_requirement in zip(requirements, contextual_requirements):
-        evaluation = by_id.get(requirement["id"])
-        if not evaluation or evaluation.get("support_level") not in SUPPORT_FACTORS:
-            raise ValueError("Gemini returned an invalid requirement evaluation")
-        evidence_ids = evaluation.get("evidence_ids", [])
-        if not isinstance(evidence_ids, list) or not all(isinstance(item, str) for item in evidence_ids):
-            raise ValueError("Gemini returned invalid evidence references")
-        allowed_evidence_ids = {item["id"] for item in contextual_requirement["evidence"]}
-        valid_evidence_ids = [item for item in evidence_ids if item in allowed_evidence_ids]
-        support_level = evaluation["support_level"]
+
+
+def build_match_prompt(job_description: str, profile: dict[str, Any]) -> str:
+    """Build a readable full request, ordered for reusable-prefix caching."""
+    return f"""
+{MATCHING_DEVELOPER_INSTRUCTIONS}
+
+{build_match_profile_context(profile)}
+
+JOB DESCRIPTION (the only job-specific input):
+{job_description}
+""".strip()
+
+
+MATCH_RESPONSE_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        "requirements": {
+            "type": "array", "maxItems": 10,
+            "items": {
+                "type": "object", "additionalProperties": False,
+                "properties": {
+                    "id": {"type": "string"}, "text": {"type": "string"},
+                    "category": {"type": "string", "enum": sorted(VALID_CATEGORIES)},
+                    "importance": {"type": "integer", "minimum": 1, "maximum": 10},
+                    "is_genuine_hard_constraint": {"type": "boolean"},
+                    "support_level": {"type": "string", "enum": sorted(SUPPORT_FACTORS)},
+                    "evidence_ids": {"type": "array", "items": {"type": "string"}},
+                    "explanation": {"type": "string"},
+                },
+                "required": ["id", "text", "category", "importance", "is_genuine_hard_constraint", "support_level", "evidence_ids", "explanation"],
+            },
+        },
+        "summary": {"type": "string"},
+        "recommendations": {"type": "array", "maxItems": 3, "items": {"type": "string"}},
+    },
+    "required": ["requirements", "summary", "recommendations"],
+}
+
+
+def validate_match_response(data: dict[str, Any], profile: dict[str, Any]) -> tuple[list[dict[str, Any]], str, list[str]]:
+    """Validate model output before deterministic evidence/source scoring."""
+    requirements = data.get("requirements") if isinstance(data, dict) else None
+    if not isinstance(requirements, list) or not requirements:
+        raise ValueError("model did not return job requirements")
+    if len(requirements) > 10:
+        raise ValueError("model returned too many job requirements")
+    evidence_by_id = {item["id"]: item for item in profile["evidence_chunks"]}
+    validated = []
+    requirement_ids: set[str] = set()
+    for item in requirements:
+        if not isinstance(item, dict):
+            raise ValueError("a job requirement is not an object")
+        requirement_id = item.get("id")
+        text = item.get("text")
+        category = item.get("category")
+        importance = item.get("importance")
+        support_level = item.get("support_level")
+        evidence_ids = item.get("evidence_ids", [])
+        if (
+            not isinstance(requirement_id, str)
+            or not requirement_id.strip()
+            or requirement_id in requirement_ids
+            or not isinstance(text, str)
+            or not text.strip()
+            or category not in VALID_CATEGORIES
+            or support_level not in SUPPORT_FACTORS
+            or not isinstance(evidence_ids, list)
+            or not all(isinstance(evidence_id, str) for evidence_id in evidence_ids)
+        ):
+            raise ValueError("model returned an invalid job requirement")
+        if not isinstance(importance, int) or not 1 <= importance <= 10:
+            raise ValueError("model returned an invalid requirement importance")
+        requirement_ids.add(requirement_id)
+        valid_evidence_ids = [evidence_id for evidence_id in evidence_ids if evidence_id in evidence_by_id]
         if support_level in POSITIVE_SUPPORT_LEVELS and not valid_evidence_ids:
             support_level = "no_evidence"
-        result.append(
+        validated.append(
             {
-                **requirement,
+                "id": requirement_id,
+                "text": text.strip(),
+                "category": category,
+                "importance": importance,
+                "is_genuine_hard_constraint": bool(item.get("is_genuine_hard_constraint")),
                 "support_level": support_level,
                 "support_factor": SUPPORT_FACTORS[support_level],
                 "evidence_ids": valid_evidence_ids,
-                "explanation": str(evaluation.get("explanation", "")).strip(),
+                "explanation": str(item.get("explanation", "")).strip(),
             }
         )
     summary = str(data.get("summary", "")).strip()
     recommendations = data.get("recommendations", [])
     if not isinstance(recommendations, list):
         recommendations = []
-    return result, summary, [str(item) for item in recommendations[:3]]
+    return validated, summary, [str(item) for item in recommendations[:3]]
 
 
 def calculate_score(evaluations: list[dict[str, Any]]) -> int:
@@ -463,19 +472,14 @@ def _group_matches(evaluations: list[dict[str, Any]], levels: set[str]) -> list[
     return [item for item in evaluations if item["support_level"] in levels]
 
 
-def analyse_job(job_description: str) -> dict[str, Any]:
-    if len(job_description.strip()) < 20:
-        raise ValueError("job description must contain at least 20 characters")
+def build_analysis_result(job_description: str, data: dict[str, Any]) -> dict[str, Any]:
+    """Turn a validated Batch response into the persisted deterministic result."""
     profile = candidate_profile()
-    cache_key = _sha256(MATCHING_SCHEMA_VERSION + profile["source_hash"] + job_description)
-    cache_path = CACHE_DIR / f"{cache_key}.json"
-    if cache_path.is_file():
-        cached_result = json.loads(cache_path.read_text(encoding="utf-8"))
-        cached_result["cached"] = True
-        return cached_result
-
-    requirements = extract_requirements(job_description)
-    evaluations, summary, recommendations = evaluate_requirements(requirements, profile)
+    model = os.getenv("OPENAI_MODEL", MODEL_NAME)
+    cache_key = _sha256(
+        MATCHING_SCHEMA_VERSION + MATCHING_PROMPT_VERSION + model + profile["source_hash"] + job_description
+    )
+    evaluations, summary, recommendations = validate_match_response(data, profile)
     evidence_by_id = {item["id"]: item for item in profile["evidence_chunks"]}
     for evaluation in evaluations:
         evaluation["evidence"] = [
@@ -505,6 +509,12 @@ def analyse_job(job_description: str) -> dict[str, Any]:
         "recommendations": recommendations,
         "requirements": evaluations,
     }
-    CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    cache_path.write_text(json.dumps(result, indent=2, ensure_ascii=False), encoding="utf-8")
+    logger.info("Batch match complete (%s): score=%s requirements=%s", cache_key[:16], result["overall_score"], len(evaluations))
     return result
+
+
+def analyse_job(job_description: str) -> dict[str, Any]:
+    """Interactive matching is intentionally disabled: use the Batch workflow."""
+    if len(job_description.strip()) < 20:
+        raise ValueError("job description must contain at least 20 characters")
+    raise RuntimeError("Direct matching is disabled. Submit stored jobs through the OpenAI Batch workflow.")

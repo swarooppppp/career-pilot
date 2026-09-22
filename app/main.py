@@ -1,11 +1,14 @@
 """Application factory and top-level FastAPI routes."""
 
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
+from app.logging_utils import configure_logging
+from app.services.batch_scheduler import start_batch_scheduler
 from app.api.routes.match import router as match_router
 from app.api.routes.jobs import router as jobs_router
 from app.api.routes.profile import router as profile_router
@@ -16,7 +19,19 @@ ROOT = Path(__file__).resolve().parent.parent
 STATIC_DIR = ROOT / "app" / "static"
 TEMPLATE_PATH = ROOT / "app" / "templates" / "index.html"
 
-app = FastAPI(title="Career Pilot", version="0.1.0")
+configure_logging()
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    stop_scheduler = start_batch_scheduler()
+    try:
+        yield
+    finally:
+        stop_scheduler.set()
+
+
+app = FastAPI(title="Career Pilot", version="0.1.0", lifespan=lifespan)
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 app.include_router(match_router, prefix="/api/match", tags=["match"])
 app.include_router(jobs_router, prefix="/api/jobs", tags=["jobs"])

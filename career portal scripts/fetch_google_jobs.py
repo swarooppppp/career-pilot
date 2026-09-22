@@ -60,6 +60,15 @@ def page_url(search_url: str, page: int) -> str:
     return urlunparse(parsed._replace(query=urlencode(params, doseq=True)))
 
 
+def job_detail_url(search_url: str, job_id: str, title: str) -> str:
+    """Build the public job-description URL, not Google's sign-in/apply URL."""
+    parsed = urlparse(search_url)
+    query = [(key, value) for key, value in parse_qsl(parsed.query, keep_blank_values=True) if key != "page"]
+    slug = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")
+    base_path = parsed.path.rstrip("/")
+    return urlunparse(parsed._replace(path=f"{base_path}/{job_id}-{slug}", query=urlencode(query, doseq=True)))
+
+
 def fetch_html(url: str, timeout: int) -> str:
     request = Request(url, headers={"User-Agent": "Mozilla/5.0", "Accept": "text/html"})
     try:
@@ -97,7 +106,7 @@ def matching_bracket_end(source: str, start: int) -> int:
     raise ValueError("Unclosed job record in Google Careers response")
 
 
-def parse_jobs(page_html: str) -> list[dict[str, Any]]:
+def parse_jobs(page_html: str, search_url: str) -> list[dict[str, Any]]:
     jobs: list[dict[str, Any]] = []
     for match in JOB_START.finditer(page_html):
         raw = page_html[match.start() : matching_bracket_end(page_html, match.start()) + 1]
@@ -120,6 +129,7 @@ def parse_jobs(page_html: str) -> list[dict[str, Any]]:
             "id": record[0],
             "title": record[1],
             "applyUrl": record[2],
+            "application_url": job_detail_url(search_url, record[0], record[1]),
             "company": record[7],
             "locale": record[8],
             "locations": locations,
@@ -136,16 +146,19 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("url", help="Google Careers results URL, enclosed in quotes.")
     parser.add_argument("--max-pages", type=int, default=1, help="Use 0 to fetch all pages.")
+    parser.add_argument("--max-jobs", type=int, default=0, help="Keep at most this many unique jobs; 0 keeps all fetched jobs.")
     parser.add_argument("--timeout", type=int, default=30)
     parser.add_argument("--output", type=Path, default=Path("google_jobs.json"))
     args = parser.parse_args()
+    if args.max_jobs < 0:
+        parser.error("max-jobs must be non-negative")
 
     jobs: list[dict[str, Any]] = []
     page = 1
     while args.max_pages == 0 or page <= args.max_pages:
         url = page_url(args.url, page)
         print(f"Fetching page {page}: {url}", file=sys.stderr)
-        page_jobs = parse_jobs(fetch_html(url, args.timeout))
+        page_jobs = parse_jobs(fetch_html(url, args.timeout), url)
         if not page_jobs:
             break
         jobs.extend(page_jobs)
@@ -155,6 +168,8 @@ def main() -> int:
 
     # A job can appear in multiple location-filtered pages; retain its first occurrence.
     unique_jobs = list({job["id"]: job for job in jobs}.values())
+    if args.max_jobs:
+        unique_jobs = unique_jobs[:args.max_jobs]
     output = {
         "source": "https://www.google.com/about/careers/applications/jobs/results",
         "retrieval": "server-rendered Google Careers results HTML, paginated with the page query parameter",

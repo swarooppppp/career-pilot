@@ -3,7 +3,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
-from generate_resume import generate_resume
+from generate_resume import _resume_context, generate_resume
 
 
 TAILORED_RESPONSE = {
@@ -56,6 +56,25 @@ class ResumeGenerationTests(unittest.TestCase):
             source = generated_tex.read_text(encoding="utf-8")
             self.assertIn(r"\textbf{Java}", source)
             self.assertIn("900+", source)
+
+    def test_completed_job_context_reuses_match_evidence_not_the_raw_jd(self):
+        analysis = {
+            "summary": "Strong backend fit.",
+            "requirements": [{
+                "id": "req-1", "text": "Java services", "category": "required_skill",
+                "importance": 9, "support_level": "direct", "explanation": "Supported.",
+                "evidence": [{
+                    "id": "evidence-1", "title": "Oracle", "source_type": "work_experience",
+                    "text": "Built Java REST services.",
+                }],
+            }],
+            "recommendations": ["Emphasize Java."],
+        }
+        context = _resume_context("A raw JD that must not be sent again.", analysis, "Software Engineer")
+
+        self.assertIn("JOB MATCH CONTEXT", context)
+        self.assertIn("Built Java REST services.", context)
+        self.assertNotIn("A raw JD that must not be sent again.", context)
 
 
 if __name__ == "__main__":

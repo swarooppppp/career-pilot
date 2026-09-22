@@ -76,6 +76,22 @@ class MicrosoftFetchRetryTests(unittest.TestCase):
         urlopen.assert_called_once()
         sleep.assert_not_called()
 
+    def test_search_uses_repeated_seniority_and_ui_filter_parameters(self):
+        args = type("Args", (), {
+            "query": "Software Engineering", "location": "India", "sort_by": "timestamp",
+            "include_remote": True, "include_relocation": False,
+            "seniority": "Entry,Senior,Mid-Level", "role_type": "individual contributor",
+            "employment_type": "full-time", "timeout": 10, "max_retries": 4,
+            "backoff_seconds": 2,
+        })()
+        with patch.object(fetch_microsoft_jobs, "get_json", return_value={}) as get_json:
+            fetch_microsoft_jobs.search_jobs(args, 0)
+
+        params = get_json.call_args.args[1]
+        self.assertEqual(params["filter_seniority"], ["Entry", "Senior", "Mid-Level"])
+        self.assertEqual(params["filter_roletype"], "individual contributor")
+        self.assertEqual(params["filter_employment_type"], "full-time")
+
 
 if __name__ == "__main__":
     unittest.main()
