@@ -39,6 +39,10 @@ services:
         value: "300"
       - key: LINKEDIN_MAX_PAGES
         value: "20"
+      - key: LINKEDIN_MIN_DELAY
+        value: "3"
+      - key: LINKEDIN_MAX_DELAY
+        value: "3"
       - key: LINKEDIN_429_MAX_RETRIES
         value: "8"
       - key: LINKEDIN_429_INITIAL_BACKOFF_SECONDS
