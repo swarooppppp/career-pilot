@@ -19,6 +19,10 @@ def _positive_minutes(name: str, default: int) -> float:
     return value
 
 
+def _submission_enabled() -> bool:
+    return os.getenv("OPENAI_BATCH_SUBMISSION_ENABLED", "true").strip().lower() in {"1", "true", "yes", "on"}
+
+
 def start_batch_scheduler() -> threading.Event:
     """Start one local scheduler; FastAPI stops it during shutdown."""
     submit_seconds = _positive_minutes("OPENAI_BATCH_SUBMIT_INTERVAL_MINUTES", 60) * 60
@@ -26,12 +30,13 @@ def start_batch_scheduler() -> threading.Event:
     submit_limit = int(os.getenv("OPENAI_BATCH_SUBMIT_LIMIT", "100"))
     if submit_limit < 1:
         raise ValueError("OPENAI_BATCH_SUBMIT_LIMIT must be at least 1")
+    submission_enabled = _submission_enabled()
     stop = threading.Event()
 
     def run() -> None:
         # Submit and poll once on startup, then repeat at the configured intervals.
         next_poll = 0.0
-        next_submit = 0.0
+        next_submit = 0.0 if submission_enabled else float("inf")
         elapsed = 0.0
         while not stop.is_set():
             if elapsed >= next_poll:
@@ -41,7 +46,7 @@ def start_batch_scheduler() -> threading.Event:
                 except Exception:
                     logger.exception("OpenAI Batch polling failed; will retry on the next interval")
                 next_poll = elapsed + poll_seconds
-            if elapsed >= next_submit:
+            if submission_enabled and elapsed >= next_submit:
                 try:
                     logger.info("Submitting scheduled OpenAI batch (limit=%s)", submit_limit)
                     submit_pending_batch(submit_limit)
@@ -54,5 +59,8 @@ def start_batch_scheduler() -> threading.Event:
 
     thread = threading.Thread(target=run, name="openai-batch-scheduler", daemon=True)
     thread.start()
-    logger.info("OpenAI Batch scheduler started (submit every %sm; poll every %sm)", submit_seconds / 60, poll_seconds / 60)
+    logger.info(
+        "OpenAI Batch scheduler started (submission %s; poll every %sm)",
+        "enabled" if submission_enabled else "paused", poll_seconds / 60,
+    )
     return stop

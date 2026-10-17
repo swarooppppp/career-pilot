@@ -3,7 +3,15 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
-from generate_resume import _resume_context, generate_resume
+from generate_resume import (
+    RESUME_DEVELOPER_INSTRUCTIONS,
+    RESUME_RESPONSE_SCHEMA,
+    TEMPLATE,
+    _resume_context,
+    generate_resume,
+    emphasis_keywords,
+    latex_escape,
+)
 
 
 TAILORED_RESPONSE = {
@@ -26,15 +34,23 @@ TAILORED_RESPONSE = {
         "oracle_project_intern": [
             "Improved Oracle Digital Assistant resolution accuracy from 61% to 88% across 15+ HR use cases.",
         ],
-        "distributed_rate_limiter": [
-            "Built a distributed Java and Spring Boot rate limiter using Redis at 1,000 requests per second.",
-            "Implemented token bucket and sliding-window controls with zero over-admission across 10,000+ requests.",
-        ],
-        "expense_splitter": [
-            "Built an event-driven expense platform using Spring Boot, Kafka, and PostgreSQL for 5,000 users.",
-            "Used Redis caching and optimistic locking to reduce reads by 60% and prevent race conditions.",
-        ],
     },
+    "projects": [
+        {
+            "id": "career_pilot",
+            "bullets": [
+                "Built a FastAPI job-matching platform with OpenAI Batch processing and persisted workflow state.",
+                "Reduced job-fetching time by 70% through concurrent portal fetching and safe serial imports.",
+            ],
+        },
+        {
+            "id": "distributed_rate_limiter",
+            "bullets": [
+                "Built a distributed Java and Spring Boot rate limiter using Redis at 1,000 requests per second.",
+                "Implemented token bucket and sliding-window controls with zero over-admission across 10,000+ requests.",
+            ],
+        },
+    ],
 }
 
 
@@ -56,6 +72,8 @@ class ResumeGenerationTests(unittest.TestCase):
             source = generated_tex.read_text(encoding="utf-8")
             self.assertIn(r"\textbf{Java}", source)
             self.assertIn("900+", source)
+            self.assertIn("Career Pilot - AI-Powered Job Matching Platform", source)
+            self.assertNotIn("Expense Splitter", source)
 
     def test_completed_job_context_reuses_match_evidence_not_the_raw_jd(self):
         analysis = {
@@ -74,7 +92,25 @@ class ResumeGenerationTests(unittest.TestCase):
 
         self.assertIn("JOB MATCH CONTEXT", context)
         self.assertIn("Built Java REST services.", context)
+        self.assertIn("REQUIRED RESUME SECTION EVIDENCE", context)
+        self.assertIn("Oracle Digital Assistant", context)
+        self.assertIn("PROJECT PORTFOLIO", context)
+        self.assertIn("Career Pilot", context)
         self.assertNotIn("A raw JD that must not be sent again.", context)
+
+    def test_resume_copy_uses_rounded_experience_and_bolds_important_technology(self):
+        self.assertIn('"2+ years"', RESUME_DEVELOPER_INSTRUCTIONS)
+        self.assertIn("Never write \"not enough information\"", RESUME_DEVELOPER_INSTRUCTIONS)
+        self.assertEqual(RESUME_RESPONSE_SCHEMA["properties"]["summary"]["maxLength"], 360)
+        self.assertIn(r"\documentclass[letterpaper,11pt]", TEMPLATE.read_text(encoding="utf-8"))
+        skills = {"languages": ["Java", "Python"], "frameworks_libraries": ["Spring Boot"], "tools_platforms": [], "concepts": []}
+        keywords = emphasis_keywords(skills)
+        self.assertIn("Java", keywords)
+        self.assertIn("Spring Boot", keywords)
+        self.assertIn("Kafka", keywords)
+
+    def test_latex_escaping_removes_unsupported_unicode(self):
+        self.assertEqual(latex_escape("initial 初 phase — 50%"), "initial  phase - 50\\%")
 
 
 if __name__ == "__main__":

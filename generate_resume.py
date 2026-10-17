@@ -9,6 +9,7 @@ import os
 import re
 import sys
 import tempfile
+import unicodedata
 from datetime import datetime
 from pathlib import Path
 
@@ -22,15 +23,37 @@ RESUME_PROMPT_VERSION = "2026-09-21-match-context-v1"
 EXPECTED_BULLET_COUNTS = {
     "oracle_software_engineer": 6,
     "oracle_project_intern": 1,
-    "distributed_rate_limiter": 2,
-    "expense_splitter": 2,
+}
+PROJECTS = {
+    "career_pilot": {
+        "title": "Career Pilot - AI-Powered Job Matching Platform",
+        "technologies": "Python, FastAPI, OpenAI Batch API, PostgreSQL, Kafka, Docker",
+    },
+    "distributed_rate_limiter": {
+        "title": "Distributed Rate Limiter as a Service",
+        "url": "https://github.com/swarooppppp/distributed-rate-limitter",
+        "technologies": "Java, Spring Boot, Redis, Docker",
+    },
+    "expense_splitter": {
+        "title": "Expense Splitter",
+        "url": "https://github.com/swarooppppp/onepoint",
+        "technologies": "Spring Boot, React, PostgreSQL, Redis, Kafka, Docker",
+    },
+}
+IMPORTANT_TECHNOLOGY_TERMS = {
+    "AI", "API", "APIs", "AWS", "CI/CD", "C/C++", "Docker", "Git", "Go",
+    "HTML/CSS", "Java", "JavaScript", "JPA", "JWT", "Kafka", "Kubernetes",
+    "LLM", "Microservices", "MongoDB", "MySQL", "Node.js", "OAuth2", "PostgreSQL",
+    "Python", "React", "React.js", "Redis", "REST", "SQL", "Spring Boot",
+    "System Design", "Distributed Systems", "Event-Driven Architecture",
+    "Stateless Architecture", "Concurrency", "Database Optimization",
 }
 
 RESUME_RESPONSE_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
     "properties": {
-        "summary": {"type": "string"},
+        "summary": {"type": "string", "maxLength": 360},
         "skills": {
             "type": "object",
             "additionalProperties": False,
@@ -46,13 +69,37 @@ RESUME_RESPONSE_SCHEMA = {
             "type": "object",
             "additionalProperties": False,
             "properties": {
-                key: {"type": "array", "items": {"type": "string"}, "minItems": count, "maxItems": count}
+                key: {
+                    "type": "array",
+                    "items": {"type": "string", "maxLength": 245},
+                    "minItems": count,
+                    "maxItems": count,
+                }
                 for key, count in EXPECTED_BULLET_COUNTS.items()
             },
             "required": list(EXPECTED_BULLET_COUNTS),
         },
+        "projects": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "id": {"type": "string", "enum": list(PROJECTS)},
+                    "bullets": {
+                        "type": "array",
+                        "minItems": 2,
+                        "maxItems": 2,
+                        "items": {"type": "string", "maxLength": 245},
+                    },
+                },
+                "required": ["id", "bullets"],
+            },
+        },
     },
-    "required": ["summary", "skills", "experience"],
+    "required": ["summary", "skills", "experience", "projects"],
 }
 
 RESUME_DEVELOPER_INSTRUCTIONS = """
@@ -62,10 +109,24 @@ metric, employer, date, responsibility, or achievement. Do not add a keyword
 merely because it appears in a job requirement. Use the job-match terminology
 only where it is supported by the evidence. Return only the requested JSON.
 
-The output must contain exactly 11 complete, concise, plain-text experience
-bullets: 6 for oracle_software_engineer, 1 for oracle_project_intern, 2 for
-distributed_rate_limiter, and 2 for expense_splitter. Do not use Markdown or
-LaTeX commands. Keep the four skill lists truthful and concise.
+The output must contain exactly 7 complete, concise, plain-text work-experience
+bullets: 6 for oracle_software_engineer and 1 for oracle_project_intern. Select
+exactly 2 different projects from the supplied portfolio, then provide exactly
+2 evidence-backed bullets for each selected project. Choose the two projects
+that best prove the strongest supported job requirements. Do not use Markdown
+or LaTeX commands. The PDF must fit on one page: keep each bullet under 245
+characters and the summary under 360 characters. Keep the four skill lists
+truthful and concise.
+Use plain ASCII English characters only; do not emit non-Latin characters.
+
+For resume-facing copy, describe the candidate as having "2+ years" of
+professional experience, never a decimal value. The exact calculated value is
+reserved for eligibility filtering and must not be restated in this content.
+
+Every required experience section must contain a substantive, evidence-backed
+bullet. Never write "not enough information", "insufficient information", or
+similar placeholder wording. In particular, oracle_project_intern must use the
+provided Oracle Digital Assistant evidence.
 """.strip()
 
 
@@ -130,6 +191,10 @@ def _resume_context(job_description: str, match_analysis: dict | None, job_title
             }, ensure_ascii=False),
             "CITED CANDIDATE EVIDENCE (the only source for factual resume claims):",
             json.dumps(list(evidence_by_id.values()), ensure_ascii=False),
+            "REQUIRED RESUME SECTION EVIDENCE — Oracle Project Intern (must be used for oracle_project_intern):",
+            _project_intern_evidence(),
+            "PROJECT PORTFOLIO (select exactly two projects for the resume):",
+            _project_portfolio_evidence(),
         ))
 
     # The standalone paste-a-JD screen has no first-pass result to reuse.
@@ -138,6 +203,27 @@ def _resume_context(job_description: str, match_analysis: dict | None, job_title
         "JOB DESCRIPTION:", job_description,
         "MASTER EXPERIENCE (source of truth):", MASTER_EXPERIENCE.read_text(encoding="utf-8"),
     ))
+
+
+def _project_intern_evidence() -> str:
+    """Return the canonical Project Intern facts for every dashboard resume."""
+    master_experience = MASTER_EXPERIENCE.read_text(encoding="utf-8")
+    match = re.search(
+        r"(?ms)^## Oracle — Project Intern\s*$\n(.*?)(?=^## |\Z)",
+        master_experience,
+    )
+    if match is None:
+        raise ValueError("master experience is missing the Oracle Project Intern section")
+    return match.group(0).strip()
+
+
+def _project_portfolio_evidence() -> str:
+    """Return every verified project so the model can select the strongest two."""
+    master_experience = MASTER_EXPERIENCE.read_text(encoding="utf-8")
+    match = re.search(r"(?ms)^## Projects\s*$\n(.*?)(?=^## |\Z)", master_experience)
+    if match is None:
+        raise ValueError("master experience is missing the Projects section")
+    return match.group(0).strip()
 
 
 def request_content(job_description: str, match_analysis: dict | None = None, job_title: str | None = None) -> dict:
@@ -167,6 +253,7 @@ def request_content(job_description: str, match_analysis: dict | None = None, jo
         raise ValueError(f"OpenAI returned invalid JSON: {error}") from error
 
     experience_data = data.get("experience") if isinstance(data, dict) else None
+    projects_data = data.get("projects") if isinstance(data, dict) else None
     if not isinstance(data.get("summary"), str) or not data["summary"].strip():
         raise ValueError("OpenAI response must contain a non-empty summary")
     expected_skill_categories = {
@@ -191,10 +278,33 @@ def request_content(job_description: str, match_analysis: dict | None = None, jo
             raise ValueError(f"{section} must contain exactly {count} bullets")
         if not all(isinstance(bullet, str) and bullet.strip() for bullet in bullets):
             raise ValueError(f"{section} contains an empty or invalid bullet")
+    if not isinstance(projects_data, list) or len(projects_data) != 2:
+        raise ValueError("OpenAI must select exactly two projects")
+    project_ids: list[str] = []
+    for project in projects_data:
+        if not isinstance(project, dict) or set(project) != {"id", "bullets"}:
+            raise ValueError("each selected project must contain only an id and bullets")
+        project_id = project.get("id")
+        bullets = project.get("bullets")
+        if project_id not in PROJECTS:
+            raise ValueError("OpenAI selected an unknown project")
+        if not isinstance(bullets, list) or len(bullets) != 2 or not all(
+            isinstance(bullet, str) and bullet.strip() for bullet in bullets
+        ):
+            raise ValueError("each selected project must contain exactly two complete bullets")
+        project_ids.append(project_id)
+    if len(set(project_ids)) != 2:
+        raise ValueError("OpenAI selected the same project twice")
     return data
 
 
 def latex_escape(value: str) -> str:
+    # pdflatex's default OT1 encoding cannot typeset arbitrary Unicode. Model
+    # output occasionally contains an accidental foreign character, which must
+    # never make the entire resume generation fail.
+    value = value.translate(str.maketrans({"—": "-", "–": "-", "“": '"', "”": '"', "’": "'"}))
+    value = unicodedata.normalize("NFKD", value)
+    value = value.encode("ascii", "ignore").decode("ascii")
     replacements = {
         "\\": r"\textbackslash{}",
         "&": r"\&",
@@ -229,6 +339,12 @@ def highlight_text(value: str, keywords: list[str] | None = None) -> str:
             flags=re.IGNORECASE,
         )
     return escaped
+
+
+def emphasis_keywords(skills: dict[str, list[str]]) -> list[str]:
+    """Highlight selected and generally important technical terms in resume copy."""
+    selected_skills = [skill for values in skills.values() for skill in values]
+    return list(dict.fromkeys([*selected_skills, *sorted(IMPORTANT_TECHNOLOGY_TERMS)]))
 
 
 def replace_resume_items(
@@ -299,6 +415,40 @@ def replace_skills(template: str, skills: dict[str, list[str]]) -> str:
     return result
 
 
+def replace_project_headings(template: str, projects: list[dict[str, object]]) -> str:
+    """Fill the two fixed LaTeX project slots with the selected project labels."""
+    marker = r"(?m)^[ \t]*\\resumeProjectHeading\s*\{"
+    positions = [match.start() for match in re.finditer(marker, template)]
+    if len(positions) != 2:
+        raise ValueError(f"template contains {len(positions)} project headings; expected 2")
+    result = template
+    for start, project in reversed(list(zip(positions, projects))):
+        project_id = str(project["id"])
+        details = PROJECTS[project_id]
+        title = latex_escape(str(details["title"]))
+        technologies = latex_escape(str(details["technologies"]))
+        title_markup = (
+            rf"\textbf{{\href{{{details['url']}}}{{{title}}}}}"
+            if "url" in details else rf"\textbf{{{title}}}"
+        )
+        heading = rf"{title_markup} $|$ \emph{{{technologies}}}"
+        opening = result.find("{", start)
+        depth = 0
+        closing = None
+        for index in range(opening, len(result)):
+            if result[index] == "{":
+                depth += 1
+            elif result[index] == "}":
+                depth -= 1
+                if depth == 0:
+                    closing = index
+                    break
+        if closing is None:
+            raise ValueError("could not find project heading closing brace")
+        result = result[: opening + 1] + heading + result[closing:]
+    return result
+
+
 def generate_resume(
     job_description: str,
     output_dir: Path = ROOT,
@@ -316,6 +466,9 @@ def generate_resume(
             for section in EXPECTED_BULLET_COUNTS
             for bullet in data["experience"][section]
         ]
+        bullets.extend(
+            bullet for project in data["projects"] for bullet in project["bullets"]
+        )
         output_dir.mkdir(parents=True, exist_ok=True)
         timestamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
         output_pdf = output_dir.resolve() / f"Swaroop_SWE_{timestamp}.pdf"
@@ -328,13 +481,10 @@ def generate_resume(
         with tempfile.TemporaryDirectory(prefix="resume-generation-") as directory:
             generated_tex = Path(directory) / "resume.tex"
             template = TEMPLATE.read_text(encoding="utf-8")
-            keyword_values = [
-                skill
-                for category in data["skills"].values()
-                for skill in category
-            ]
+            keyword_values = emphasis_keywords(data["skills"])
             generated_source = replace_summary(template, data["summary"], keyword_values)
             generated_source = replace_skills(generated_source, data["skills"])
+            generated_source = replace_project_headings(generated_source, data["projects"])
             generated_source = replace_resume_items(generated_source, bullets, keyword_values)
             if generated_source == template:
                 raise ValueError("Gemini output did not change the LaTeX template")

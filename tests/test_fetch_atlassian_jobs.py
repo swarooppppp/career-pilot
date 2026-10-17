@@ -33,6 +33,22 @@ class AtlassianFetchTests(unittest.TestCase):
         self.assertEqual(result["application_url"], "https://www.atlassian.com/company/careers/details/abc123")
         self.assertIn("Build reliable services.", result["jobDescriptionText"])
 
+    def test_extracts_full_job_posting_requirements_from_detail_page(self):
+        page = (
+            '<script type="application/ld+json">'
+            '{"@context":"https://schema.org","@type":"JobPosting",'
+            '"description":"<p>Requirements: 3+ years of experience.</p>"}'
+            '</script>'
+        )
+        description = fetch_atlassian_jobs.detail_description(page)
+        result = fetch_atlassian_jobs.normalise_result({
+            "id": "abc123", "title": "Software Engineer", "locations": ["Bengaluru, India"],
+            "overview": "<p>Short summary.</p>",
+            "portalJobPost": {"portalUrl": "/company/careers/details/abc123"},
+        }, description)
+        assert result is not None
+        self.assertIn("3+ years of experience.", result["jobDescriptionText"])
+
 
 if __name__ == "__main__":
     unittest.main()

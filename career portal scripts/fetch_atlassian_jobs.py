@@ -6,7 +6,9 @@ from __future__ import annotations
 import argparse
 import html
 import json
+import re
 import sys
+import time
 from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any
@@ -62,6 +64,38 @@ def fetch_jobs(timeout: int) -> list[dict[str, Any]]:
     return [job for job in payload if isinstance(job, dict)]
 
 
+def fetch_detail_page(url: str, timeout: int) -> str:
+    """Fetch the public role page, which contains its complete requirements."""
+    request = Request(url, headers={"Accept": "text/html", "User-Agent": "Mozilla/5.0"})
+    try:
+        with urlopen(request, timeout=timeout) as response:
+            return response.read().decode(response.headers.get_content_charset() or "utf-8", errors="replace")
+    except HTTPError as error:
+        raise RuntimeError(f"Atlassian returned HTTP {error.code} for job detail {url}") from error
+    except URLError as error:
+        raise RuntimeError(f"Could not reach Atlassian job detail: {error.reason}") from error
+
+
+def detail_description(document: str) -> str:
+    """Extract a full JobPosting description from the public role-page schema."""
+    scripts = re.findall(r'<script[^>]+type=["\']application/ld\+json["\'][^>]*>(.*?)</script>', document, flags=re.IGNORECASE | re.DOTALL)
+    for script in scripts:
+        try:
+            payload = json.loads(html.unescape(script))
+        except json.JSONDecodeError:
+            continue
+        for item in payload if isinstance(payload, list) else [payload]:
+            if not isinstance(item, dict):
+                continue
+            item_type = item.get("@type", "")
+            if item_type != "JobPosting" and "JobPosting" not in item_type:
+                continue
+            description = str(item.get("description") or "").strip()
+            if description:
+                return description
+    raise RuntimeError("Atlassian job detail did not contain a JobPosting description")
+
+
 def locations_text(locations: Any) -> str:
     if not isinstance(locations, list):
         return ""
@@ -87,10 +121,10 @@ def matches(job: dict[str, Any], query: dict[str, list[str]]) -> bool:
     )
 
 
-def normalise_result(job: dict[str, Any]) -> dict[str, Any] | None:
+def normalise_result(job: dict[str, Any], description_html: str | None = None) -> dict[str, Any] | None:
     job_id = str(job.get("id") or "").strip()
     title = str(job.get("title") or "").strip()
-    description_html = str(job.get("overview") or "").strip()
+    description_html = str(description_html or job.get("overview") or "").strip()
     portal_post = job.get("portalJobPost") if isinstance(job.get("portalJobPost"), dict) else {}
     application_url = str(portal_post.get("portalUrl") or "").strip()
     if not job_id or not title or not description_html or not application_url:
@@ -107,27 +141,53 @@ def normalise_result(job: dict[str, Any]) -> dict[str, Any] | None:
     }
 
 
+def hydrate_results(jobs: list[dict[str, Any]], timeout: int, delay: float, skip_ids: set[str]) -> list[dict[str, Any]]:
+    """Replace listing overviews with complete public descriptions before import."""
+    results: list[dict[str, Any]] = []
+    for index, job in enumerate(jobs, start=1):
+        if str(job.get("id") or "") in skip_ids:
+            print(f"Skipping existing {index}/{len(jobs)}: {job.get('id', '')}", file=sys.stderr)
+            continue
+        portal_post = job.get("portalJobPost") if isinstance(job.get("portalJobPost"), dict) else {}
+        detail_path = str(portal_post.get("portalUrl") or "").strip()
+        description_html: str | None = None
+        if detail_path:
+            try:
+                print(f"Fetching {index}/{len(jobs)}: {job.get('id', '')}", file=sys.stderr)
+                description_html = detail_description(fetch_detail_page(urljoin(BASE_URL, detail_path), timeout))
+            except RuntimeError as error:
+                print(f"Skipping detail hydration for {job.get('id', '')}: {error}", file=sys.stderr)
+        result = normalise_result(job, description_html)
+        if result is not None:
+            results.append(result)
+        if index != len(jobs):
+            time.sleep(delay)
+    return results
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("url", nargs="?", default=DEFAULT_URL, help="Atlassian public careers jobs URL")
     parser.add_argument("--max-jobs", type=int, default=50, help="Maximum matching jobs to write; 0 keeps all.")
     parser.add_argument("--timeout", type=int, default=60)
+    parser.add_argument("--delay", type=float, default=0.5, help="Seconds between public job-detail requests.")
+    parser.add_argument("--skip-job-id", action="append", default=[])
     parser.add_argument("--output", type=Path, default=Path("atlassian_jobs.json"))
     args = parser.parse_args()
-    if args.max_jobs < 0 or args.timeout < 1:
-        parser.error("max-jobs cannot be negative and timeout must be positive")
+    if args.max_jobs < 0 or args.timeout < 1 or args.delay < 0:
+        parser.error("max-jobs and delay cannot be negative; timeout must be positive")
     parsed = urlparse(args.url)
     if parsed.scheme != "https" or parsed.netloc != "www.atlassian.com" or parsed.path != "/company/careers/all-jobs":
         parser.error("url must be an https://www.atlassian.com/company/careers/all-jobs URL")
     try:
         query = parse_qs(parsed.query)
-        jobs = [result for job in fetch_jobs(args.timeout) if matches(job, query)
-                if (result := normalise_result(job)) is not None]
+        matching_jobs = [job for job in fetch_jobs(args.timeout) if matches(job, query)]
     except RuntimeError as error:
         print(f"Error: {error}", file=sys.stderr)
         return 1
     if args.max_jobs:
-        jobs = jobs[:args.max_jobs]
+        matching_jobs = matching_jobs[:args.max_jobs]
+    jobs = hydrate_results(matching_jobs, args.timeout, args.delay, set(args.skip_job_id))
     output = {
         "source": "Atlassian Careers public listings API",
         "retrieval": "Public Atlassian careers listings endpoint filtered locally using the supplied careers URL",

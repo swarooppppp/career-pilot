@@ -144,6 +144,7 @@ def main() -> int:
     parser.add_argument("--max-pages", type=int, default=10)
     parser.add_argument("--max-jobs", type=int, default=50)
     parser.add_argument("--timeout", type=int, default=30)
+    parser.add_argument("--skip-job-id", action="append", default=[])
     parser.add_argument("--output", type=Path, default=Path("apple_jobs.json"))
     args = parser.parse_args()
     if args.max_pages < 1 or args.max_jobs < 0 or args.timeout < 1:
@@ -168,7 +169,11 @@ def main() -> int:
             if args.max_jobs and len(listings) >= args.max_jobs:
                 break
         jobs: list[dict[str, Any]] = []
+        skip_ids = set(args.skip_job_id)
         for number, listing in enumerate(listings, start=1):
+            if str(listing.get("id") or "") in skip_ids:
+                print(f"Skipping existing Apple job {number}/{len(listings)}: {listing.get('id')}", file=sys.stderr)
+                continue
             url = detail_url(args.url, listing)
             print(f"Fetching Apple job {number}/{len(listings)}: {url}", file=sys.stderr)
             details = hydration_data(fetch_text(url, args.timeout))["loaderData"]["jobDetails"]["jobsData"]

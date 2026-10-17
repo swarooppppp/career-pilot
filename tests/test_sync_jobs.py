@@ -59,6 +59,25 @@ class SyncJobsTests(unittest.TestCase):
 
         self.assertTrue(any("ingest_jobs.py" in str(command) and command[-1] == "alpha" for command in calls))
 
+    def test_non_strict_sync_imports_successes_and_continues(self):
+        sources = [
+            sync_jobs.SourceSpec("alpha", Path("alpha.json"), ["fetch", "alpha"]),
+            sync_jobs.SourceSpec("beta", Path("beta.json"), ["fetch", "beta"]),
+        ]
+        calls = []
+
+        def fake_run(command):
+            if command == ["fetch", "beta"]:
+                raise RuntimeError("blocked")
+            calls.append(command)
+
+        with patch.object(sync_jobs, "configured_sources", return_value=sources), \
+                patch.object(sync_jobs, "run_command", side_effect=fake_run), \
+                patch.dict("os.environ", {"JOB_FETCH_CONCURRENCY": "2"}):
+            sync_jobs.sync_configured_jobs(strict=False)
+
+        self.assertTrue(any("ingest_jobs.py" in str(command) and command[-1] == "alpha" for command in calls))
+
 
 if __name__ == "__main__":
     unittest.main()

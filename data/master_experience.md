@@ -28,6 +28,9 @@
 - Built a Java-based SQL rewriter that translates dummy queries over a virtual schema into security-hardened production queries.
 - Added row-level access controls at every subquery level across more than 30 tables.
 - Decoupled LLM reasoning from backend architecture.
+-- Engineered a real-time JavaScript compensation-calculation engine using Big.js for precision arithmetic, supporting  170 business rules, 105 calculated fields, and 203 dependencies across salary, budget, eligibility, and FTE calculations, with a <150 ms recalculation latency target.
+- Implemented auditable calculation trails, automated policy alerts, and 24 unit tests** covering expression parsing, salary adjustments, grade bands, and derived metrics, improving traceability and validation of 100+ calculated outputs.
+- Improved concurrency reliability for Compensation Worksheet REST APIs by analyzing Oracle/ADF locking behavior and designing deterministic row update ordering to reduce deadlock risk across worksheet save, eligibility, and reassignment flows
 
 ### AI agents and LLM systems
 
@@ -37,6 +40,13 @@
 - Implemented token optimization and context caching strategies for LLM inference pipelines.
 - Reduced token usage by 75%.
 - Reduced average response latency from approximately 15 seconds to approximately 5 seconds.
+
+### Workforce Compensation Employee Analyst
+
+- Built an AI-assisted Workforce Compensation employee-analysis workflow that normalizes app, REST, and capability inputs into validated plan, period, employee, and acting-manager context before executing a request.
+- Designed request orchestration that classifies employee, manager, and combined planning questions; routes each to the appropriate analysis path; and supports interactive worker-name resolution when a request is ambiguous.
+- Developed a metadata-guided natural-language-to-SQL pipeline for secured compensation worksheets, including allowed-column filtering, bind-parameter handling, hierarchy-aware access controls, SQL validation, targeted repair, and safe business-object query execution.
+- Implemented parallel retrieval and composition of worksheet context, plan properties, component metadata, audit/alert information, and manager-priority actions to support responsive compensation analysis and actionable summaries.
 
 ### Market Survey Processing Pipeline
 
@@ -85,11 +95,13 @@
 - Built a Python job-discovery and AI-assisted resume-matching platform with FastAPI, Uvicorn, REST APIs, SQLAlchemy, SQLite, PostgreSQL, and Docker-ready infrastructure.
 - Integrated Google Careers, Microsoft Careers, and Amazon Jobs sources; normalized public job data, applied content-hash and portal-ID deduplication, and persisted job, analysis, batch, and event state transactionally.
 - Implemented concurrent portal fetching with Python ThreadPoolExecutor while retaining serial database imports for safe SQLite writes; added Microsoft HTTP 429 retry handling with Retry-After support and exponential backoff.
+- Architected a concurrent portal-ingestion pipeline with Python `ThreadPoolExecutor`, reducing end-to-end job-fetch latency by approximately 70% while preserving serialized database imports for safe, deterministic writes.
 - Designed a cost-controlled OpenAI Batch API workflow using structured JSON Schema outputs, one model call per job, persistent batch tracking, scheduled submission/polling, and duplicate-submission protection.
 - Built deterministic pre-LLM eligibility filtering for years of experience, seniority/title exclusions, and experience-band rules; parse verified non-internship professional experience directly from Markdown resume dates.
 - Developed evidence-grounded matching that validates cited evidence IDs, labels work experience/projects/education/skills sources, and calculates explainable weighted match scores in Python rather than trusting model-generated percentages.
 - Added Kafka-compatible asynchronous job processing with PostgreSQL transactional outbox events, partition-aware workers, rate limiting, stale-job recovery, and LangGraph job-state orchestration.
 - Generated tailored ATS-friendly resume PDFs through the OpenAI Responses API, validated structured content, and rendered deterministic LaTeX output.
+- Orchestrated automated job discovery, deterministic eligibility and evidence-based matching, and LLM-backed resume generation, eliminating more than 2 hours of manual workflow per candidate.
 
 ## Education
 

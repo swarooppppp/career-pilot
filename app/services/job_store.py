@@ -358,6 +358,14 @@ def list_jobs(include_ineligible: bool = False) -> list[dict[str, Any]]:
         return [_serialize(row) for row in connection.execute(statement).mappings()]
 
 
+def existing_external_job_ids(source: str) -> set[str]:
+    """Return the portal IDs already imported for one source."""
+    initialise()
+    statement = select(jobs.c.external_job_id).where(jobs.c.source == source)
+    with _engine(database_url()).connect() as connection:
+        return {str(row.external_job_id) for row in connection.execute(statement)}
+
+
 def get_job(job_id: str) -> dict[str, Any] | None:
     initialise()
     with _engine(database_url()).connect() as connection:

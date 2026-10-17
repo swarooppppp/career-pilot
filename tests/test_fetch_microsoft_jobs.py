@@ -92,6 +92,19 @@ class MicrosoftFetchRetryTests(unittest.TestCase):
         self.assertEqual(params["filter_roletype"], "individual contributor")
         self.assertEqual(params["filter_employment_type"], "full-time")
 
+    def test_skips_existing_ids_without_requesting_details(self):
+        args = type("Args", (), {"skip_job_id": ["100"], "delay": 0, "timeout": 10, "max_retries": 4, "backoff_seconds": 2, "locale": "en"})()
+        summaries = [{"id": 100}, {"id": 200}]
+        details = {"id": 200, "jobDescription": "<p>Fresh role</p>", "publicUrl": "https://example.test/200"}
+        with patch.object(fetch_microsoft_jobs, "get_job_details", return_value=details) as get_job_details, \
+                patch.object(fetch_microsoft_jobs.time, "sleep") as sleep:
+            jobs, skipped_existing = fetch_microsoft_jobs.fetch_job_details(summaries, args)
+
+        self.assertEqual(skipped_existing, 1)
+        self.assertEqual([job["id"] for job in jobs], [200])
+        get_job_details.assert_called_once_with(200, args)
+        sleep.assert_not_called()
+
 
 if __name__ == "__main__":
     unittest.main()

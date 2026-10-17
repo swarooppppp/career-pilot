@@ -7,6 +7,7 @@ import argparse
 import os
 import subprocess
 import sys
+import threading
 from pathlib import Path
 
 import uvicorn
@@ -28,8 +29,16 @@ def main() -> None:
     )
     args = parser.parse_args()
     if args.sync_jobs:
-        print("[startup] Fetching and importing configured job sources...")
-        sync_configured_jobs()
+        print("[startup] Fetching and importing configured job sources in the background...")
+        # A third-party career site can temporarily block one adapter. Import
+        # the healthy sources and start the personal app instead of making the
+        # whole local workflow unavailable.
+        threading.Thread(
+            target=sync_configured_jobs,
+            kwargs={"strict": False},
+            name="portal-sync",
+            daemon=True,
+        ).start()
 
     worker = None
     if os.getenv("MATCH_EXECUTION_MODE", "batch").lower() == "worker":

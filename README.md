@@ -51,6 +51,10 @@ failing the sync.
 Set `FETCH_DATABRICKS="true"` and `DATABRICKS_JOBS_URL` to include Databricks.
 Its public Greenhouse board returns complete job descriptions in one request;
 the adapter applies the department, location, and search filters from the URL.
+Set `FETCH_ADOBE="true"` and `ADOBE_JOBS_URL` to include Adobe. Its public
+server-rendered category/search data is followed by public job-detail pages so
+each imported role has a complete description. Configure `ADOBE_MAX_JOBS` and
+`ADOBE_DELAY` to control the number of detail requests and their pacing.
 Set `FETCH_UBER="true"` and `UBER_JOBS_URL` to include Uber's public careers
 search. The adapter opens a temporary Playwright browser context and retrieves
 up to ten API pages (50 normalized jobs by default), including each job's full

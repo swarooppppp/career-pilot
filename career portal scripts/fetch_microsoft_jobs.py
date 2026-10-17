@@ -132,6 +132,37 @@ def get_job_details(job_id: int, args: argparse.Namespace) -> dict[str, Any]:
     )
 
 
+def fetch_job_details(
+    summaries: list[dict[str, Any]], args: argparse.Namespace
+) -> tuple[list[dict[str, Any]], int]:
+    """Hydrate only summaries whose job IDs are not already stored locally."""
+    known_job_ids = {str(job_id) for job_id in args.skip_job_id}
+    jobs: list[dict[str, Any]] = []
+    skipped_existing = 0
+    for index, summary in enumerate(summaries, start=1):
+        job_id = str(summary["id"])
+        if job_id in known_job_ids:
+            skipped_existing += 1
+            print(f"Skipping existing {index}/{len(summaries)}: {job_id}", file=sys.stderr)
+            continue
+        print(f"Fetching {index}/{len(summaries)}: {job_id}", file=sys.stderr)
+        details = get_job_details(int(job_id), args)
+        description_html = details.get("jobDescription", "")
+        position_url = str(details.get("positionUrl") or "")
+        detail_url = str(details.get("publicUrl") or "")
+        if not detail_url and position_url:
+            detail_url = f"{BASE_URL}{position_url}"
+        jobs.append({
+            **details,
+            "application_url": detail_url,
+            "jobDescriptionHtml": description_html,
+            "jobDescriptionText": html_to_text(description_html),
+        })
+        if index != len(summaries):
+            time.sleep(args.delay)
+    return jobs, skipped_existing
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--query", default="Software Engineer")
@@ -149,6 +180,10 @@ def main() -> int:
     parser.add_argument("--max-retries", type=int, default=4, help="Additional retries after an HTTP 429 response.")
     parser.add_argument("--backoff-seconds", type=float, default=2, help="Initial 429 retry wait when Retry-After is absent.")
     parser.add_argument("--timeout", type=int, default=30)
+    parser.add_argument(
+        "--skip-job-id", action="append", default=[],
+        help="Microsoft job ID already present in the database; may be repeated.",
+    )
     parser.add_argument("--output", type=Path, default=Path("microsoft_jobs.json"))
     args = parser.parse_args()
     if args.delay < 0 or args.max_retries < 0 or args.backoff_seconds < 0 or args.max_jobs < 0:
@@ -167,23 +202,7 @@ def main() -> int:
     if args.max_jobs:
         summaries = summaries[:args.max_jobs]
 
-    jobs: list[dict[str, Any]] = []
-    for index, summary in enumerate(summaries, start=1):
-        print(f"Fetching {index}/{len(summaries)}: {summary['id']}", file=sys.stderr)
-        details = get_job_details(int(summary["id"]), args)
-        description_html = details.get("jobDescription", "")
-        position_url = str(details.get("positionUrl") or "")
-        detail_url = str(details.get("publicUrl") or "")
-        if not detail_url and position_url:
-            detail_url = f"{BASE_URL}{position_url}"
-        jobs.append({
-            **details,
-            "application_url": detail_url,
-            "jobDescriptionHtml": description_html,
-            "jobDescriptionText": html_to_text(description_html),
-        })
-        if index != len(summaries):
-            time.sleep(args.delay)
+    jobs, skipped_existing = fetch_job_details(summaries, args)
 
     output = {
         "source": BASE_URL,
@@ -200,6 +219,7 @@ def main() -> int:
             "include_relocation": args.include_relocation,
             "total_results_reported_by_api": total,
             "jobs_fetched": len(jobs),
+            "jobs_skipped_existing": skipped_existing,
         },
         "jobs": jobs,
     }

@@ -8,86 +8,60 @@
   </head>
   <body>
     <main class="container">
-      <header class="hero">
-        <p class="product-label"><span></span> Career Pilot</p>
-        <h1>Make each application<br>count.</h1>
-        <p class="intro">Assess your fit against your full experience, then tailor a resume when the opportunity is worth pursuing.</p>
+      <header class="topbar">
+        <a class="brand" href="#dashboard" aria-label="Career Pilot home"><span></span> Career Pilot</a>
+        <nav class="tabs" aria-label="Workspace">
+          <button type="button" class="tab is-active" data-tab="dashboard" aria-selected="true">Dashboard</button>
+          <button type="button" class="tab" data-tab="direct" aria-selected="false">Tailor from JD</button>
+        </nav>
       </header>
-      <section class="composer" aria-labelledby="composer-title">
-        <div class="composer-heading">
+      <section id="dashboard-panel" class="tab-panel" aria-labelledby="dashboard-title">
+        <div class="page-heading"><p class="eyebrow">Your pipeline</p><h1 id="dashboard-title">Find the next role worth pursuing.</h1><p>Review eligible roles, analyse the strongest fits, and make one tailored resume at a time.</p></div>
+        <section class="dashboard" aria-label="Job dashboard">
+          <div class="section-heading"><div><h2>Job dashboard</h2><p>Only jobs that pass your experience and seniority filters appear here.</p></div><div class="actions compact-actions"><button type="button" id="refresh-jobs" class="secondary">Refresh</button><button type="button" id="process-jobs">Analyse pending jobs</button></div></div>
+          <p id="job-status" role="status"></p>
+          <div id="job-resume-result" class="resume-result" hidden aria-live="polite"><span>Tailored resume ready</span><a id="job-download-link" class="download">Download PDF</a></div>
+          <div class="company-filter" aria-label="Company filter">
+            <span class="filter-label">Companies</span>
+            <details id="company-filter-menu" class="company-filter-menu">
+              <summary id="company-filter-summary">All companies</summary>
+              <div id="company-filter-options" class="company-filter-options"></div>
+            </details>
+            <button type="button" id="clear-company-filter" class="secondary" hidden>Clear</button>
+          </div>
+          <div id="job-list" class="job-list"></div>
+        </section>
+        <section class="unsupported-sources" aria-labelledby="unsupported-sources-title">
           <div>
-            <p class="eyebrow">Quick analysis</p>
-            <h2 id="composer-title">Evaluate a job description</h2>
+            <p class="eyebrow">Manual fallback</p>
+            <h2 id="unsupported-sources-title">Not connected yet</h2>
+            <p>These sites do not offer a stable public job feed today. Open the filtered careers page to browse them directly.</p>
           </div>
-          <span class="composer-note">Evidence-based scoring</span>
-        </div>
-        <form id="resume-form">
-          <label for="job-description">Job description</label>
-          <textarea id="job-description" name="job_description" required
-            placeholder="Paste the complete job description here..."></textarea>
-          <div class="actions">
-            <button type="submit" id="analyse-button">Analyse match <span aria-hidden="true">→</span></button>
-            <button type="button" id="generate-button" class="secondary">Generate resume</button>
+          <div class="unsupported-source-list">
+            <article class="unsupported-source">
+              <div><h3>LinkedIn</h3><p>Anonymous job extraction is restricted.</p></div>
+              <a class="secondary link-button" href="https://www.linkedin.com/jobs/search/?keywords=LinkedIn&amp;location=India" target="_blank" rel="noreferrer">Browse jobs <span aria-hidden="true">↗</span></a>
+            </article>
+            <article class="unsupported-source">
+              <div><h3>Nutanix</h3><p>The careers site blocks automated access.</p></div>
+              <a class="secondary link-button" href="https://careers.nutanix.com/en/jobs/?search=&amp;country=India&amp;team=Engineering&amp;type=Full-Time&amp;pagesize=20#results" target="_blank" rel="noreferrer">Browse careers <span aria-hidden="true">↗</span></a>
+            </article>
           </div>
-        </form>
+        </section>
+        <details class="master-editor"><summary>Update master experience</summary><p>Your full experience is the matching source of truth. Saving it changes future analyses.</p><textarea id="master-experience" aria-label="Master experience"></textarea><button type="button" id="save-master-experience">Save master experience</button><p id="master-status" role="status"></p></details>
       </section>
-      <p id="status" role="status"></p>
-      <section id="match-details" class="match-details" hidden aria-live="polite">
-        <div class="score-row">
-          <div>
-            <p class="eyebrow">Job match</p>
-            <p id="match-score" class="score"></p>
-          </div>
-          <p id="match-summary" class="match-summary"></p>
-        </div>
-        <div class="match-columns">
-          <div>
-            <h2>Strong matches</h2>
-            <ul id="strong-matches"></ul>
-          </div>
-          <div>
-            <h2>Transferable experience</h2>
-            <ul id="transferable-matches"></ul>
-          </div>
-          <div>
-            <h2>Uncertain or missing</h2>
-            <ul id="uncertain-requirements"></ul>
-          </div>
-        </div>
-        <div id="critical-gaps-container" hidden>
-          <h2>Critical gaps</h2>
-          <ul id="critical-gaps"></ul>
-        </div>
-        <div id="recommendations-container" hidden>
-          <h2>Recommendations</h2>
-          <ul id="recommendations"></ul>
-        </div>
+      <section id="direct-panel" class="tab-panel" hidden aria-labelledby="direct-title">
+        <div class="page-heading"><p class="eyebrow">Direct tailoring</p><h1 id="direct-title">Start with a job description.</h1><p>Paste a role that is not in your dashboard to assess the fit and generate a targeted resume.</p></div>
+        <section class="composer" aria-labelledby="composer-title">
+          <div class="composer-heading"><div><p class="eyebrow">Quick analysis</p><h2 id="composer-title">Evaluate a job description</h2></div><span class="composer-note">Evidence-based scoring</span></div>
+          <form id="resume-form"><label for="job-description">Job description</label><textarea id="job-description" name="job_description" required placeholder="Paste the complete job description here..."></textarea><div class="actions"><button type="submit" id="analyse-button">Analyse match <span aria-hidden="true">→</span></button><button type="button" id="generate-button" class="secondary" data-resume-action>Generate resume</button></div></form>
+        </section>
+        <p id="status" role="status"></p>
+        <div id="direct-resume-result" class="resume-result" hidden aria-live="polite"><span>Tailored resume ready</span><a id="download-link" class="download">Download PDF</a></div>
+        <section id="match-details" class="match-details" hidden aria-live="polite"><div class="score-row"><div><p class="eyebrow">Job match</p><p id="match-score" class="score"></p></div><p id="match-summary" class="match-summary"></p></div><div class="match-columns"><div><h2>Strong matches</h2><ul id="strong-matches"></ul></div><div><h2>Transferable experience</h2><ul id="transferable-matches"></ul></div><div><h2>Uncertain or missing</h2><ul id="uncertain-requirements"></ul></div></div><div id="critical-gaps-container" hidden><h2>Critical gaps</h2><ul id="critical-gaps"></ul></div><div id="recommendations-container" hidden><h2>Recommendations</h2><ul id="recommendations"></ul></div></section>
       </section>
-      <a id="download-link" class="download" hidden>Download PDF</a>
-
-      <section class="dashboard" aria-labelledby="dashboard-title">
-        <div class="section-heading">
-          <div>
-            <h2 id="dashboard-title">Job dashboard</h2>
-            <p>Import jobs from a portal script, then analyse only eligible, unprocessed roles.</p>
-          </div>
-          <div class="actions compact-actions">
-            <button type="button" id="refresh-jobs" class="secondary">Refresh</button>
-            <button type="button" id="process-jobs">Analyse pending jobs</button>
-          </div>
-        </div>
-        <p id="job-status" role="status"></p>
-        <div id="job-list" class="job-list"></div>
-      </section>
-
-      <details class="master-editor">
-        <summary>Update master experience</summary>
-        <p>Your full experience is the matching source of truth. Saving it changes future analyses.</p>
-        <textarea id="master-experience" aria-label="Master experience"></textarea>
-        <button type="button" id="save-master-experience">Save master experience</button>
-        <p id="master-status" role="status"></p>
-      </details>
     </main>
+    <div id="generation-progress" class="generation-progress" hidden role="status" aria-live="polite"><span class="progress-ring" aria-hidden="true"></span><span>Building your tailored resume…</span></div>
     <script src="/static/app.js"></script>
   </body>
 </html>
