@@ -334,9 +334,9 @@ def configured_sources() -> list[SourceSpec]:
             "--timeout", os.getenv("LINKEDIN_TIMEOUT", "30"),
             "--min-delay", os.getenv("LINKEDIN_MIN_DELAY", "1"),
             "--max-delay", os.getenv("LINKEDIN_MAX_DELAY", "1"),
-            "--429-max-retries", os.getenv("LINKEDIN_429_MAX_RETRIES", "10"),
+            "--429-max-retries", os.getenv("LINKEDIN_429_MAX_RETRIES", "8"),
             "--429-initial-backoff-seconds", os.getenv("LINKEDIN_429_INITIAL_BACKOFF_SECONDS", "60"),
-            "--429-max-backoff-seconds", os.getenv("LINKEDIN_429_MAX_BACKOFF_SECONDS", "480"),
+            "--429-max-backoff-seconds", os.getenv("LINKEDIN_429_MAX_BACKOFF_SECONDS", "960"),
             "--output", str(output),
         ]
         sources.append(SourceSpec("linkedin", output, add_existing_job_ids(command, "linkedin")))

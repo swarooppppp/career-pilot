@@ -69,9 +69,9 @@ def main() -> int:
     parser.add_argument("--delay", type=float, default=1.0)
     parser.add_argument("--min-delay", type=float, default=None, help="Minimum randomized delay between detail requests")
     parser.add_argument("--max-delay", type=float, default=None, help="Maximum randomized delay between detail requests")
-    parser.add_argument("--429-max-retries", type=int, default=10)
+    parser.add_argument("--429-max-retries", type=int, default=8)
     parser.add_argument("--429-initial-backoff-seconds", type=float, default=60)
-    parser.add_argument("--429-max-backoff-seconds", type=float, default=480)
+    parser.add_argument("--429-max-backoff-seconds", type=float, default=960)
     parser.add_argument("--output", type=Path, default=Path("linkedin_jobs.json"))
     args = parser.parse_args()
     if args.max_pages < 1 or args.max_jobs < 0 or args.timeout < 1 or args.delay < 0 or args.__dict__["429_max_retries"] < 0 or args.__dict__["429_initial_backoff_seconds"] < 0 or args.__dict__["429_max_backoff_seconds"] < 0:

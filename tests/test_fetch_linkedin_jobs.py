@@ -54,13 +54,13 @@ class LinkedInFetchTests(unittest.TestCase):
         with patch.object(module, "sleep", side_effect=sleeps.append):
             result = module.fetch_with_429_retries(
                 __import__("unittest.mock").mock.Mock(side_effect=[module.linkedin.LinkedInRateLimitError("429"), module.linkedin.LinkedInRateLimitError("429"), "ok"]),
-                "detail", 10, 60, 480,
+                "detail", 8, 60, 960,
             )
         self.assertEqual(result, "ok")
         self.assertEqual(sleeps, [60, 120])
 
     def test_retry_after_is_capped(self) -> None:
-        self.assertEqual(module.retry_delay(module.linkedin.LinkedInRateLimitError("429", 999), 1, 60, 480), (480.0, True))
+        self.assertEqual(module.retry_delay(module.linkedin.LinkedInRateLimitError("429", 999), 1, 60, 960), (960.0, True))
 
 
 if __name__ == "__main__":

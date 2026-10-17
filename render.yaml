@@ -1,0 +1,45 @@
+services:
+  - type: web
+    name: career-pilot
+    runtime: python
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: python run.py
+    healthCheckPath: /health
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: DATABASE_URL
+        fromDatabase: {name: career-pilot-db, property: connectionString}
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: APP_PASSWORD
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: LINKEDIN_JOBS_URL
+        sync: false
+  - type: cron
+    name: career-pilot-ingestion
+    runtime: python
+    plan: starter
+    schedule: "0 */6 * * *"
+    buildCommand: pip install -r requirements.txt
+    startCommand: python run_ingestion.py
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase: {name: career-pilot-db, property: connectionString}
+      - key: FETCH_LINKEDIN
+        value: "true"
+      - key: LINKEDIN_JOBS_URL
+        sync: false
+      - key: LINKEDIN_429_MAX_RETRIES
+        value: "8"
+      - key: LINKEDIN_429_INITIAL_BACKOFF_SECONDS
+        value: "60"
+      - key: LINKEDIN_429_MAX_BACKOFF_SECONDS
+        value: "960"
+databases:
+  - name: career-pilot-db
+    plan: basic-256mb
+    databaseName: career_pilot

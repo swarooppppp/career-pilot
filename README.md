@@ -5,6 +5,12 @@ experience, then can generate a tailored resume PDF.
 
 ## Local setup
 
+## Render deployment
+
+`render.yaml` defines a web service, managed Postgres database, and a LinkedIn ingestion cron job that runs every six hours (00:00, 06:00, 12:00, and 18:00 UTC). Create a Render Blueprint from this repository, then set `APP_PASSWORD`, `OPENAI_API_KEY`, and `LINKEDIN_JOBS_URL` for both services. Render supplies `DATABASE_URL` and `SESSION_SECRET`.
+
+The cron job runs `python run_ingestion.py` and exits after one fetch/import cycle. It uses eight LinkedIn 429 retries with a 960-second maximum delay.
+
 ```bash
 python3 -m pip install -r requirements.txt
 cp .env.example .env
