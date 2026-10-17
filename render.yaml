@@ -2,7 +2,7 @@ services:
   - type: web
     name: career-pilot
     runtime: python
-    plan: starter
+    plan: free
     buildCommand: pip install -r requirements.txt
     startCommand: python run.py
     healthCheckPath: /health
@@ -41,5 +41,5 @@ services:
         value: "960"
 databases:
   - name: career-pilot-db
-    plan: basic-256mb
+    plan: free
     databaseName: career_pilot
