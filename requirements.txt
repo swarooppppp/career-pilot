@@ -2,6 +2,7 @@ google-genai
 openai
 python-dotenv
 fastapi
+itsdangerous
 uvicorn
 langchain-text-splitters
 langgraph
