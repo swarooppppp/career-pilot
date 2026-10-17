@@ -39,6 +39,18 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(title="Career Pilot", version="0.1.0", lifespan=lifespan)
+@app.middleware("http")
+async def require_login(request: Request, call_next):
+    password = os.getenv("APP_PASSWORD", "")
+    if not password or request.url.path in {"/health", "/login", "/logout"} or request.url.path.startswith("/static/"):
+        return await call_next(request)
+    if request.session.get("authenticated"):
+        return await call_next(request)
+    return RedirectResponse("/login", status_code=303)
+
+
+# Middleware is applied from the most recently added layer outward. Register
+# sessions after the auth guard so decoded session data is available to it.
 session_secret = os.getenv("SESSION_SECRET", "")
 app.add_middleware(
     SessionMiddleware,
@@ -48,14 +60,6 @@ app.add_middleware(
 )
 
 
-@app.middleware("http")
-async def require_login(request: Request, call_next):
-    password = os.getenv("APP_PASSWORD", "")
-    if not password or request.url.path in {"/health", "/login", "/logout"} or request.url.path.startswith("/static/"):
-        return await call_next(request)
-    if request.session.get("authenticated"):
-        return await call_next(request)
-    return RedirectResponse("/login", status_code=303)
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 app.include_router(match_router, prefix="/api/match", tags=["match"])
 app.include_router(jobs_router, prefix="/api/jobs", tags=["jobs"])
