@@ -35,6 +35,10 @@ services:
         value: "true"
       - key: LINKEDIN_JOBS_URL
         sync: false
+      - key: LINKEDIN_MAX_JOBS
+        value: "300"
+      - key: LINKEDIN_MAX_PAGES
+        value: "20"
       - key: LINKEDIN_429_MAX_RETRIES
         value: "8"
       - key: LINKEDIN_429_INITIAL_BACKOFF_SECONDS
