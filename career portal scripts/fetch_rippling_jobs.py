@@ -98,8 +98,22 @@ def job_posting_description(document: str) -> str:
 
 
 def fetch_detail(url: str, timeout: int) -> str:
+    return fetch_detail_with_date(url, timeout)[0]
+
+
+def fetch_detail_with_date(url: str, timeout: int) -> tuple[str, str | None]:
     request = Request(url, headers={"Accept": "text/html", "User-Agent": USER_AGENT})
-    return job_posting_description(fetch_bytes(request, timeout).decode("utf-8", errors="replace"))
+    document = fetch_bytes(request, timeout).decode("utf-8", errors="replace")
+    description = job_posting_description(document)
+    for raw in re.findall(r'<script[^>]+type=["\']application/ld\+json["\'][^>]*>(.*?)</script>', document, flags=re.I | re.S):
+        try:
+            payload = json.loads(raw)
+        except json.JSONDecodeError:
+            continue
+        for item in payload if isinstance(payload, list) else [payload]:
+            if isinstance(item, dict) and item.get("@type") == "JobPosting" and item.get("datePosted"):
+                return description, str(item["datePosted"])
+    return description, None
 
 
 def fetch_jobs(url: str, max_jobs: int, timeout: int, delay: float, skip_ids: set[str]) -> list[dict[str, Any]]:
@@ -115,9 +129,9 @@ def fetch_jobs(url: str, max_jobs: int, timeout: int, delay: float, skip_ids: se
         if job_id in skip_ids:
             print(f"Skipping existing {index}/{len(summaries)}: {job_id}", file=sys.stderr); continue
         print(f"Fetching {index}/{len(summaries)}: {job_id}", file=sys.stderr)
-        description_html = fetch_detail(detail_url, timeout)
+        description_html, posted_date = fetch_detail_with_date(detail_url, timeout)
         jobs.append({"id": job_id, "title": title, "company": "Rippling", "location": " | ".join(hit.get("locationNames") or []),
-                     "application_url": detail_url, "jobDescriptionHtml": description_html, "jobDescriptionText": html_to_text(description_html)})
+                     "application_url": detail_url, "posted_date": posted_date, "jobDescriptionHtml": description_html, "jobDescriptionText": html_to_text(description_html)})
         if index != len(summaries): time.sleep(delay)
     return list({job["id"]: job for job in jobs}.values())
 

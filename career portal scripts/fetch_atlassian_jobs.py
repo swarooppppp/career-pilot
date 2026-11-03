@@ -76,7 +76,7 @@ def fetch_detail_page(url: str, timeout: int) -> str:
         raise RuntimeError(f"Could not reach Atlassian job detail: {error.reason}") from error
 
 
-def detail_description(document: str) -> str:
+def detail_posting(document: str) -> dict[str, Any]:
     """Extract a full JobPosting description from the public role-page schema."""
     scripts = re.findall(r'<script[^>]+type=["\']application/ld\+json["\'][^>]*>(.*?)</script>', document, flags=re.IGNORECASE | re.DOTALL)
     for script in scripts:
@@ -92,8 +92,12 @@ def detail_description(document: str) -> str:
                 continue
             description = str(item.get("description") or "").strip()
             if description:
-                return description
+                return item
     raise RuntimeError("Atlassian job detail did not contain a JobPosting description")
+
+
+def detail_description(document: str) -> str:
+    return str(detail_posting(document)["description"])
 
 
 def locations_text(locations: Any) -> str:
@@ -121,7 +125,7 @@ def matches(job: dict[str, Any], query: dict[str, list[str]]) -> bool:
     )
 
 
-def normalise_result(job: dict[str, Any], description_html: str | None = None) -> dict[str, Any] | None:
+def normalise_result(job: dict[str, Any], description_html: str | None = None, posting_date: str | None = None) -> dict[str, Any] | None:
     job_id = str(job.get("id") or "").strip()
     title = str(job.get("title") or "").strip()
     description_html = str(description_html or job.get("overview") or "").strip()
@@ -135,7 +139,9 @@ def normalise_result(job: dict[str, Any], description_html: str | None = None) -
         "company": "Atlassian",
         "location": locations_text(job.get("locations")),
         "application_url": urljoin(BASE_URL, application_url),
-        "posted_date": portal_post.get("updatedDate"),
+        "posted_date": posting_date or portal_post.get("datePosted") or portal_post.get("publishedDate"),
+        "posting_date_source": "JobPosting.datePosted" if posting_date else "portalJobPost.publication" if portal_post.get("datePosted") or portal_post.get("publishedDate") else None,
+        "updated_date": portal_post.get("updatedDate"),
         "jobDescriptionHtml": description_html,
         "jobDescriptionText": html_to_text(description_html),
     }
@@ -151,13 +157,16 @@ def hydrate_results(jobs: list[dict[str, Any]], timeout: int, delay: float, skip
         portal_post = job.get("portalJobPost") if isinstance(job.get("portalJobPost"), dict) else {}
         detail_path = str(portal_post.get("portalUrl") or "").strip()
         description_html: str | None = None
+        posting_date = None
         if detail_path:
             try:
                 print(f"Fetching {index}/{len(jobs)}: {job.get('id', '')}", file=sys.stderr)
-                description_html = detail_description(fetch_detail_page(urljoin(BASE_URL, detail_path), timeout))
+                schema = detail_posting(fetch_detail_page(urljoin(BASE_URL, detail_path), timeout))
+                description_html = str(schema["description"])
+                posting_date = schema.get("datePosted")
             except RuntimeError as error:
                 print(f"Skipping detail hydration for {job.get('id', '')}: {error}", file=sys.stderr)
-        result = normalise_result(job, description_html)
+        result = normalise_result(job, description_html, posting_date)
         if result is not None:
             results.append(result)
         if index != len(jobs):
@@ -169,6 +178,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("url", nargs="?", default=DEFAULT_URL, help="Atlassian public careers jobs URL")
     parser.add_argument("--max-jobs", type=int, default=50, help="Maximum matching jobs to write; 0 keeps all.")
+    parser.add_argument("--sort-recent", action="store_true", help="Order by portal update time before limiting and hydrating")
     parser.add_argument("--timeout", type=int, default=60)
     parser.add_argument("--delay", type=float, default=0.5, help="Seconds between public job-detail requests.")
     parser.add_argument("--skip-job-id", action="append", default=[])
@@ -185,6 +195,8 @@ def main() -> int:
     except RuntimeError as error:
         print(f"Error: {error}", file=sys.stderr)
         return 1
+    if args.sort_recent:
+        matching_jobs.sort(key=lambda job: str((job.get("portalJobPost") or {}).get("updatedDate") or ""), reverse=True)
     if args.max_jobs:
         matching_jobs = matching_jobs[:args.max_jobs]
     jobs = hydrate_results(matching_jobs, args.timeout, args.delay, set(args.skip_job_id))

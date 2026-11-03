@@ -1,0 +1,2203 @@
+{
+  "companies": [
+    {
+      "company": "Databricks",
+      "status": "reuse",
+      "existing_script": "career portal scripts/fetch_databricks_jobs.py",
+      "note": "Newest update first before limiting; update date is not original publication date.",
+      "slug": "databricks",
+      "url": "https://www.databricks.com/company/careers/open-positions?department=Engineering&location=India&search=Software%20Engineer",
+      "args": [
+        "--sort-recent"
+      ],
+      "filter_policy": {
+        "country": "India",
+        "engineering": "native",
+        "method": "department=Engineering & location=India, checked locally by adapter"
+      }
+    },
+    {
+      "company": "Rubrik",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_rubrik_jobs.py",
+      "note": "Direct public Greenhouse API; exact Engineering department; first publication descending before limiting. India-only location filter enabled.",
+      "slug": "rubrik",
+      "url": "https://www.rubrik.com/company/careers/departments/engineering",
+      "args": [
+        "--location",
+        "India"
+      ],
+      "filter_policy": {
+        "country": "India",
+        "engineering": "native",
+        "method": "exact Engineering department & --location India"
+      }
+    },
+    {
+      "company": "Uber",
+      "status": "reuse",
+      "existing_script": "career portal scripts/fetch_uber_jobs.py",
+      "note": "Always headed in the local runner; dedicated Chromium window minimized before navigation. Engineering/India URL retained; available result dates sorted after fetching.",
+      "slug": "uber",
+      "url": "https://jobs.uber.com/en/jobs/?team=Engineer&countries=India",
+      "args": [
+        "--headed",
+        "--minimized"
+      ],
+      "filter_policy": {
+        "country": "India",
+        "engineering": "native",
+        "method": "team=Engineer & countries=India"
+      }
+    },
+    {
+      "company": "Google",
+      "status": "reuse",
+      "existing_script": "career portal scripts/fetch_google_jobs.py",
+      "note": "Requests portal date ordering.",
+      "slug": "google",
+      "url": "https://www.google.com/about/careers/applications/jobs/results/?q=%22Software+Engineer%22&location=India&hl=en&target_level=MID&target_level=EARLY&degree=BACHELORS&employment_type=FULL_TIME&sort_by=date",
+      "args": [
+        "--max-pages",
+        "3"
+      ],
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Software Engineer query & India location + engineering-title validation"
+      }
+    },
+    {
+      "company": "Atlassian",
+      "status": "reuse",
+      "existing_script": "career portal scripts/fetch_atlassian_jobs.py",
+      "note": "Newest portal update first before limiting and fetching details.",
+      "slug": "atlassian",
+      "url": "https://www.atlassian.com/company/careers/all-jobs?team=Engineering&location=India&search=Software%20Engineer",
+      "args": [
+        "--sort-recent"
+      ],
+      "filter_policy": {
+        "country": "India",
+        "engineering": "native",
+        "method": "team=Engineering & location=India, checked locally by adapter"
+      }
+    },
+    {
+      "company": "LinkedIn",
+      "status": "reuse",
+      "existing_script": "career portal scripts/fetch_linkedin_jobs.py",
+      "note": "LinkedIn employer, India, last 24 hours, Engineering keyword and engineering-title validation; recent first.",
+      "slug": "linkedin",
+      "url": "https://in.linkedin.com/jobs/search?location=India&geoId=102713980&f_TPR=r86400&f_C=1337&activeFilter=f_TPR&position=1&pageNum=0&sortBy=DD&keywords=Engineering",
+      "args": [
+        "--max-pages",
+        "5",
+        "--min-delay",
+        "3",
+        "--max-delay",
+        "3",
+        "--429-max-retries",
+        "0"
+      ],
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Engineering keyword & India geo filter + engineering-title validation"
+      }
+    },
+    {
+      "company": "Snowflake",
+      "status": "missing",
+      "existing_script": null,
+      "note": "Still pending; no URL or adapter validated.",
+      "slug": "snowflake",
+      "args": [],
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Pending adapter; not runnable"
+      }
+    },
+    {
+      "company": "Stripe",
+      "status": "reuse",
+      "existing_script": "career portal scripts/fetch_stripe_jobs.py",
+      "note": "Existing headless browser fetcher; sorts available dates within fetched results.",
+      "slug": "stripe",
+      "url": "https://stripe.com/careers/search?query=Software+Engineer&locations=Asia+Pacific--India&employment_types=Full+time",
+      "args": [],
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Software Engineer query & India location + engineering-title validation"
+      }
+    },
+    {
+      "company": "Rippling",
+      "status": "reuse",
+      "existing_script": "career portal scripts/fetch_rippling_jobs.py",
+      "note": "Existing adapter exposes no posting date; preserves portal order.",
+      "slug": "rippling",
+      "url": "https://www.rippling.com/en-GB/careers/open-roles?search=Software%20Engineer&department=Engineering&location=Bangalore%2C%20India",
+      "args": [],
+      "filter_policy": {
+        "country": "India",
+        "engineering": "native",
+        "method": "Algolia departmentName=Engineering & Bangalore, India"
+      }
+    },
+    {
+      "company": "IBM",
+      "slug": "ibm",
+      "status": "unconfirmed",
+      "existing_script": "local_career_portals/fetch_ibm_jobs.py",
+      "url": "https://www.ibm.com/in-en/careers/search?field_keyword_08%5B0%5D=Software%20Engineering&field_keyword_18%5B0%5D=Professional&field_keyword_05%5B0%5D=India&sort=dcdate_desc",
+      "args": [],
+      "note": "Excluded from runs after user said IBM was not the intended company. Adapter retained; Confluent URL unresolved.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "native",
+        "method": "excluded pending company clarification"
+      }
+    },
+    {
+      "company": "Glean",
+      "slug": "glean",
+      "status": "reuse",
+      "existing_script": "career portal scripts/fetch_greenhouse_jobs.py",
+      "args": [
+        "--board",
+        "gleanwork",
+        "--company",
+        "Glean",
+        "--department",
+        "Engineering",
+        "--exact-department",
+        "--location",
+        "India"
+      ],
+      "note": "Public Greenhouse feed; exact Engineering department and India location before limiting.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "native",
+        "method": "Exact Engineering board department & India location"
+      }
+    },
+    {
+      "company": "Abnormal AI",
+      "slug": "abnormal_ai",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_filtered_board_jobs.py",
+      "args": [
+        "--source",
+        "abnormal_ai"
+      ],
+      "note": "Portal Engineering category IDs plus exact Hybrid - Bangalore, India location; direct full-description board feed.",
+      "url": "https://abnormal.ai/careers/open-roles?category=Engineering&location=Hybrid+-+Bangalore%2C+India",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "native",
+        "method": "portal category membership & exact supplied India location"
+      }
+    },
+    {
+      "company": "Microsoft",
+      "slug": "microsoft",
+      "status": "reuse",
+      "existing_script": "local_career_portals/fetch_microsoft_browser_jobs.py",
+      "args": [
+        "--max-pages",
+        "5",
+        "--delay",
+        "1"
+      ],
+      "note": "Headless browser, exact supplied Software Engineering profession and seniority filters, newest first; initial-response reuse, TTL detail cache, persistent 429 cooldown.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "native",
+        "method": "Verified filter_profession=software engineering, India, Mid-Level/Senior/Entry, remote included, relocation excluded; output India check"
+      },
+      "url": "https://apply.careers.microsoft.com/careers?query=Software+Engineering&start=0&location=India&pid=1970393557043583&sort_by=timestamp&filter_include_remote=1&filter_include_relocation=0&filter_profession=software+engineering&filter_seniority=Mid-Level%2CSenior%2CEntry"
+    },
+    {
+      "company": "Amazon",
+      "slug": "amazon",
+      "status": "reuse",
+      "existing_script": "career portal scripts/fetch_amazon_jobs.py",
+      "args": [
+        "--max-pages",
+        "10"
+      ],
+      "note": "Existing public JSON API; recent-first search.",
+      "url": "https://www.amazon.jobs/en/search?offset=0&result_limit=10&category%5B%5D=software-development&job_type%5B%5D=Full-Time&city%5B%5D=Bengaluru&city%5B%5D=Hyderabad&distanceType=Mi&radius=24km&industry_experience=one_to_three_years&is_manager%5B%5D=0&latitude=&longitude=&loc_group_id=&loc_query=India&base_query=Software+Development&city=&country=IND&region=&county=&query_options=&sort=recent",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "native",
+        "method": "software-development category & country IND"
+      }
+    },
+    {
+      "company": "Airbnb",
+      "slug": "airbnb",
+      "status": "reuse",
+      "existing_script": "local_career_portals/fetch_additional_board_jobs.py",
+      "args": [
+        "--source",
+        "airbnb"
+      ],
+      "note": "Public Greenhouse board with canonical Airbnb career links; Software Engineering and Engineering & Technology departments, India location, first publication descending.",
+      "url": "https://careers.airbnb.com/positions/?_departments=engineering&_paged=1",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "native",
+        "method": "Public Greenhouse board with canonical Airbnb career links; Software Engineering and Engineering & Technology departments, India location, first publication descending."
+      }
+    },
+    {
+      "company": "Cloudflare",
+      "slug": "cloudflare",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_filtered_board_jobs.py",
+      "args": [
+        "--source",
+        "cloudflare"
+      ],
+      "note": "Exact Career Site Department=Engineering and Job Posting Location=Bengaluru, India metadata; direct board feed.",
+      "url": "https://www.cloudflare.com/careers/jobs/?department=Engineering&location=Bengaluru%2C+India",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "native",
+        "method": "Career Site Department and Job Posting Location metadata"
+      }
+    },
+    {
+      "company": "MongoDB",
+      "slug": "mongodb",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_filtered_board_jobs.py",
+      "args": [
+        "--source",
+        "mongodb"
+      ],
+      "note": "Headless portal Engineering filter with Indian country/city facets, joined to full-description board feed.",
+      "url": "https://www.mongodb.com/company/careers/see-jobs",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "native",
+        "method": "native Engineering UI filter + India and Indian city facets"
+      }
+    },
+    {
+      "company": "Intuit",
+      "slug": "intuit",
+      "status": "reuse",
+      "existing_script": "career portal scripts/fetch_intuit_jobs.py",
+      "args": [
+        "--country",
+        "India"
+      ],
+      "note": "Existing HTML search/detail adapter; sorts available dates within fetched results.",
+      "url": "https://jobs.intuit.com/search-jobs?acm=8698512,68357,68358&alrpm=ALL&ascf=%5B%7B%22key%22:%22ALL%22,%22value%22:%22%22%7D%5D",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "saved category facets & --country India + engineering-title validation"
+      }
+    },
+    {
+      "company": "Postman",
+      "slug": "postman",
+      "status": "reuse",
+      "existing_script": "career portal scripts/fetch_postman_jobs.py",
+      "args": [],
+      "note": "Existing public feed and Workday details; sorts available update dates within fetched results.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "native",
+        "method": "exact Engineering department & Bangalore/Hyderabad"
+      }
+    },
+    {
+      "company": "Salesforce",
+      "slug": "salesforce",
+      "status": "reuse",
+      "existing_script": "career portal scripts/fetch_salesforce_jobs.py",
+      "args": [],
+      "note": "Existing static public datasets; sorts available dates within fetched results.",
+      "url": "https://www.salesforce.com/company/careers/jobs/?country=India&pagesize=20&employeeTypes=Regular&team=Software+Engineering&page=1",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "native",
+        "method": "Software Engineering team & India country, checked locally by adapter"
+      }
+    },
+    {
+      "company": "Adobe",
+      "slug": "adobe",
+      "status": "reuse",
+      "existing_script": "local_career_portals/fetch_adobe_india_jobs.py",
+      "args": [],
+      "note": "All bounded listing pages filtered to engineering titles and India, sorted by postedDate before full-description hydration.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "All bounded listing pages filtered to engineering titles and India, sorted by postedDate before full-description hydration."
+      },
+      "url": "https://careers.adobe.com/us/en/c/engineering-and-product-jobs?from=10&s=1"
+    },
+    {
+      "company": "Harness",
+      "slug": "harness",
+      "status": "reuse",
+      "existing_script": "career portal scripts/fetch_greenhouse_jobs.py",
+      "args": [
+        "--board",
+        "harnessinc",
+        "--company",
+        "Harness",
+        "--department",
+        "Engineering",
+        "--exact-department",
+        "--location",
+        "India"
+      ],
+      "note": "Exact Engineering board department and India location before limiting.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "native",
+        "method": "Exact Engineering board department and India location before limiting."
+      }
+    },
+    {
+      "company": "Nutanix",
+      "slug": "nutanix",
+      "status": "reuse",
+      "existing_script": "career portal scripts/fetch_nutanix_jobs.py",
+      "args": [
+        "--headed-fallback"
+      ],
+      "note": "Native India/Engineering search; headless first, one minimized headed attempt after HTTP 403. Structured locations and dates retained. First listing page only.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "native",
+        "method": "Native India/Engineering search; headless first, one minimized headed attempt after HTTP 403. Structured locations and dates retained. First listing page only."
+      },
+      "url": "https://careers.nutanix.com/en/jobs/?search=&country=India&team=Engineering&type=Full-Time&pagesize=20"
+    },
+    {
+      "company": "Palo Alto Networks",
+      "slug": "palo_alto",
+      "status": "reuse",
+      "existing_script": "career portal scripts/fetch_palo_alto_jobs.py",
+      "args": [
+        "--max-pages",
+        "10"
+      ],
+      "note": "Software Engineer search, explicit India structured-country check, engineering-title output guard.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Software Engineer search, explicit India structured-country check, engineering-title output guard."
+      },
+      "url": "https://jobs.paloaltonetworks.com/en/search-jobs/Software%20Engineer/47263/1"
+    },
+    {
+      "company": "Eightfold AI",
+      "slug": "eightfold",
+      "status": "reuse",
+      "existing_script": "career portal scripts/fetch_eightfold_jobs.py",
+      "args": [
+        "--domain",
+        "volkscience.com",
+        "--company",
+        "Eightfold AI",
+        "--query",
+        "Software Engineer",
+        "--location",
+        "India",
+        "--sort-by",
+        "timestamp",
+        "--seniority",
+        "1,2",
+        "--max-pages",
+        "5"
+      ],
+      "note": "Existing Eightfold tenant API, engineering query and India search; conservative title/location output checks.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Existing Eightfold tenant API, engineering query and India search; conservative title/location output checks."
+      }
+    },
+    {
+      "company": "PhonePe",
+      "slug": "phonepe",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_smartrecruiters_jobs.py",
+      "args": [
+        "--source",
+        "phonepe"
+      ],
+      "note": "Official Apollo feed: PUBLIC Engineering roles in India; full SmartRecruiters descriptions.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "native",
+        "method": "Official Apollo feed: PUBLIC Engineering roles in India; full SmartRecruiters descriptions."
+      },
+      "url": "https://www.phonepe.com/careers/job-openings/"
+    },
+    {
+      "company": "Razorpay",
+      "slug": "razorpay",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_additional_board_jobs.py",
+      "args": [
+        "--source",
+        "razorpay"
+      ],
+      "note": "Supplied Engineering department ID and descendants; India locations; recent publication first.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "native",
+        "method": "Supplied Engineering department ID and descendants; India locations; recent publication first."
+      },
+      "url": "https://job-boards.greenhouse.io/razorpaysoftwareprivatelimited?departments%5B%5D=4024806005"
+    },
+    {
+      "company": "Fivetran",
+      "slug": "fivetran",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_additional_board_jobs.py",
+      "args": [
+        "--source",
+        "fivetran"
+      ],
+      "note": "Engineering Department, OR of all three supplied locations, Employee Type Regular; publication date descending.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "native",
+        "method": "Engineering Department, OR of all three supplied locations, Employee Type Regular; publication date descending."
+      },
+      "url": "https://www.fivetran.com/careers?dept=Engineering+Department&loc=Bangalore%2C+India&loc=Bengaluru%2C+Karnataka%2C+India&loc=Remote%2C+India&type=Regular#jobs"
+    },
+    {
+      "company": "Cockroach Labs",
+      "slug": "cockroach_labs",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_additional_board_jobs.py",
+      "args": [
+        "--source",
+        "cockroach_labs"
+      ],
+      "note": "Exact Engineering department and India locations; publication date descending.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "native",
+        "method": "Exact Engineering department and India locations; publication date descending."
+      },
+      "url": "https://www.cockroachlabs.com/careers/open-positions/"
+    },
+    {
+      "company": "ServiceNow",
+      "slug": "servicenow",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_smartrecruiters_jobs.py",
+      "args": [
+        "--source",
+        "servicenow"
+      ],
+      "note": "Public SmartRecruiters feed; Engineering function, India, Software Engineer query, supplied city OR filter; website challenge avoided by using separate public feed.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "native",
+        "method": "Public SmartRecruiters feed; Engineering function, India, Software Engineer query, supplied city OR filter; website challenge avoided by using separate public feed."
+      },
+      "url": "https://careers.servicenow.com/jobs/?search=Software+Engineer&country=India&region=Karnataka&location=Bangalore&region=&location=Bangalore%2C+Karnataka%2C+India&region=&location=Hyderabad&region=Maharashtra&location=Mumbai&region=&location=Gurgaon&origin=global"
+    },
+    {
+      "company": "CrowdStrike",
+      "slug": "crowdstrike",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_crowdstrike_india_jobs.py",
+      "url": "https://crowdstrike.wd5.myworkdayjobs.com/crowdstrikecareers?q=Software%20Engineer&locationCountry=c4f78be1a8f14da0ab49ce1162348a5e",
+      "official_careers_url": "https://www.crowdstrike.com/en-us/careers/",
+      "args": [],
+      "note": "Workday country facet, conservative engineering titles, full detail country check; startDate ordering.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Workday country facet, conservative engineering titles, full detail country check; startDate ordering."
+      },
+      "validation": {
+        "checked_at": "2026-11-01T04:41:44.272524+00:00",
+        "status": "ok",
+        "sample_jobs": 12,
+        "sample_file": "local_career_portals/data/samples/batch4_20261101_100810/batch4_top50.json"
+      }
+    },
+    {
+      "company": "NVIDIA",
+      "slug": "nvidia",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_eightfold_company_jobs.py",
+      "url": "https://jobs.nvidia.com/careers?query=Software%20Engineer&location=India&sort_by=timestamp&filter_job_category=engineering",
+      "official_careers_url": "https://www.nvidia.com/en-us/about-nvidia/careers/",
+      "args": [
+        "--source",
+        "nvidia"
+      ],
+      "note": "Official jobs.nvidia.com PCSx API, verified Engineering category, India, postedTs order.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Official jobs.nvidia.com PCSx API, verified Engineering category, India, postedTs order."
+      },
+      "validation": {
+        "checked_at": "2026-11-01T04:41:44.272524+00:00",
+        "status": "ok",
+        "sample_jobs": 50,
+        "sample_file": "local_career_portals/data/samples/batch4_20261101_100810/batch4_top50.json"
+      }
+    },
+    {
+      "company": "Apple",
+      "slug": "apple",
+      "status": "reuse",
+      "existing_script": "career portal scripts/fetch_apple_jobs.py",
+      "url": "https://jobs.apple.com/en-in/search?location=india-INDC&key=Software%2520Engineer",
+      "official_careers_url": "https://jobs.apple.com/en-in/search",
+      "args": [
+        "--max-pages",
+        "10"
+      ],
+      "note": "Existing public hydration adapter; India search and engineering-title guard; available postDateInGMT within fetched results.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Existing public hydration adapter; India search and engineering-title guard; available postDateInGMT within fetched results."
+      },
+      "validation": {
+        "checked_at": "2026-11-01T04:41:44.272524+00:00",
+        "status": "ok",
+        "sample_jobs": 45,
+        "sample_file": "local_career_portals/data/samples/batch4_20261101_100810/batch4_top50.json"
+      }
+    },
+    {
+      "company": "Coinbase",
+      "slug": "coinbase",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_additional_board_jobs.py",
+      "url": "https://www.coinbase.com/careers/positions",
+      "official_careers_url": "https://www.coinbase.com/careers/positions",
+      "args": [
+        "--source",
+        "coinbase"
+      ],
+      "note": "Public Coinbase-linked board; Engineering departments and descendants; India locations; publication date before limit. Includes engineering/developer titles outside the main technical department (e.g. quant development, ML and security); excludes non-engineering titles through the final guard.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Public Coinbase-linked board; Engineering departments and descendants; India locations; publication date before limit. Includes engineering/developer titles outside the main technical department (e.g. quant development, ML and security); excludes non-engineering titles through the final guard."
+      },
+      "validation": {
+        "checked_at": "2026-11-01T04:41:44.272524+00:00",
+        "status": "ok",
+        "sample_jobs": 8,
+        "sample_file": "local_career_portals/data/samples/batch4_20261101_100810/batch4_top50.json"
+      }
+    },
+    {
+      "company": "D. E. Shaw",
+      "slug": "de_shaw",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_de_shaw_jobs.py",
+      "url": "https://www.deshawindia.com/careers",
+      "official_careers_url": "https://www.deshawindia.com/careers",
+      "args": [],
+      "note": "Embedded full descriptions; Core Tech, Front Office Tech, Quality and Test Engineering, Systems; India; exploratory records excluded. No posting dates exposed.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "native",
+        "method": "Embedded full descriptions; Core Tech, Front Office Tech, Quality and Test Engineering, Systems; India; exploratory records excluded. No posting dates exposed."
+      },
+      "validation": {
+        "checked_at": "2026-11-01T04:41:44.272524+00:00",
+        "status": "ok",
+        "sample_jobs": 30,
+        "sample_file": "local_career_portals/data/samples/batch4_20261101_100810/batch4_top50.json"
+      }
+    },
+    {
+      "company": "Squarepoint Capital",
+      "slug": "squarepoint",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_additional_board_jobs.py",
+      "url": "https://www.squarepoint-capital.com/open-opportunities",
+      "official_careers_url": "https://www.squarepoint-capital.com/open-opportunities",
+      "args": [
+        "--source",
+        "squarepoint"
+      ],
+      "note": "Public board Technology category plus engineering-title and India guards; publication date before local limit. Includes engineering/developer titles outside the main technical department (e.g. quant development, ML and security); excludes non-engineering titles through the final guard.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Public board Technology category plus engineering-title and India guards; publication date before local limit. Includes engineering/developer titles outside the main technical department (e.g. quant development, ML and security); excludes non-engineering titles through the final guard."
+      },
+      "validation": {
+        "checked_at": "2026-11-01T04:41:44.272524+00:00",
+        "status": "ok",
+        "sample_jobs": 7,
+        "sample_file": "local_career_portals/data/samples/batch4_20261101_100810/batch4_top50.json"
+      }
+    },
+    {
+      "company": "Tower Research",
+      "slug": "tower_research",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_additional_board_jobs.py",
+      "url": "https://tower-research.com/roles/",
+      "official_careers_url": "https://tower-research.com/careers/",
+      "args": [
+        "--source",
+        "tower_research"
+      ],
+      "note": "Public board native engineering departments and descendants, India locations, publication date before limit. Includes engineering/developer titles outside the main technical department (e.g. quant development, ML and security); excludes non-engineering titles through the final guard.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Public board native engineering departments and descendants, India locations, publication date before limit. Includes engineering/developer titles outside the main technical department (e.g. quant development, ML and security); excludes non-engineering titles through the final guard."
+      },
+      "validation": {
+        "checked_at": "2026-11-01T04:41:44.272524+00:00",
+        "status": "ok",
+        "sample_jobs": 9,
+        "sample_file": "local_career_portals/data/samples/batch4_20261101_100810/batch4_top50.json"
+      }
+    },
+    {
+      "company": "Millennium Management",
+      "slug": "millennium",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_eightfold_company_jobs.py",
+      "url": "https://career.mlp.com/careers?domain=mlp.com&query=Software%20Engineer&location=India&sort_by=timestamp",
+      "official_careers_url": "https://www.mlp.com/careers/",
+      "args": [
+        "--source",
+        "millennium"
+      ],
+      "note": "Official Eightfold v2 API, India and engineering-title validation; t_update is an update date, not publication date.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Official Eightfold v2 API, India and engineering-title validation; t_update is an update date, not publication date."
+      },
+      "validation": {
+        "checked_at": "2026-11-01T04:41:44.272524+00:00",
+        "status": "ok",
+        "sample_jobs": 13,
+        "sample_file": "local_career_portals/data/samples/batch4_20261101_100810/batch4_top50.json"
+      }
+    },
+    {
+      "company": "Moloco",
+      "slug": "moloco",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_additional_board_jobs.py",
+      "url": "https://www.moloco.com/company/careers",
+      "official_careers_url": "https://www.moloco.com/company/careers",
+      "args": [
+        "--source",
+        "moloco"
+      ],
+      "note": "Official page boardToken=moloco; native Engineering descendants; India scope. No India locations present during discovery.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "native",
+        "method": "Official page boardToken=moloco; native Engineering descendants; India scope. No India locations present during discovery."
+      },
+      "validation": {
+        "checked_at": "2026-11-01T04:41:44.272524+00:00",
+        "status": "empty",
+        "sample_jobs": 0,
+        "sample_file": "local_career_portals/data/samples/batch4_20261101_100810/batch4_top50.json"
+      }
+    },
+    {
+      "company": "Arcesium",
+      "slug": "arcesium",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_additional_board_jobs.py",
+      "url": "https://job-boards.greenhouse.io/arcesiumllc",
+      "official_careers_url": "https://www.arcesium.com/careers",
+      "args": [
+        "--source",
+        "arcesium"
+      ],
+      "note": "Public linked Arcesium LLC board; Technology category, conservative engineering titles and India guard; original website returned 429 and was not retried.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Public linked Arcesium LLC board; Technology category, conservative engineering titles and India guard; original website returned 429 and was not retried."
+      },
+      "validation": {
+        "checked_at": "2026-11-01T04:41:44.272524+00:00",
+        "status": "ok",
+        "sample_jobs": 3,
+        "sample_file": "local_career_portals/data/samples/batch4_20261101_100810/batch4_top50.json"
+      }
+    },
+    {
+      "company": "Adyen",
+      "slug": "adyen",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_additional_board_jobs.py",
+      "url": "https://careers.adyen.com/vacancies",
+      "official_careers_url": "https://careers.adyen.com/vacancies",
+      "args": [
+        "--source",
+        "adyen"
+      ],
+      "note": "Development/infrastructure teams span multiple department labels; conservative engineering-title and India checks before sorting/limiting.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Development/infrastructure teams span multiple department labels; conservative engineering-title and India checks before sorting/limiting."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T08:47:17.039750+00:00",
+        "status": "empty",
+        "sample_jobs": 0,
+        "sample_file": "local_career_portals/data/samples/batch5_20261103_141702/batch5_top50.json"
+      }
+    },
+    {
+      "company": "Canva",
+      "slug": "canva",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_canva_jobs.py",
+      "url": "https://www.lifeatcanva.com/en/jobs/",
+      "official_careers_url": "https://www.lifeatcanva.com/en/jobs/",
+      "args": [],
+      "note": "Current public SmartRecruiters board; explicit country IN and engineering titles; empty India results checked against an active global board.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Current public SmartRecruiters board; explicit country IN and engineering titles; empty India results checked against an active global board."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T08:47:17.039750+00:00",
+        "status": "empty",
+        "sample_jobs": 0,
+        "sample_file": "local_career_portals/data/samples/batch5_20261103_141702/batch5_top50.json"
+      }
+    },
+    {
+      "company": "Notion",
+      "slug": "notion",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_ashby_jobs.py",
+      "url": "https://www.notion.com/careers",
+      "official_careers_url": "https://www.notion.com/careers",
+      "args": [
+        "--source",
+        "notion"
+      ],
+      "note": "Official Ashby board Notion; listed engineering titles explicitly eligible in India, including secondary locations.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Official Ashby board Notion; listed engineering titles explicitly eligible in India, including secondary locations."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T08:47:17.039750+00:00",
+        "status": "ok",
+        "sample_jobs": 1,
+        "sample_file": "local_career_portals/data/samples/batch5_20261103_141702/batch5_top50.json"
+      }
+    },
+    {
+      "company": "Anyscale",
+      "slug": "anyscale",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_ashby_jobs.py",
+      "url": "https://www.anyscale.com/careers",
+      "official_careers_url": "https://www.anyscale.com/careers",
+      "args": [
+        "--source",
+        "anyscale"
+      ],
+      "note": "Official linked Ashby board anyscale; explicit India eligibility and conservative engineering-title filter.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Official linked Ashby board anyscale; explicit India eligibility and conservative engineering-title filter."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T08:47:17.039750+00:00",
+        "status": "ok",
+        "sample_jobs": 5,
+        "sample_file": "local_career_portals/data/samples/batch5_20261103_141702/batch5_top50.json"
+      }
+    },
+    {
+      "company": "ElevenLabs",
+      "slug": "elevenlabs",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_ashby_jobs.py",
+      "url": "https://elevenlabs.io/careers",
+      "official_careers_url": "https://elevenlabs.io/careers",
+      "args": [
+        "--source",
+        "elevenlabs"
+      ],
+      "note": "Official Ashby board ElevenLabs; engineering titles plus explicit primary/secondary India eligibility. Remote alone does not imply India eligibility.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Official Ashby board ElevenLabs; engineering titles plus explicit primary/secondary India eligibility. Remote alone does not imply India eligibility."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T08:47:17.039750+00:00",
+        "status": "empty",
+        "sample_jobs": 0,
+        "sample_file": "local_career_portals/data/samples/batch5_20261103_141702/batch5_top50.json"
+      }
+    },
+    {
+      "company": "Samsara",
+      "slug": "samsara",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_additional_board_jobs.py",
+      "url": "https://www.samsara.com/company/careers",
+      "official_careers_url": "https://www.samsara.com/company/careers",
+      "args": [
+        "--source",
+        "samsara"
+      ],
+      "note": "Public linked board samsara; technical departments include Platform, Telematics and Safety AI. Engineering-title/India checks, excluding sales/support departments.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Public linked board samsara; technical departments include Platform, Telematics and Safety AI. Engineering-title/India checks, excluding sales/support departments."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T08:47:17.039750+00:00",
+        "status": "ok",
+        "sample_jobs": 3,
+        "sample_file": "local_career_portals/data/samples/batch5_20261103_141702/batch5_top50.json"
+      }
+    },
+    {
+      "company": "Wiz",
+      "slug": "wiz",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_additional_board_jobs.py",
+      "url": "https://www.wiz.io/careers",
+      "official_careers_url": "https://www.wiz.io/careers",
+      "args": [
+        "--source",
+        "wiz"
+      ],
+      "note": "Public linked board wizinc; engineering-title and India filters, excluding sales/support functions.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Public linked board wizinc; engineering-title and India filters, excluding sales/support functions."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T08:47:17.039750+00:00",
+        "status": "empty",
+        "sample_jobs": 0,
+        "sample_file": "local_career_portals/data/samples/batch5_20261103_141702/batch5_top50.json"
+      }
+    },
+    {
+      "company": "CyberArk",
+      "slug": "cyberark",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_cyberark_jobs.py",
+      "url": "https://jobs.paloaltonetworks.com/en/search-jobs/CyberArk/47263/1",
+      "official_careers_url": "https://www.cyberark.com/careers/",
+      "args": [],
+      "note": "CyberArk careers now routes to Palo Alto Networks/Idira. Brand-scoped successor search; explicit CyberArk/Idira mention, India country and engineering title required; real hiring employer preserved.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "CyberArk careers now routes to Palo Alto Networks/Idira. Brand-scoped successor search; explicit CyberArk/Idira mention, India country and engineering title required; real hiring employer preserved."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T08:47:17.039750+00:00",
+        "status": "empty",
+        "sample_jobs": 0,
+        "sample_file": "local_career_portals/data/samples/batch5_20261103_141702/batch5_top50.json"
+      }
+    },
+    {
+      "company": "Okta",
+      "slug": "okta",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_additional_board_jobs.py",
+      "url": "https://www.okta.com/company/careers/job-listing/",
+      "official_careers_url": "https://www.okta.com/company/careers/job-listing/",
+      "args": [
+        "--source",
+        "okta"
+      ],
+      "note": "Public linked board okta; engineering titles across SW-Eng/Infrastructure/Security teams, India, excluding sales/support departments.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Public linked board okta; engineering titles across SW-Eng/Infrastructure/Security teams, India, excluding sales/support departments."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T08:47:17.039750+00:00",
+        "status": "ok",
+        "sample_jobs": 50,
+        "sample_file": "local_career_portals/data/samples/batch5_20261103_141702/batch5_top50.json"
+      }
+    },
+    {
+      "company": "Snyk",
+      "slug": "snyk",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_ashby_jobs.py",
+      "url": "https://snyk.io/careers/all-jobs/",
+      "official_careers_url": "https://snyk.io/careers/all-jobs/",
+      "args": [
+        "--source",
+        "snyk"
+      ],
+      "note": "Official linked Ashby board Snyk; listed engineering titles with explicit India eligibility.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Official linked Ashby board Snyk; listed engineering titles with explicit India eligibility."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T08:47:17.039750+00:00",
+        "status": "empty",
+        "sample_jobs": 0,
+        "sample_file": "local_career_portals/data/samples/batch5_20261103_141702/batch5_top50.json"
+      }
+    },
+    {
+      "company": "JFrog",
+      "slug": "jfrog",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_additional_board_jobs.py",
+      "url": "https://join.jfrog.com/positions/",
+      "official_careers_url": "https://join.jfrog.com/positions/",
+      "args": [
+        "--source",
+        "jfrog"
+      ],
+      "note": "Public JFrog-linked Greenhouse board; Engineering/India title and location guards; first publication descending.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Public JFrog-linked Greenhouse board; Engineering/India title and location guards; first publication descending."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T10:11:00.711945+00:00",
+        "status": "empty",
+        "sample_jobs": 0,
+        "sample_file": "local_career_portals/data/samples/batch6_20261103_153907/batch6_top50.json"
+      }
+    },
+    {
+      "company": "Netskope",
+      "slug": "netskope",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_additional_board_jobs.py",
+      "url": "https://www.netskope.com/company/careers/open-positions",
+      "official_careers_url": "https://www.netskope.com/company/careers/open-positions",
+      "args": [
+        "--source",
+        "netskope"
+      ],
+      "note": "Public Netskope board; engineering-title/India checks including Member of Technical Staff; excludes sales/support departments.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Public Netskope board; engineering-title/India checks including Member of Technical Staff; excludes sales/support departments."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T10:11:00.711945+00:00",
+        "status": "ok",
+        "sample_jobs": 15,
+        "sample_file": "local_career_portals/data/samples/batch6_20261103_153907/batch6_top50.json"
+      }
+    },
+    {
+      "company": "SentinelOne",
+      "slug": "sentinelone",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_additional_board_jobs.py",
+      "url": "https://www.sentinelone.com/careers/",
+      "official_careers_url": "https://www.sentinelone.com/careers/",
+      "args": [
+        "--source",
+        "sentinelone"
+      ],
+      "note": "Public sentinellabs board with SentinelOne canonical links; engineering-title/India checks; original jobs page returned 429 and was not retried.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Public sentinellabs board with SentinelOne canonical links; engineering-title/India checks; original jobs page returned 429 and was not retried."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T10:11:00.711945+00:00",
+        "status": "ok",
+        "sample_jobs": 9,
+        "sample_file": "local_career_portals/data/samples/batch6_20261103_153907/batch6_top50.json"
+      }
+    },
+    {
+      "company": "Pure Storage",
+      "slug": "pure_storage",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_additional_board_jobs.py",
+      "url": "https://www.everpuredata.com/company/careers.html",
+      "official_careers_url": "https://www.everpuredata.com/company/careers.html",
+      "args": [
+        "--source",
+        "pure_storage"
+      ],
+      "note": "Company is now Everpure (formerly Pure Storage). Public purestorage board; technical titles including Member of Technical Staff, India; actual employer retained.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Company is now Everpure (formerly Pure Storage). Public purestorage board; technical titles including Member of Technical Staff, India; actual employer retained."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T10:11:00.711945+00:00",
+        "status": "ok",
+        "sample_jobs": 40,
+        "sample_file": "local_career_portals/data/samples/batch6_20261103_153907/batch6_top50.json"
+      }
+    },
+    {
+      "company": "Arista Networks",
+      "slug": "arista",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_arista_jobs.py",
+      "url": "https://www.arista.com/en/careers",
+      "official_careers_url": "https://www.arista.com/en/careers",
+      "args": [],
+      "note": "Public AristaNetworks SmartRecruiters feed; native country IN and engineering titles; full description/qualification sections.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Public AristaNetworks SmartRecruiters feed; native country IN and engineering titles; full description/qualification sections."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T10:11:00.711945+00:00",
+        "status": "ok",
+        "sample_jobs": 20,
+        "sample_file": "local_career_portals/data/samples/batch6_20261103_153907/batch6_top50.json"
+      }
+    },
+    {
+      "company": "Cohesity",
+      "slug": "cohesity",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_workday_india_jobs.py",
+      "url": "https://cohesity.wd5.myworkdayjobs.com/Cohesity_Careers?q=Engineer",
+      "official_careers_url": "https://www.cohesity.com/careers/open-positions/",
+      "args": [
+        "--company",
+        "Cohesity"
+      ],
+      "note": "Reuses Workday transport; actual tenant discovered from official feed in minimized-headed browser. Production uses public Workday API with native India and engineering facets plus detail-country validation.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Reuses Workday transport; actual tenant discovered from official feed in minimized-headed browser. Production uses public Workday API with native India and engineering facets plus detail-country validation."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T10:11:00.711945+00:00",
+        "status": "ok",
+        "sample_jobs": 6,
+        "sample_file": "local_career_portals/data/samples/batch6_20261103_153907/batch6_top50.json"
+      }
+    },
+    {
+      "company": "Broadcom",
+      "slug": "broadcom",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_workday_india_jobs.py",
+      "url": "https://broadcom.wd1.myworkdayjobs.com/External_Career?q=Engineer",
+      "official_careers_url": "https://www.broadcom.com/company/careers",
+      "args": [
+        "--company",
+        "Broadcom"
+      ],
+      "note": "Public Workday API; discovers India locations because this tenant does not expose a country facet; R&D facet and technical titles; detail-country checked.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Public Workday API; discovers India locations because this tenant does not expose a country facet; R&D facet and technical titles; detail-country checked."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T10:11:00.711945+00:00",
+        "status": "ok",
+        "sample_jobs": 50,
+        "sample_file": "local_career_portals/data/samples/batch6_20261103_153907/batch6_top50.json"
+      }
+    },
+    {
+      "company": "Workday",
+      "slug": "workday",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_workday_india_jobs.py",
+      "url": "https://workday.wd5.myworkdayjobs.com/Workday?q=Engineer",
+      "official_careers_url": "https://www.workday.com/en-us/company/careers/overview.html",
+      "args": [
+        "--company",
+        "Workday"
+      ],
+      "note": "Public Workday API; tenant requires Location_Country, not locationCountry. Discovers India and engineering facets, validates detail country and sorts startDate.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Public Workday API; tenant requires Location_Country, not locationCountry. Discovers India and engineering facets, validates detail country and sorts startDate."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T10:11:00.711945+00:00",
+        "status": "ok",
+        "sample_jobs": 1,
+        "sample_file": "local_career_portals/data/samples/batch6_20261103_153907/batch6_top50.json"
+      }
+    },
+    {
+      "company": "Docusign",
+      "slug": "docusign",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_docusign_jobs.py",
+      "url": "https://careers.docusign.com/careers-home/jobs",
+      "official_careers_url": "https://careers.docusign.com/careers-home/jobs",
+      "args": [],
+      "note": "Public careers API with complete description fields; native country India and verified engineering titles; category metadata can disagree with titles and is preserved without being trusted.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Public careers API with complete description fields; native country India and verified engineering titles; category metadata can disagree with titles and is preserved without being trusted."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T10:11:00.711945+00:00",
+        "status": "ok",
+        "sample_jobs": 29,
+        "sample_file": "local_career_portals/data/samples/batch6_20261103_153907/batch6_top50.json"
+      }
+    },
+    {
+      "company": "Dynatrace",
+      "slug": "dynatrace",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_dynatrace_jobs.py",
+      "url": "https://www.dynatrace.com/careers/jobs/",
+      "official_careers_url": "https://www.dynatrace.com/careers/jobs/",
+      "args": [],
+      "note": "Native Coveo country=India and team=Engineering; full JobPosting descriptions and datePosted; validates active global taxonomy; no index-date substitution.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "native",
+        "method": "Native Coveo country=India and team=Engineering; full JobPosting descriptions and datePosted; validates active global taxonomy; no index-date substitution."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T13:04:58.368789+00:00",
+        "status": "empty",
+        "sample_jobs": 0,
+        "sample_file": "local_career_portals/data/samples/batch7_20261103_183101/batch7_top50.json"
+      }
+    },
+    {
+      "company": "PayPal",
+      "slug": "paypal",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_workday_india_jobs.py",
+      "url": "https://paypal.wd1.myworkdayjobs.com/jobs",
+      "official_careers_url": "https://careers.pypl.com/locations/india/default.aspx",
+      "args": [
+        "--company",
+        "PayPal",
+        "--search-text",
+        ""
+      ],
+      "note": "Public Workday jobs tenant; discovers India locations and technical job-family IDs; no keyword restriction, verifies detail country, sorts startDate before cap.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Public Workday jobs tenant; discovers India locations and technical job-family IDs; no keyword restriction, verifies detail country, sorts startDate before cap."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T13:04:58.368789+00:00",
+        "status": "ok",
+        "sample_jobs": 9,
+        "sample_file": "local_career_portals/data/samples/batch7_20261103_183101/batch7_top50.json"
+      }
+    },
+    {
+      "company": "eBay",
+      "slug": "ebay",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_workday_india_jobs.py",
+      "url": "https://ebay.wd5.myworkdayjobs.com/apply",
+      "official_careers_url": "https://jobs.ebayinc.com/us/en/search-results",
+      "args": [
+        "--company",
+        "eBay",
+        "--search-text",
+        ""
+      ],
+      "note": "Public Workday apply tenant linked from official eBay jobs; native Location_Country and Engineering job family; detail India check and startDate sorting.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Public Workday apply tenant linked from official eBay jobs; native Location_Country and Engineering job family; detail India check and startDate sorting."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T13:04:58.368789+00:00",
+        "status": "ok",
+        "sample_jobs": 50,
+        "sample_file": "local_career_portals/data/samples/batch7_20261103_183101/batch7_top50.json"
+      }
+    },
+    {
+      "company": "Commvault",
+      "slug": "commvault",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_additional_board_jobs.py",
+      "url": "https://www.commvault.com/careers/jobs",
+      "official_careers_url": "https://www.commvault.com/careers",
+      "args": [
+        "--source",
+        "commvault"
+      ],
+      "note": "Public commvault Greenhouse board; India location/offices and technical titles; excludes sales/support departments; full descriptions and first_published before cap.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Public commvault Greenhouse board; India location/offices and technical titles; excludes sales/support departments; full descriptions and first_published before cap."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T13:04:58.368789+00:00",
+        "status": "ok",
+        "sample_jobs": 9,
+        "sample_file": "local_career_portals/data/samples/batch7_20261103_183101/batch7_top50.json"
+      }
+    },
+    {
+      "company": "Veeam Software",
+      "slug": "veeam",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_additional_board_jobs.py",
+      "url": "https://careers.veeam.com/search-jobs",
+      "official_careers_url": "https://careers.veeam.com/en/india",
+      "args": [
+        "--source",
+        "veeam"
+      ],
+      "note": "Official portal links to veeamsoftware EU Greenhouse board, available through standard public board API; India locations and technical titles; full descriptions and first_published.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Official portal links to veeamsoftware EU Greenhouse board, available through standard public board API; India locations and technical titles; full descriptions and first_published."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T13:04:58.368789+00:00",
+        "status": "ok",
+        "sample_jobs": 6,
+        "sample_file": "local_career_portals/data/samples/batch7_20261103_183101/batch7_top50.json"
+      }
+    },
+    {
+      "company": "Red Hat",
+      "slug": "red_hat",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_workday_india_jobs.py",
+      "url": "https://redhat.wd5.myworkdayjobs.com/jobs",
+      "official_careers_url": "https://www.redhat.com/en/jobs",
+      "args": [
+        "--company",
+        "Red Hat",
+        "--search-text",
+        ""
+      ],
+      "note": "Public Workday API; discovers label-based Country and Job Function facets (opaque a/d keys); India/Engineering, detail geography and technical-title checks.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Public Workday API; discovers label-based Country and Job Function facets (opaque a/d keys); India/Engineering, detail geography and technical-title checks."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T13:04:58.368789+00:00",
+        "status": "ok",
+        "sample_jobs": 1,
+        "sample_file": "local_career_portals/data/samples/batch7_20261103_183101/batch7_top50.json"
+      }
+    },
+    {
+      "company": "GitLab",
+      "slug": "gitlab",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_additional_board_jobs.py",
+      "url": "https://job-boards.greenhouse.io/gitlab/",
+      "official_careers_url": "https://about.gitlab.com/jobs/all-jobs/",
+      "args": [
+        "--source",
+        "gitlab"
+      ],
+      "note": "Public gitlab Greenhouse board; explicit India primary/secondary locations or offices only; unspecified Remote and foreign remote roles excluded; first_published retained.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Public gitlab Greenhouse board; explicit India primary/secondary locations or offices only; unspecified Remote and foreign remote roles excluded; first_published retained."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T13:04:58.368789+00:00",
+        "status": "ok",
+        "sample_jobs": 20,
+        "sample_file": "local_career_portals/data/samples/batch7_20261103_183101/batch7_top50.json"
+      }
+    },
+    {
+      "company": "Automattic",
+      "slug": "automattic",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_automattic_jobs.py",
+      "url": "https://automattic.com/work-with-us/jobs/",
+      "official_careers_url": "https://automattic.com/work-with-us/jobs/",
+      "args": [],
+      "note": "Embedded ghJobsData with full descriptions; Engineering/Infrastructure and technical titles; India or explicit role-specific worldwide hiring evidence, unknown geography excluded; unavailable publication dates null.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Embedded ghJobsData with full descriptions; Engineering/Infrastructure and technical titles; India or explicit role-specific worldwide hiring evidence, unknown geography excluded; unavailable publication dates null."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T13:04:58.368789+00:00",
+        "status": "ok",
+        "sample_jobs": 1,
+        "sample_file": "local_career_portals/data/samples/batch7_20261103_183101/batch7_top50.json"
+      }
+    },
+    {
+      "company": "Grafana Labs",
+      "slug": "grafana_labs",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_additional_board_jobs.py",
+      "url": "https://job-boards.greenhouse.io/grafanalabs",
+      "official_careers_url": "https://grafana.com/careers/",
+      "args": [
+        "--source",
+        "grafana_labs"
+      ],
+      "note": "Public grafanalabs Greenhouse board linked by official careers; explicit India locations/offices and technical titles, foreign remote roles excluded; first_published retained.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Public grafanalabs Greenhouse board linked by official careers; explicit India locations/offices and technical titles, foreign remote roles excluded; first_published retained."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T13:04:58.368789+00:00",
+        "status": "empty",
+        "sample_jobs": 0,
+        "sample_file": "local_career_portals/data/samples/batch7_20261103_183101/batch7_top50.json"
+      }
+    },
+    {
+      "company": "Elastic",
+      "slug": "elastic",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_additional_board_jobs.py",
+      "url": "https://jobs.elastic.co/",
+      "official_careers_url": "https://www.elastic.co/careers",
+      "args": [
+        "--source",
+        "elastic"
+      ],
+      "note": "Public elastic Greenhouse board with canonical jobs.elastic.co links; explicit India locations/offices and technical titles; excludes consulting and partner sales architect departments; full descriptions and first_published.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Public elastic Greenhouse board with canonical jobs.elastic.co links; explicit India locations/offices and technical titles; excludes consulting and partner sales architect departments; full descriptions and first_published."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T13:04:58.368789+00:00",
+        "status": "ok",
+        "sample_jobs": 3,
+        "sample_file": "local_career_portals/data/samples/batch7_20261103_183101/batch7_top50.json"
+      }
+    },
+    {
+      "company": "Yugabyte",
+      "slug": "yugabyte",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_additional_board_jobs.py",
+      "url": "https://www.yugabyte.com/careers/",
+      "official_careers_url": "https://www.yugabyte.com/careers/",
+      "args": [
+        "--source",
+        "yugabyte"
+      ],
+      "note": "Public yugabyte Greenhouse board; India locations/offices, technical titles and sales/support exclusions; full descriptions and first_published before cap.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Public yugabyte Greenhouse board; India locations/offices, technical titles and sales/support exclusions; full descriptions and first_published before cap."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T13:13:05.259175+00:00",
+        "status": "ok",
+        "sample_jobs": 2,
+        "sample_file": "local_career_portals/data/samples/batch8_20261103_184255/batch8_top50.json"
+      }
+    },
+    {
+      "company": "Redis",
+      "slug": "redis",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_ashby_jobs.py",
+      "url": "https://redis.io/company/careers/current-job-openings/",
+      "official_careers_url": "https://redis.io/company/careers/current-job-openings/",
+      "args": [
+        "--source",
+        "redis"
+      ],
+      "note": "Current Redis Ashby public feed; listed Engineering department and technical titles; explicit India primary/secondary locations, publishedAt retained; old redislabs board is unavailable.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Current Redis Ashby public feed; listed Engineering department and technical titles; explicit India primary/secondary locations, publishedAt retained; old redislabs board is unavailable."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T13:13:05.259175+00:00",
+        "status": "empty",
+        "sample_jobs": 0,
+        "sample_file": "local_career_portals/data/samples/batch8_20261103_184255/batch8_top50.json"
+      }
+    },
+    {
+      "company": "SingleStore",
+      "slug": "singlestore",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_additional_board_jobs.py",
+      "url": "https://www.singlestore.com/careers/jobs/",
+      "official_careers_url": "https://www.singlestore.com/careers/jobs/",
+      "args": [
+        "--source",
+        "singlestore"
+      ],
+      "note": "Public singlestore Greenhouse board; India and technical titles across Engine, Internal Services, Cloud Operation and other development teams; sales/SE/support excluded.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Public singlestore Greenhouse board; India and technical titles across Engine, Internal Services, Cloud Operation and other development teams; sales/SE/support excluded."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T13:13:05.259175+00:00",
+        "status": "ok",
+        "sample_jobs": 6,
+        "sample_file": "local_career_portals/data/samples/batch8_20261103_184255/batch8_top50.json"
+      }
+    },
+    {
+      "company": "StarTree",
+      "slug": "startree",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_additional_board_jobs.py",
+      "url": "https://job-boards.greenhouse.io/startree",
+      "official_careers_url": "https://job-boards.greenhouse.io/startree",
+      "args": [
+        "--source",
+        "startree"
+      ],
+      "note": "Public startree board; native Engineering department and descendants with India locations; full descriptions and first_published.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "native",
+        "method": "Public startree board; native Engineering department and descendants with India locations; full descriptions and first_published."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T13:13:05.259175+00:00",
+        "status": "ok",
+        "sample_jobs": 3,
+        "sample_file": "local_career_portals/data/samples/batch8_20261103_184255/batch8_top50.json"
+      }
+    },
+    {
+      "company": "ThoughtSpot",
+      "slug": "thoughtspot",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_thoughtspot_jobs.py",
+      "url": "https://www.thoughtspot.com/careers",
+      "official_careers_url": "https://www.thoughtspot.com/careers",
+      "args": [],
+      "note": "Official getCareersListing API and current Rippling job details; structured India plus technical/MTS/tech-lead titles, sales/customer departments excluded; createdOn retained separately from unknown publication date.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "native",
+        "method": "Official getCareersListing API and current Rippling job details; structured India plus technical/MTS/tech-lead titles, sales/customer departments excluded; createdOn retained separately from unknown publication date."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T13:13:05.259175+00:00",
+        "status": "ok",
+        "sample_jobs": 7,
+        "sample_file": "local_career_portals/data/samples/batch8_20261103_184255/batch8_top50.json"
+      }
+    },
+    {
+      "company": "Instabase",
+      "slug": "instabase",
+      "status": "source_unavailable",
+      "existing_script": "local_career_portals/fetch_additional_board_jobs.py",
+      "url": "https://www.instabase.com/careers/jobs",
+      "official_careers_url": "https://www.instabase.com/careers/jobs",
+      "args": [
+        "--source",
+        "instabase"
+      ],
+      "note": "Adapter configured, but official embedded instabase Greenhouse board and board API return HTTP 404. Browser confirms the careers page cannot load its feed; excluded from scheduled/default runs, not reported as zero matching jobs.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Adapter configured, but official embedded instabase Greenhouse board and board API return HTTP 404. Browser confirms the careers page cannot load its feed; excluded from scheduled/default runs, not reported as zero matching jobs."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T13:13:05.259175+00:00",
+        "status": "source_unavailable",
+        "sample_jobs": 0,
+        "sample_file": "local_career_portals/data/samples/batch8_20261103_184255/batch8_top50.json"
+      }
+    },
+    {
+      "company": "Prophecy AI",
+      "slug": "prophecy",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_additional_board_jobs.py",
+      "url": "https://www.prophecy.ai/careers",
+      "official_careers_url": "https://www.prophecy.ai/careers",
+      "args": [
+        "--source",
+        "prophecy"
+      ],
+      "note": "Official portal links to prophecysimpledatalabs Greenhouse; India and technical titles, excluding talent communities/pools and general applications; full descriptions and first_published where vacancies exist.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Official portal links to prophecysimpledatalabs Greenhouse; India and technical titles, excluding talent communities/pools and general applications; full descriptions and first_published where vacancies exist."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T13:13:05.259175+00:00",
+        "status": "empty",
+        "sample_jobs": 0,
+        "sample_file": "local_career_portals/data/samples/batch8_20261103_184255/batch8_top50.json"
+      }
+    },
+    {
+      "company": "DevRev",
+      "slug": "devrev",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_additional_board_jobs.py",
+      "url": "https://job-boards.greenhouse.io/devrev",
+      "official_careers_url": "https://job-boards.greenhouse.io/devrev",
+      "args": [
+        "--source",
+        "devrev"
+      ],
+      "note": "Public devrev board; native Engineering, Engineering - Applied AI Engineering and R&D departments/descendants with India locations; full descriptions and first_published. Marketing page returned 429 during discovery; board worked.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "native",
+        "method": "Public devrev board; native Engineering, Engineering - Applied AI Engineering and R&D departments/descendants with India locations; full descriptions and first_published. Marketing page returned 429 during discovery; board worked."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T13:13:05.259175+00:00",
+        "status": "ok",
+        "sample_jobs": 9,
+        "sample_file": "local_career_portals/data/samples/batch8_20261103_184255/batch8_top50.json"
+      }
+    },
+    {
+      "company": "Ema",
+      "slug": "ema",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_ashby_jobs.py",
+      "url": "https://www.ema.ai/careers/jobs",
+      "official_careers_url": "https://www.ema.ai/careers/jobs",
+      "args": [
+        "--source",
+        "ema"
+      ],
+      "note": "Ema Ashby public feed matches all 39 IDs on official portal; listed Engineering department and technical titles, explicit India/Bengaluru primary/secondary locations; full descriptions and publishedAt.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Ema Ashby public feed matches all 39 IDs on official portal; listed Engineering department and technical titles, explicit India/Bengaluru primary/secondary locations; full descriptions and publishedAt."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T13:13:05.259175+00:00",
+        "status": "ok",
+        "sample_jobs": 9,
+        "sample_file": "local_career_portals/data/samples/batch8_20261103_184255/batch8_top50.json"
+      }
+    },
+    {
+      "company": "Endor Labs",
+      "slug": "endor_labs",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_additional_board_jobs.py",
+      "url": "https://www.endorlabs.com/careers",
+      "official_careers_url": "https://www.endorlabs.com/careers",
+      "args": [
+        "--source",
+        "endor_labs"
+      ],
+      "note": "Official portal links to endorlabs Greenhouse; native Engineering department/descendants and India locations, including security researchers; full descriptions and first_published.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "native",
+        "method": "Official portal links to endorlabs Greenhouse; native Engineering department/descendants and India locations, including security researchers; full descriptions and first_published."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T13:13:05.259175+00:00",
+        "status": "ok",
+        "sample_jobs": 8,
+        "sample_file": "local_career_portals/data/samples/batch8_20261103_184255/batch8_top50.json"
+      }
+    },
+    {
+      "company": "Kong",
+      "slug": "kong",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_ashby_jobs.py",
+      "url": "https://careers.konghq.com/",
+      "official_careers_url": "https://careers.konghq.com/",
+      "args": [
+        "--source",
+        "kong"
+      ],
+      "note": "Current kong Ashby board; actual native team=ENG under department=All Cost Center, technical titles and explicit India primary/secondary locations; full descriptions and publishedAt. Obsolete Lever board not used.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Current kong Ashby board; actual native team=ENG under department=All Cost Center, technical titles and explicit India primary/secondary locations; full descriptions and publishedAt. Obsolete Lever board not used."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T16:21:53.632359+00:00",
+        "status": "ok",
+        "sample_jobs": 5,
+        "sample_file": "local_career_portals/data/samples/batch9_retest_20261103_214920/batch9_retest_top50.json"
+      },
+      "transport": "browser"
+    },
+    {
+      "company": "Docker",
+      "slug": "docker",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_ashby_jobs.py",
+      "url": "https://www.docker.com/career-openings/",
+      "official_careers_url": "https://www.docker.com/career-openings/",
+      "args": [
+        "--source",
+        "docker"
+      ],
+      "note": "Official careers uses Docker Ashby board; listed Engineering department and technical titles; explicit India locations or structured country, not generic Remote; publishedAt retained.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Official careers uses Docker Ashby board; listed Engineering department and technical titles; explicit India locations or structured country, not generic Remote; publishedAt retained."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T16:21:53.632359+00:00",
+        "status": "empty",
+        "sample_jobs": 0,
+        "sample_file": "local_career_portals/data/samples/batch9_retest_20261103_214920/batch9_retest_top50.json"
+      },
+      "transport": "browser"
+    },
+    {
+      "company": "ClickHouse",
+      "slug": "clickhouse",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_ashby_jobs.py",
+      "url": "https://clickhouse.com/company/careers",
+      "official_careers_url": "https://clickhouse.com/company/careers",
+      "args": [
+        "--source",
+        "clickhouse"
+      ],
+      "note": "Current clickhouse Ashby board, replacing obsolete Greenhouse source; Engineering department and technical titles with explicit India eligibility; Support Services consulting roles excluded; publishedAt retained.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Current clickhouse Ashby board, replacing obsolete Greenhouse source; Engineering department and technical titles with explicit India eligibility; Support Services consulting roles excluded; publishedAt retained."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T16:21:53.632359+00:00",
+        "status": "ok",
+        "sample_jobs": 2,
+        "sample_file": "local_career_portals/data/samples/batch9_retest_20261103_214920/batch9_retest_top50.json"
+      },
+      "transport": "browser"
+    },
+    {
+      "company": "Miro",
+      "slug": "miro",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_additional_board_jobs.py",
+      "url": "https://miro.com/careers/open-positions/",
+      "official_careers_url": "https://miro.com/careers/open-positions/",
+      "args": [
+        "--source",
+        "miro"
+      ],
+      "note": "Public realtimeboardglobal Greenhouse source, whose board redirects to Miro official careers; technical titles and India locations/offices; sales/support/consulting exclusions; first_published retained.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Public realtimeboardglobal Greenhouse source, whose board redirects to Miro official careers; technical titles and India locations/offices; sales/support/consulting exclusions; first_published retained."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T16:21:53.632359+00:00",
+        "status": "empty",
+        "sample_jobs": 0,
+        "sample_file": "local_career_portals/data/samples/batch9_retest_20261103_214920/batch9_retest_top50.json"
+      },
+      "transport": "browser"
+    },
+    {
+      "company": "Bloomreach",
+      "slug": "bloomreach",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_additional_board_jobs.py",
+      "url": "https://www.bloomreach.com/en/careers",
+      "official_careers_url": "https://www.bloomreach.com/en/careers",
+      "args": [
+        "--source",
+        "bloomreach"
+      ],
+      "note": "Public bloomreach Greenhouse board; native Engineering department/descendants and India locations/offices; full descriptions and first_published.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "native",
+        "method": "Public bloomreach Greenhouse board; native Engineering department/descendants and India locations/offices; full descriptions and first_published."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T16:21:53.632359+00:00",
+        "status": "ok",
+        "sample_jobs": 4,
+        "sample_file": "local_career_portals/data/samples/batch9_retest_20261103_214920/batch9_retest_top50.json"
+      },
+      "transport": "browser"
+    },
+    {
+      "company": "Apollo.io",
+      "slug": "apollo",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_additional_board_jobs.py",
+      "url": "https://www.apollo.io/careers",
+      "official_careers_url": "https://www.apollo.io/careers",
+      "args": [
+        "--source",
+        "apollo"
+      ],
+      "note": "Public apolloio Greenhouse board verified as Apollo.io sales intelligence company; native Engineering department and India/Bangalore locations/offices; full descriptions and first_published.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "native",
+        "method": "Public apolloio Greenhouse board verified as Apollo.io sales intelligence company; native Engineering department and India/Bangalore locations/offices; full descriptions and first_published."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T16:21:53.632359+00:00",
+        "status": "ok",
+        "sample_jobs": 3,
+        "sample_file": "local_career_portals/data/samples/batch9_retest_20261103_214920/batch9_retest_top50.json"
+      },
+      "transport": "browser"
+    },
+    {
+      "company": "Flexport",
+      "slug": "flexport",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_additional_board_jobs.py",
+      "url": "https://www.flexport.com/careers/",
+      "official_careers_url": "https://www.flexport.com/careers/",
+      "args": [
+        "--source",
+        "flexport"
+      ],
+      "note": "Public flexport Greenhouse board; explicit India locations/offices and technical titles, excluding sales/support/consulting departments and talent communities; full descriptions and first_published.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Public flexport Greenhouse board; explicit India locations/offices and technical titles, excluding sales/support/consulting departments and talent communities; full descriptions and first_published."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T16:21:53.632359+00:00",
+        "status": "empty",
+        "sample_jobs": 0,
+        "sample_file": "local_career_portals/data/samples/batch9_retest_20261103_214920/batch9_retest_top50.json"
+      },
+      "transport": "browser"
+    },
+    {
+      "company": "BitGo",
+      "slug": "bitgo",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_additional_board_jobs.py",
+      "url": "https://www.bitgo.com/company/careers",
+      "official_careers_url": "https://www.bitgo.com/company/careers",
+      "args": [
+        "--source",
+        "bitgo"
+      ],
+      "note": "Public bitgo Greenhouse board; native Engineering department/descendants and India locations/offices; Operations technical support jobs excluded; full descriptions and first_published.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "native",
+        "method": "Public bitgo Greenhouse board; native Engineering department/descendants and India locations/offices; Operations technical support jobs excluded; full descriptions and first_published."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T16:21:53.632359+00:00",
+        "status": "ok",
+        "sample_jobs": 4,
+        "sample_file": "local_career_portals/data/samples/batch9_retest_20261103_214920/batch9_retest_top50.json"
+      },
+      "transport": "browser"
+    },
+    {
+      "company": "Zeta",
+      "slug": "zeta",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_lever_india_jobs.py",
+      "url": "https://www.zeta.tech/in/careers/work-with-us",
+      "official_careers_url": "https://www.zeta.tech/in/careers/work-with-us",
+      "args": [],
+      "note": "User-confirmed Zeta fintech, not Zeta Global; reuses existing Lever HTTP transport with exact Engineering team, technical titles and explicit India locations; complete descriptions including lists/additional; JSON-LD publication dates where available, createdAt kept separate.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "User-confirmed Zeta fintech, not Zeta Global; reuses existing Lever HTTP transport with exact Engineering team, technical titles and explicit India locations; complete descriptions including lists/additional; JSON-LD publication dates where available, createdAt kept separate."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T16:21:53.632359+00:00",
+        "status": "ok",
+        "sample_jobs": 3,
+        "sample_file": "local_career_portals/data/samples/batch9_retest_20261103_214920/batch9_retest_top50.json"
+      },
+      "transport": "browser"
+    },
+    {
+      "company": "Quince",
+      "slug": "quince",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_additional_board_jobs.py",
+      "url": "https://www.quince.com/careers",
+      "official_careers_url": "https://www.quince.com/careers",
+      "args": [
+        "--source",
+        "quince"
+      ],
+      "transport": "browser",
+      "note": "Current quince Greenhouse board; Engineering-named department branches/descendants and India offices/locations; full descriptions and first_published.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "native",
+        "method": "Current quince Greenhouse board; Engineering-named department branches/descendants and India offices/locations; full descriptions and first_published."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T15:54:48.450147+00:00",
+        "status": "ok",
+        "sample_jobs": 8,
+        "sample_file": "local_career_portals/data/samples/batch10_20261103_211801/batch10_top50.json"
+      }
+    },
+    {
+      "company": "CRED",
+      "slug": "cred",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_lever_india_jobs.py",
+      "url": "https://careers.cred.club/",
+      "official_careers_url": "https://careers.cred.club/",
+      "args": [
+        "--source",
+        "cred"
+      ],
+      "transport": "browser",
+      "note": "Public cred Lever feed; India locations, technical titles and sales/support exclusions; includes security/enterprise IT engineering; full description sections and explicit publication dates where available.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Public cred Lever feed; India locations, technical titles and sales/support exclusions; includes security/enterprise IT engineering; full description sections and explicit publication dates where available."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T15:54:48.450147+00:00",
+        "status": "ok",
+        "sample_jobs": 2,
+        "sample_file": "local_career_portals/data/samples/batch10_20261103_211801/batch10_top50.json"
+      }
+    },
+    {
+      "company": "Groww",
+      "slug": "groww",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_additional_board_jobs.py",
+      "url": "https://groww.in/careers",
+      "official_careers_url": "https://groww.in/careers",
+      "args": [
+        "--source",
+        "groww"
+      ],
+      "transport": "browser",
+      "note": "Official careers links to EU groww Greenhouse board, readable through standard public board API; India and technical titles; full descriptions/first_published; unrelated Growwh and referral boards excluded.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Official careers links to EU groww Greenhouse board, readable through standard public board API; India and technical titles; full descriptions/first_published; unrelated Growwh and referral boards excluded."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T15:54:48.450147+00:00",
+        "status": "empty",
+        "sample_jobs": 0,
+        "sample_file": "local_career_portals/data/samples/batch10_20261103_211801/batch10_top50.json"
+      }
+    },
+    {
+      "company": "Meesho",
+      "slug": "meesho",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_lever_india_jobs.py",
+      "url": "https://www.meesho.io/jobs",
+      "official_careers_url": "https://www.meesho.io/jobs",
+      "args": [
+        "--source",
+        "meesho"
+      ],
+      "transport": "browser",
+      "note": "Current meesho public Lever feed; structured India locations and technical titles across Tech/security/platform teams, sales/support excluded; complete description sections and explicit publication dates.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Current meesho public Lever feed; structured India locations and technical titles across Tech/security/platform teams, sales/support excluded; complete description sections and explicit publication dates."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T15:54:48.450147+00:00",
+        "status": "ok",
+        "sample_jobs": 7,
+        "sample_file": "local_career_portals/data/samples/batch10_20261103_211801/batch10_top50.json"
+      }
+    },
+    {
+      "company": "Flipkart",
+      "slug": "flipkart",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_flipkart_portal_jobs.py",
+      "url": "https://flipkart.turbohire.co/dashboardv2?orgId=4d757ba0-3d57-448a-b82c-238ed87ac90f&type=0",
+      "official_careers_url": "https://flipkart.turbohire.co/dashboardv2?orgId=4d757ba0-3d57-448a-b82c-238ed87ac90f&type=0",
+      "args": [],
+      "transport": "browser",
+      "note": "Current Jobs link on flipkartcareers.com leads to TurboHire; headless browser captures full public filteredjobs payload; native Technology/CL-Engg and India addresses; PublishedDate retained; canonical obfuscated job links verified.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "native",
+        "method": "Current Jobs link on flipkartcareers.com leads to TurboHire; headless browser captures full public filteredjobs payload; native Technology/CL-Engg and India addresses; PublishedDate retained; canonical obfuscated job links verified."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T15:54:48.450147+00:00",
+        "status": "ok",
+        "sample_jobs": 4,
+        "sample_file": "local_career_portals/data/samples/batch10_20261103_211801/batch10_top50.json"
+      }
+    },
+    {
+      "company": "Walmart Global Tech",
+      "slug": "walmart_global_tech",
+      "status": "source_unavailable",
+      "existing_script": "local_career_portals/fetch_workday_india_jobs.py",
+      "url": "https://walmart.wd5.myworkdayjobs.com/WalmartExternal",
+      "official_careers_url": "https://walmart.wd5.myworkdayjobs.com/WalmartExternal",
+      "args": [
+        "--company",
+        "Walmart Global Tech",
+        "--search-text",
+        "",
+        "--require-brand",
+        "Walmart Global Tech"
+      ],
+      "transport": "browser",
+      "note": "Configured native India/Engineering Workday facets, technical titles and required Walmart Global Tech detail evidence. Tenant currently redirects to Workday service-interruption page (HTTP 500), so default runs exclude it until restored.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Configured native India/Engineering Workday facets, technical titles and required Walmart Global Tech detail evidence. Tenant currently redirects to Workday service-interruption page (HTTP 500), so default runs exclude it until restored."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T15:54:48.450147+00:00",
+        "status": "source_unavailable",
+        "sample_jobs": null,
+        "sample_file": "local_career_portals/data/samples/batch10_20261103_211801/batch10_top50.json"
+      }
+    },
+    {
+      "company": "Visa",
+      "slug": "visa",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_workday_india_jobs.py",
+      "url": "https://visa.wd5.myworkdayjobs.com/Visa",
+      "official_careers_url": "https://visa.wd5.myworkdayjobs.com/Visa",
+      "args": [
+        "--company",
+        "Visa",
+        "--search-text",
+        ""
+      ],
+      "transport": "browser",
+      "note": "Current Visa Workday tenant; discovers India country and engineering job-family facets, validates detail country/title and sorts startDate before cap. Legacy SmartRecruiters tenant is empty and not used.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Current Visa Workday tenant; discovers India country and engineering job-family facets, validates detail country/title and sorts startDate before cap. Legacy SmartRecruiters tenant is empty and not used."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T15:54:48.450147+00:00",
+        "status": "ok",
+        "sample_jobs": 48,
+        "sample_file": "local_career_portals/data/samples/batch10_20261103_211801/batch10_top50.json"
+      }
+    },
+    {
+      "company": "OpenAI",
+      "slug": "openai",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_ashby_jobs.py",
+      "url": "https://openai.com/careers/search/",
+      "official_careers_url": "https://openai.com/careers/search/",
+      "args": [
+        "--source",
+        "openai"
+      ],
+      "transport": "browser",
+      "note": "Current openai Ashby feed; listed technical roles and explicit India primary/secondary locations, full descriptions and publishedAt. Retains source departments, including technical GTM deployment/architecture roles.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Current openai Ashby feed; listed technical roles and explicit India primary/secondary locations, full descriptions and publishedAt. Retains source departments, including technical GTM deployment/architecture roles."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T15:54:48.450147+00:00",
+        "status": "ok",
+        "sample_jobs": 3,
+        "sample_file": "local_career_portals/data/samples/batch10_20261103_211801/batch10_top50.json"
+      }
+    },
+    {
+      "company": "Anthropic",
+      "slug": "anthropic",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_additional_board_jobs.py",
+      "url": "https://www.anthropic.com/careers",
+      "official_careers_url": "https://www.anthropic.com/careers",
+      "args": [
+        "--source",
+        "anthropic"
+      ],
+      "transport": "browser",
+      "note": "Current anthropic Greenhouse board; explicit India locations/offices and technical titles across Applied AI and engineering, sales/support excluded; full descriptions/first_published.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Current anthropic Greenhouse board; explicit India locations/offices and technical titles across Applied AI and engineering, sales/support excluded; full descriptions/first_published."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T15:54:48.450147+00:00",
+        "status": "ok",
+        "sample_jobs": 3,
+        "sample_file": "local_career_portals/data/samples/batch10_20261103_211801/batch10_top50.json"
+      }
+    },
+    {
+      "company": "HashiCorp",
+      "slug": "hashicorp",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_hashicorp_jobs.py",
+      "url": "https://www.ibm.com/careers/search?q=hashicorp&field_keyword_08%5B0%5D=Software%20Engineering&field_keyword_05%5B0%5D=India&sort=dcdate_desc",
+      "official_careers_url": "https://www.ibm.com/careers/search?q=hashicorp&field_keyword_08%5B0%5D=Software%20Engineering&field_keyword_05%5B0%5D=India&sort=dcdate_desc",
+      "args": [],
+      "transport": "browser",
+      "note": "Official HashiCorp careers now links to IBM q=hashicorp search; native Software Engineering/India facets plus detail geography and HashiCorp evidence; actual employer retained and only JobPosting publication dates stored.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Official HashiCorp careers now links to IBM q=hashicorp search; native Software Engineering/India facets plus detail geography and HashiCorp evidence; actual employer retained and only JobPosting publication dates stored."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T15:54:48.450147+00:00",
+        "status": "ok",
+        "sample_jobs": 1,
+        "sample_file": "local_career_portals/data/samples/batch10_20261103_211801/batch10_top50.json"
+      }
+    },
+    {
+      "company": "Cisco",
+      "slug": "cisco",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_workday_india_jobs.py",
+      "url": "https://cisco.wd5.myworkdayjobs.com/Cisco_Careers",
+      "official_careers_url": "https://cisco.wd5.myworkdayjobs.com/Cisco_Careers",
+      "args": [
+        "--company",
+        "Cisco",
+        "--search-text",
+        ""
+      ],
+      "transport": "browser",
+      "note": "Current Cisco Workday tenant linked from its careers source; discovers all India locations and Engineering job-family facets, validates detail geography/titles, retains startDate.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Current Cisco Workday tenant linked from its careers source; discovers all India locations and Engineering job-family facets, validates detail geography/titles, retains startDate."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T15:54:48.450147+00:00",
+        "status": "ok",
+        "sample_jobs": 50,
+        "sample_file": "local_career_portals/data/samples/batch10_20261103_211801/batch10_top50.json"
+      }
+    },
+    {
+      "company": "DigitalOcean",
+      "slug": "digitalocean",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_additional_board_jobs.py",
+      "url": "https://www.digitalocean.com/careers",
+      "official_careers_url": "https://www.digitalocean.com/careers",
+      "args": [
+        "--source",
+        "digitalocean"
+      ],
+      "transport": "browser",
+      "note": "Current digitalocean98 Greenhouse board; India locations/offices and technical titles across cloud/security/platform teams; sales/support/consulting excluded; full descriptions and first_published.",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Current digitalocean98 Greenhouse board; India locations/offices and technical titles across cloud/security/platform teams; sales/support/consulting excluded; full descriptions and first_published."
+      },
+      "validation": {
+        "checked_at": "2026-11-03T15:54:48.450147+00:00",
+        "status": "ok",
+        "sample_jobs": 17,
+        "sample_file": "local_career_portals/data/samples/batch10_20261103_211801/batch10_top50.json"
+      }
+    }
+  ],
+  "scheduler_enabled": false,
+  "deferred_companies": [
+    "Confluent"
+  ],
+  "sort_preference": "recent first where supported; dates unavailable means preserve portal order"
+}

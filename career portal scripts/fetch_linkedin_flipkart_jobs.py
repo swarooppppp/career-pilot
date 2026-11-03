@@ -82,12 +82,15 @@ class JobPageParser(HTMLParser):
         self.company = ""
         self.location = ""
         self.posted_date = ""
+        self.posted_datetime = ""
         self.description_parts: list[str] = []
         self._capture: str | None = None
         self._capture_depth = 0
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         attributes = dict(attrs)
+        if tag == "time" and attributes.get("datetime"):
+            self.posted_datetime = str(attributes["datetime"])
         classes = set((attributes.get("class") or "").split())
         if self._capture:
             self._capture_depth += 1
@@ -132,7 +135,7 @@ class JobPageParser(HTMLParser):
         title, company, location = self.title.strip(), self.company.strip(), self.location.strip()
         if not job_id or not title or not company or not description:
             return None
-        return {"id": job_id, "title": title, "company": company, "location": location, "application_url": url, "posted_date": self.posted_date.strip(), "jobDescriptionText": description}
+        return {"id": job_id, "title": title, "company": company, "location": location, "application_url": url, "posted_date": self.posted_datetime or self.posted_date.strip(), "jobDescriptionText": description}
 
 
 def parse_job_page(page_html: str, url: str) -> dict[str, str] | None:

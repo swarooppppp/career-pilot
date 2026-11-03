@@ -37,7 +37,7 @@ class JobPipelineTests(unittest.TestCase):
                     "jobDescriptionText": "Requires 3+ years building Java REST APIs.",
                 }],
                 "example",
-                candidate_years=2,
+                candidate_years=3,
             )
             analysis = {
                 "overall_score": 87,

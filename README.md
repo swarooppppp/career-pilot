@@ -158,7 +158,7 @@ URL. Email is optional and uses the SMTP values in `.env`.
 ## Job pipeline
 
 Portal scripts write their raw JSON independently. Import their output into the
-shared local dashboard with a two-year experience buffer:
+shared local dashboard using the ceiling of verified professional experience:
 
 ```bash
 python3 ingest_jobs.py google_jobs.json --source google
@@ -197,3 +197,87 @@ sync exits with a failure summary.
 ```bash
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests
 ```
+
+Uber-only macOS background scheduling, persistent sessions, and best-effort browser hiding: [setup and troubleshooting](automation/README.md).
+
+### Posting dates
+
+Imported jobs store nullable `posted_date` (UTC) and `posted_date_precision`
+(`date` or `timestamp`). Date-only source values use midnight UTC with `date`
+precision. Unknown or relative dates remain null; update times are never used as
+publication dates. A later fetch without a publication date preserves a stored
+value. Date-only updates preserve completed matching results.
+
+Database initialization automatically adds these columns to existing SQLite and
+PostgreSQL databases. To fill missing dates from existing per-company snapshots
+without importing new jobs or changing analysis results, run:
+
+```sh
+python backfill_posting_dates.py --dry-run
+python backfill_posting_dates.py
+```
+
+The local portal runner still writes JSON snapshots; the database importer stores
+publication dates when those snapshots are imported. New Databricks, Greenhouse,
+Atlassian, Rippling, and LinkedIn fetches retain explicit publication dates where
+the source supplies them. Legacy Databricks/Atlassian update dates mislabeled as
+posting dates are excluded from backfill.
+
+## Scheduled local portal collection
+
+The local app collects every available company in `local_career_portals/companies.json`
+at **07:00, 10:00, 13:00, 16:00, 19:00 and 22:00 Asia/Kolkata**. It checks the
+persisted calendar state each minute; after sleep/login it runs one catch-up for
+missed slots. The Mac must be awake with a logged-in session. It does not wake
+or power on the laptop. A first start performs a catch-up immediately.
+
+```sh
+.venv/bin/python automation/local_service.py install
+.venv/bin/python automation/local_service.py status
+.venv/bin/python automation/local_service.py logs
+.venv/bin/python automation/local_service.py stop
+.venv/bin/python automation/local_service.py start
+.venv/bin/python automation/local_service.py uninstall
+```
+
+Open http://127.0.0.1:8000. Installation starts a per-user macOS LaunchAgent
+and restarts it after login or an unexpected exit. Alternatively run
+`.venv/bin/python run_local.py` manually. Do not run both on the same port.
+
+Defaults in `.env`: `PORTAL_WORKERS=3`, `PORTAL_SOURCE_TIMEOUT=600`,
+`PORTAL_SCHEDULER_ENABLED=true`, `OPENAI_BATCH_SUBMIT_INTERVAL_MINUTES=1`,
+`OPENAI_BATCH_SUBMIT_LIMIT=100`, and `OPENAI_BATCH_POLL_INTERVAL_MINUTES=5`.
+The existing database and OpenAI settings are reused. Set
+`PORTAL_SCHEDULER_ENABLED=false` to pause collection. Each company runs in an
+isolated subprocess, preserving its configured browser mode; Uber remains headed
+and minimized. Source failures and last successful runs appear on the dashboard.
+Fetch logs/snapshots are under `local_career_portals/data/scheduled/`; durable
+calendar state is in `data/portal_schedule.json`. An OS lock prevents overlapping
+collections. Existing source-specific date/order limitations still apply.
+
+Python accepts explicit minimum experience requirements up to the ceiling of
+verified non-internship professional experience. For 2.4 years, 3+ and 3–5 pass;
+4+ fails. Missing experience requirements remain eligible and labeled unspecified.
+Existing title exclusions remain. Jobs appear as each source finishes, before
+matching completes. OpenAI Batch matching runs asynchronously and may take up to
+its 24-hour completion window. Failed jobs expose an explicit retry action.
+
+Applied sets `applied=true` and `applied_at`; Delete sets `deleted_at`. Both hide
+the job persistently across refreshes/imports. Resume generation runs in the
+background after matching; PDFs live in `generated/resumes/` and are downloadable
+from each job. Interrupted generation is marked retryable after restart. Applied
+status is independent of resume generation. Dashboard data refreshes every 15 seconds.
+
+If the LaunchAgent reports `Operation not permitted` reading this Desktop repo,
+macOS privacy settings are blocking background folder access. Grant the service's
+Python interpreter access under **System Settings → Privacy & Security → Full Disk
+Access**, then restart the service. Resolve the interpreter with
+`.venv/bin/python -c 'import os,sys; print(os.path.realpath(sys.executable))'`.
+Stop any manually running copy before starting the LaunchAgent on port 8000.
+
+Only deterministically eligible jobs are stored in the jobs table. Ineligible
+fetch results are counted as rejected and skipped before insertion. If an
+existing job becomes ineligible, its job row and matching links are removed;
+minimal source/portal-ID markers preserve any Applied/deleted action. Raw portal
+snapshots and fetch logs remain separate from the database. Import statistics
+count new eligible inserts, excluding repeats and updates.

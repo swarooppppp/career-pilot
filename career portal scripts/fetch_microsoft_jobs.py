@@ -119,6 +119,8 @@ def search_jobs(args: argparse.Namespace, start: int) -> dict[str, Any]:
         params["filter_roletype"] = args.role_type
     if args.employment_type:
         params["filter_employment_type"] = args.employment_type
+    if getattr(args, "profession", ""):
+        params["filter_profession"] = args.profession
     return get_json("/api/pcsx/search", params, args.timeout, args.max_retries, args.backoff_seconds)
 
 
@@ -169,6 +171,7 @@ def main() -> int:
     parser.add_argument("--location", default="India")
     parser.add_argument("--sort-by", default="relevance")
     parser.add_argument("--seniority", default="", help="Comma-separated seniority filters accepted by Microsoft Careers.")
+    parser.add_argument("--profession", default="", help="Microsoft profession facet, e.g. software engineering")
     parser.add_argument("--role-type", default="", help="Microsoft role type filter, e.g. individual contributor.")
     parser.add_argument("--employment-type", default="", help="Microsoft employment type filter, e.g. full-time.")
     parser.add_argument("--include-remote", action=argparse.BooleanOptionalAction, default=True)

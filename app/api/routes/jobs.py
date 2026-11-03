@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 
 from app.services.job_store import (
     get_job,
+    delete_jobs,
     list_jobs,
     mark_resume_generated,
     retry_analysis,
@@ -25,6 +26,15 @@ class JobAction(BaseModel):
 
 class ProcessRequest(BaseModel):
     limit: int = Field(default=10, ge=1, le=50)
+
+
+class BulkDeleteRequest(BaseModel):
+    job_ids: list[str] = Field(min_length=1, max_length=1000)
+
+
+@router.post("/bulk-delete")
+def bulk_delete(request: BulkDeleteRequest) -> dict:
+    return {"deleted": delete_jobs(request.job_ids)}
 
 
 @router.get("")
@@ -66,25 +76,33 @@ def retry_job_analysis(job_id: str) -> dict[str, str]:
     return {"status": "pending"}
 
 
-@router.post("/{job_id}/generate-resume")
-def generate_job_resume(job_id: str) -> dict[str, str]:
+@router.post("/{job_id}/generate-resume", status_code=202)
+def generate_job_resume(job_id: str) -> dict:
+    from app.services.resume_tasks import start_resume
+    try:
+        return start_resume(job_id)
+    except LookupError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except ValueError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+
+
+@router.get("/sources/status")
+def source_status() -> dict:
+    from app.services.portal_scheduler import read_state
+    return read_state()
+
+
+@router.get("/{job_id}")
+def job_details(job_id: str) -> dict:
     job = get_job(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="job not found")
-    if job["analysis_status"] != "completed" or not job.get("match"):
-        raise HTTPException(status_code=422, detail="complete job matching before generating a tailored resume")
-    try:
-        from app.api.routes.resume import TEMP_ROOT
+    return job
 
-        output_dir = TEMP_ROOT / job_id
-        pdf_path = generate_resume(
-            job["job_description"], output_dir,
-            match_analysis=job["match"], job_title=job["job_title"],
-        )
-        mark_resume_generated(job_id)
-    except Exception as error:
-        raise HTTPException(status_code=500, detail=f"resume generation failed: {error}") from error
-    return {
-        "filename": pdf_path.name,
-        "download_url": f"/api/resume/download/{job_id}/{pdf_path.name}",
-    }
+
+@router.delete("/{job_id}")
+def delete_job(job_id: str) -> dict:
+    if not update_user_status(job_id, "deleted"):
+        raise HTTPException(status_code=404, detail="job not found")
+    return {"status": "deleted"}

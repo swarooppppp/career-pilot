@@ -12,3 +12,11 @@ generated/
 data/match_cache/
 data/career_pilot.db
 data/*_jobs.json
+.venv/
+.automation/
+data/portal_schedule.*
+data/logs/
+local_career_portals/data/scheduled/
+
+# Local database snapshots
+data/backups/

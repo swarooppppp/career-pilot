@@ -13,6 +13,9 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from app.logging_utils import configure_logging
 from app.services.batch_scheduler import start_batch_scheduler
+from app.services.portal_scheduler import start_portal_scheduler
+from app.services.job_store import initialise, recover_untracked_batch_reservations
+from app.services.resume_tasks import recover_resume_tasks
 from app.api.routes.match import router as match_router
 from app.api.routes.jobs import router as jobs_router
 from app.api.routes.profile import router as profile_router
@@ -31,11 +34,16 @@ async def lifespan(_: FastAPI):
     if os.getenv("ENVIRONMENT", "development").lower() == "production":
         if not os.getenv("SESSION_SECRET") or not os.getenv("APP_PASSWORD"):
             raise RuntimeError("SESSION_SECRET and APP_PASSWORD are required in production")
+    initialise()
+    recover_resume_tasks()
+    recover_untracked_batch_reservations()
     stop_scheduler = start_batch_scheduler()
+    stop_portals = start_portal_scheduler()
     try:
         yield
     finally:
         stop_scheduler.set()
+        stop_portals.set()
 
 
 app = FastAPI(title="Career Pilot", version="0.1.0", lifespan=lifespan)

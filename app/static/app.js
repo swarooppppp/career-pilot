@@ -22,6 +22,11 @@ const clearCompanyFilterButton = document.querySelector("#clear-company-filter")
 const COMPANY_FILTER_KEY = "career-pilot-company-filter";
 let resumeGenerating = false;
 let dashboardJobs = [];
+const selectedJobIds = new Set();
+let bulkDeleting = false;
+const selectAllJobs = document.querySelector("#select-all-jobs");
+const deleteSelectedJobs = document.querySelector("#delete-selected-jobs");
+const selectedJobCount = document.querySelector("#selected-job-count");
 let selectedCompanies;
 try { selectedCompanies = new Set(JSON.parse(localStorage.getItem(COMPANY_FILTER_KEY) || "[]")); }
 catch { selectedCompanies = new Set(); }
@@ -110,15 +115,27 @@ async function generateStoredResume(jobId) {
   clearResumeResults(); setResumeBusy(true); jobStatus.textContent = "Generating tailored resume… This may take a minute.";
   try {
     const result = await readResult(await fetch(`/api/jobs/${jobId}/generate-resume`, { method: "POST" }));
-    jobDownloadLink.href = result.download_url; jobDownloadLink.download = result.filename; jobDownloadLink.textContent = `Download ${result.filename}`;
-    jobResumeResult.hidden = false; jobStatus.textContent = "Resume generated successfully."; await loadJobs();
+    jobStatus.textContent = "Resume generation started in the background."; await loadJobs();
   } catch (error) { jobStatus.textContent = `Error: ${error.message}`; } finally { setResumeBusy(false); }
 }
 async function retryAnalysis(jobId) {
   try { await readResult(await fetch(`/api/jobs/${jobId}/retry-analysis`, { method: "POST" })); jobStatus.textContent = "Job marked for retry. Use Analyse pending jobs when the batch service is reachable."; await loadJobs(); }
   catch (error) { jobStatus.textContent = `Error: ${error.message}`; }
 }
+function updateBulkControls() {
+  const visible = visibleJobs();
+  const count = visible.filter(job => selectedJobIds.has(job.id)).length;
+  selectAllJobs.checked = visible.length > 0 && count === visible.length;
+  selectAllJobs.indeterminate = count > 0 && count < visible.length;
+  selectAllJobs.disabled = bulkDeleting || !visible.length;
+  deleteSelectedJobs.disabled = bulkDeleting || !count;
+  deleteSelectedJobs.textContent = bulkDeleting ? "Deleting…" : "Delete selected";
+  selectedJobCount.textContent = `${count} selected`;
+}
 function renderJobs(jobs) {
+  const visibleIds = new Set(jobs.map(job => job.id));
+  for (const id of selectedJobIds) if (!visibleIds.has(id)) selectedJobIds.delete(id);
+  updateBulkControls();
   jobList.replaceChildren();
   if (!jobs.length) {
     jobList.textContent = dashboardJobs.length
@@ -132,18 +149,34 @@ function renderJobs(jobs) {
     const meta = document.createElement("p"); meta.className = "job-meta"; meta.textContent = `${job.company_name} · ${job.location || "Location not specified"}`;
     const details = document.createElement("p"); details.className = "job-meta";
     details.textContent = `${job.minimum_years_experience === null ? "No explicit experience requirement" : `${job.minimum_years_experience}+ years required`} · ${job.analysis_status}`;
-    card.append(title, meta, details);
+    const heading = document.createElement("div"); heading.className = "job-heading";
+    const checkbox = document.createElement("input"); checkbox.type = "checkbox"; checkbox.className = "job-select";
+    checkbox.setAttribute("aria-label", `Select ${job.job_title} at ${job.company_name}`);
+    checkbox.checked = selectedJobIds.has(job.id); checkbox.disabled = bulkDeleting;
+    checkbox.addEventListener("change", () => {
+      if (checkbox.checked) selectedJobIds.add(job.id); else selectedJobIds.delete(job.id);
+      updateBulkControls();
+    });
+    heading.append(checkbox, title);
+    card.append(heading, meta, details);
     if (job.match) { const score = document.createElement("p"); score.className = "job-score"; score.textContent = `${job.match_score}% match — ${job.match.summary}`; card.append(score); }
     else if (job.analysis_error) { const error = document.createElement("p"); error.className = "job-error"; error.textContent = `Analysis failed: ${job.analysis_error}`; card.append(error); }
     const actions = document.createElement("div"); actions.className = "job-actions";
     if (job.application_url) { const apply = document.createElement("a"); apply.href = job.application_url; apply.target = "_blank"; apply.rel = "noreferrer"; apply.className = "secondary link-button"; apply.textContent = "View job"; actions.append(apply); }
-    if (job.match) {
-      const resumeButton = jobButton("Generate resume", () => generateStoredResume(job.id), "", true);
-      resumeButton.disabled = resumeGenerating;
-      actions.append(resumeButton);
+    const resumeButton = jobButton(job.resume_status === "generating" ? "Generating resume…" : "Generate resume", () => generateStoredResume(job.id), "", true);
+    resumeButton.disabled = !job.match || job.resume_status === "generating";
+    actions.append(resumeButton);
+    if (job.resume_status === "completed" && job.resume_filename) {
+      const download = document.createElement("a");
+      download.href = `/api/resume/download/${job.id}/${encodeURIComponent(job.resume_filename)}`;
+      download.textContent = "Download resume"; download.className = "secondary link-button"; actions.append(download);
     }
+    if (job.resume_error) { const error = document.createElement("p"); error.textContent = job.resume_error; card.append(error); }
     if (job.analysis_status === "failed") actions.append(jobButton("Retry analysis", () => retryAnalysis(job.id)));
-    actions.append(jobButton("Save", () => updateJobStatus(job.id, "saved")), jobButton("Applied", () => updateJobStatus(job.id, "applied")), jobButton("Dismiss", () => updateJobStatus(job.id, "dismissed")));
+    actions.append(jobButton("Applied", () => updateJobStatus(job.id, "applied")), jobButton("Delete", async () => {
+      try { await readResult(await fetch(`/api/jobs/${job.id}`, { method: "DELETE" })); await loadJobs(); }
+      catch (error) { jobStatus.textContent = error.message; }
+    }));
     card.append(actions); jobList.append(card);
   }
 }
@@ -179,4 +212,53 @@ processJobsButton.addEventListener("click", async () => {
 async function loadMasterExperience() { try { masterExperience.value = (await readResult(await fetch("/api/profile/master-experience"))).content; } catch (error) { masterStatus.textContent = `Could not load master experience: ${error.message}`; } }
 saveMasterButton.addEventListener("click", async () => { saveMasterButton.disabled = true; masterStatus.textContent = "Saving…"; try { await readResult(await fetch("/api/profile/master-experience", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ content: masterExperience.value }) })); masterStatus.textContent = "Master experience saved. Future analyses will use it."; } catch (error) { masterStatus.textContent = `Error: ${error.message}`; } finally { saveMasterButton.disabled = false; } });
 for (const tab of document.querySelectorAll(".tab")) tab.addEventListener("click", () => setTab(tab.dataset.tab));
-loadJobs(); loadMasterExperience(); window.setInterval(loadJobs, 60_000);
+loadJobs(); loadMasterExperience(); window.setInterval(loadJobs, 15_000);
+
+async function loadSourceStatus() {
+  try {
+    const state = await readResult(await fetch("/api/jobs/sources/status"));
+    const stats = document.querySelector("#collection-stats");
+    stats.replaceChildren();
+    const total = document.createElement("strong");
+    total.textContent = `${state.statistics?.new_eligible_jobs_total || 0} new eligible jobs added`;
+    const run = document.createElement("p");
+    const slot = state.last_slot ? new Date(state.last_slot).toLocaleString("en-IN", {timeZone: "Asia/Kolkata"}) + " IST" : "Not run yet";
+    run.textContent = `${state.status === "running" ? "Current run" : "Last run"}: ${slot} · ${state.statistics?.companies_completed || 0}/${state.statistics?.companies_total || 0} companies processed`;
+    const note = document.createElement("p"); note.textContent = `${dashboardJobs.length} eligible jobs currently on the dashboard (excluding Applied/deleted). ${state.statistics?.new_jobs_total || 0} total new records imported. New eligible counts exclude updates and duplicates.`;
+    stats.append(total, run, note);
+    const panel = document.querySelector("#source-status");
+    panel.replaceChildren();
+    const summary = document.createElement("summary"); summary.textContent = `Portal collection: ${state.status || "waiting"} · six runs daily (India time)`; panel.append(summary);
+    for (const [slug, source] of Object.entries(state.sources || {})) {
+      const line = document.createElement("p");
+      line.textContent = `${source.company || slug}: ${source.status} · ${source.new_eligible_jobs || 0} new eligible · ${source.jobs_count || 0} fetched · last success: ${source.last_success_at || "none"}${source.error ? " · " + source.error : ""}`;
+      panel.append(line);
+    }
+  } catch (_) { /* Keep the last source report during temporary connection loss. */ }
+}
+loadSourceStatus(); window.setInterval(loadSourceStatus, 15_000);
+
+selectAllJobs.addEventListener("change", () => {
+  for (const job of visibleJobs()) {
+    if (selectAllJobs.checked) selectedJobIds.add(job.id); else selectedJobIds.delete(job.id);
+  }
+  renderJobs(visibleJobs());
+});
+deleteSelectedJobs.addEventListener("click", async () => {
+  const ids = visibleJobs().filter(job => selectedJobIds.has(job.id)).map(job => job.id);
+  if (!ids.length || bulkDeleting) return;
+  bulkDeleting = true; renderJobs(visibleJobs());
+  let deleted = 0;
+  try {
+    for (let offset = 0; offset < ids.length; offset += 1000) {
+      const result = await readResult(await fetch("/api/jobs/bulk-delete", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ job_ids: ids.slice(offset, offset + 1000) }),
+      }));
+      deleted += result.deleted;
+      for (const id of ids.slice(offset, offset + 1000)) selectedJobIds.delete(id);
+    }
+    jobStatus.textContent = `Deleted ${deleted} ${deleted === 1 ? "job" : "jobs"}.`;
+  } catch (error) { jobStatus.textContent = `Deleted ${deleted} jobs. ${error.message}`; }
+  finally { bulkDeleting = false; await loadJobs(); updateBulkControls(); }
+});

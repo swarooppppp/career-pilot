@@ -28,8 +28,10 @@ def page_url(url: str, page: int) -> str:
 
 def job_posting(document: str, url: str) -> dict:
     for payload in re.findall(r'<script[^>]+application/ld\+json[^>]*>(.*?)</script>',document,re.I|re.S):
-        try: value=json.loads(html.unescape(payload))
-        except json.JSONDecodeError: continue
+        try: value=json.loads(payload)
+        except json.JSONDecodeError:
+            try: value=json.loads(html.unescape(payload))
+            except json.JSONDecodeError: continue
         for candidate in value if isinstance(value,list) else [value]:
             if isinstance(candidate,dict) and candidate.get("@type")=="JobPosting": return candidate
     raise RuntimeError(f"Palo Alto detail page lacks JobPosting data: {url}")

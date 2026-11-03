@@ -76,7 +76,8 @@ def normalise_result(job: dict[str, Any]) -> dict[str, Any] | None:
     if not job_id or not title or not description_html or not application_url:
         return None
     return {"id": job_id, "title": title, "company": "Databricks", "location": location,
-            "application_url": application_url, "posted_date": job.get("updated_at"),
+            "application_url": application_url, "posted_date": job.get("first_published"),
+            "posting_date_source": "first_published", "updated_date": job.get("updated_at"),
             "jobDescriptionHtml": description_html, "jobDescriptionText": html_to_text(description_html)}
 
 
@@ -84,6 +85,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("url", nargs="?", default=DEFAULT_URL, help="Databricks careers search URL")
     parser.add_argument("--max-jobs", type=int, default=50)
+    parser.add_argument("--sort-recent", action="store_true", help="Order by portal update time before limiting results")
     parser.add_argument("--timeout", type=int, default=60)
     parser.add_argument("--output", type=Path, default=Path("databricks_jobs.json"))
     args = parser.parse_args()
@@ -97,6 +99,8 @@ def main() -> int:
                 if (result := normalise_result(job)) is not None]
     except RuntimeError as error:
         print(f"Error: {error}", file=sys.stderr); return 1
+    if args.sort_recent:
+        jobs.sort(key=lambda job: str(job.get("posted_date") or job.get("updated_date") or ""), reverse=True)
     if args.max_jobs:
         jobs = jobs[:args.max_jobs]
     output = {"source": "Databricks public Greenhouse board", "retrieval": "Public Greenhouse board filtered locally using the supplied careers URL",

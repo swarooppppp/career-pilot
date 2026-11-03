@@ -3,8 +3,8 @@
 
 Uber's careers API sometimes presents a Cloudflare challenge to direct Python
 HTTP clients. This adapter opens the public search page and makes the same-
-origin API requests from that temporary browser context. It never reads or
-stores a user's existing browser cookies.
+origin API requests from a dedicated browser context. An optional profile retains its own cookies;
+it never reads the user's regular browser profile.
 """
 
 from __future__ import annotations
@@ -13,6 +13,8 @@ import argparse
 import asyncio
 import html
 import json
+import os
+import signal
 import sys
 from html.parser import HTMLParser
 from pathlib import Path
@@ -101,9 +103,11 @@ def validate_search_url(search_url: str) -> None:
 
 
 async def fetch_pages_in_browser(
-    search_url: str, max_pages: int, timeout_ms: int, headed: bool
+    search_url: str, max_pages: int, timeout_ms: int, headed: bool,
+    profile: Path | None = None, diagnostics: Path | None = None,
+    minimized: bool = False,
 ) -> list[dict[str, Any]]:
-    """Retrieve bounded API pages using cookies created only in this browser context."""
+    """Retrieve bounded API pages; optional persistent profiles require an external lock."""
     try:
         from playwright.async_api import Error as PlaywrightError, async_playwright
     except ImportError as error:
@@ -114,14 +118,28 @@ async def fetch_pages_in_browser(
 
     try:
         async with async_playwright() as playwright:
-            browser = await playwright.chromium.launch(headless=not headed)
-            context = await browser.new_context(viewport={"width": 1440, "height": 900})
-            page = await context.new_page()
+            browser = None
+            if profile:
+                profile.mkdir(parents=True, exist_ok=True, mode=0o700)
+                context = await playwright.chromium.launch_persistent_context(
+                    str(profile.resolve()), headless=not headed,
+                    viewport={"width": 1440, "height": 900},
+                    **({"args": ["--start-minimized"]} if minimized else {}),
+                )
+            else:
+                browser = await playwright.chromium.launch(headless=not headed, **({"args": ["--start-minimized"]} if minimized else {}))
+                context = await browser.new_context(viewport={"width": 1440, "height": 900})
+            page = None
             try:
+                page = context.pages[0] if context.pages else await context.new_page()
+                if minimized:
+                    session = await context.new_cdp_session(page)
+                    window = await session.send("Browser.getWindowForTarget")
+                    await session.send("Browser.setWindowBounds", {"windowId": window["windowId"], "bounds": {"windowState": "minimized"}})
                 response = await page.goto(search_url, wait_until="domcontentloaded", timeout=timeout_ms)
                 body = await page.content()
                 if "Just a moment..." in body or "challenge-platform" in body:
-                    raise RuntimeError("Uber Jobs displayed a Cloudflare verification challenge; retry with --headed later")
+                    raise RuntimeError("Uber Jobs requires manual verification; scheduled execution stopped without attempting the challenge")
                 if response is not None and response.status >= 400:
                     raise RuntimeError(f"Uber Jobs search page returned HTTP {response.status}")
                 await page.wait_for_selector("a.js-view-job", timeout=timeout_ms)
@@ -146,9 +164,26 @@ async def fetch_pages_in_browser(
                   return results;
                 }""", {"maxPages": max_pages})
                 return [item for item in pages if isinstance(item, dict)]
+            except Exception as error:
+                if diagnostics:
+                    import traceback
+                    diagnostics.mkdir(parents=True, exist_ok=True, mode=0o700)
+                    frames = traceback.extract_tb(error.__traceback__)
+                    (diagnostics / "error.json").write_text(json.dumps({
+                        "exception": type(error).__name__,
+                        "frames": [{"file": f.filename, "line": f.lineno, "function": f.name} for f in frames],
+                    }, indent=2))
+                if diagnostics and page:
+                    diagnostics.mkdir(parents=True, exist_ok=True, mode=0o700)
+                    try:
+                        await page.screenshot(path=str(diagnostics / "failure.png"), timeout=5000)
+                    except Exception:
+                        pass
+                raise
             finally:
                 await context.close()
-                await browser.close()
+                if browser:
+                    await browser.close()
     except PlaywrightError as error:
         raise RuntimeError(f"Uber browser fetch failed: {error}") from error
 
@@ -160,16 +195,37 @@ def main() -> int:
     parser.add_argument("--max-jobs", type=int, default=50, help="Maximum normalized jobs to write; 0 keeps all fetched jobs.")
     parser.add_argument("--timeout", type=int, default=60, help="Browser navigation/selector timeout in seconds.")
     parser.add_argument("--headed", action="store_true", help="Show Chromium; useful when diagnosing a verification challenge.")
+    parser.add_argument("--minimized", action="store_true", help="With --headed, minimize this dedicated browser window before navigation")
     parser.add_argument("--output", type=Path, default=Path("uber_jobs.json"))
+    parser.add_argument("--profile", type=Path, help="Dedicated persistent profile; caller must serialize access.")
+    parser.add_argument("--diagnostics", type=Path, help="Private failure screenshot directory.")
     args = parser.parse_args()
+    signal.signal(signal.SIGTERM, lambda *_: os.kill(os.getpid(), signal.SIGINT))
+    os.umask(0o077)
+    # A detached worker must not survive a crashed supervisor indefinitely.
+    parent_pid = os.environ.get("UBER_SUPERVISOR_PID")
+    if parent_pid:
+        import threading
+        import time
+        def watch_parent():
+            while os.getppid() == int(parent_pid):
+                time.sleep(1)
+            os.kill(os.getpid(), signal.SIGTERM)
+        threading.Thread(target=watch_parent, daemon=True).start()
     if args.max_pages < 1 or args.max_jobs < 0 or args.timeout < 1:
         parser.error("max-pages and timeout must be positive; max-jobs cannot be negative")
+    if args.minimized and not args.headed:
+        parser.error("--minimized requires --headed")
     try:
         validate_search_url(args.url)
-        print(f"Opening Uber Careers in a temporary browser session (up to {args.max_pages} pages)...", file=sys.stderr)
-        pages = asyncio.run(fetch_pages_in_browser(args.url, args.max_pages, args.timeout * 1000, args.headed))
+        print(f"Opening Uber Careers in a dedicated browser session (up to {args.max_pages} pages)...", file=sys.stderr)
+        options = {"minimized": True} if args.minimized else {}
+        pages = asyncio.run(fetch_pages_in_browser(args.url, args.max_pages, args.timeout * 1000, args.headed, args.profile, args.diagnostics, **options))
     except (RuntimeError, ValueError) as error:
-        print(f"Error: {error}", file=sys.stderr)
+        if "requires manual verification" in str(error):
+            print("MANUAL_VERIFICATION_REQUIRED: Uber challenge detected; no challenge attempted.", file=sys.stderr)
+        else:
+            print(f"Error ({type(error).__name__}): Uber fetch failed; inspect private diagnostics or run manually.", file=sys.stderr)
         return 1
 
     jobs: list[dict[str, Any]] = []
@@ -193,13 +249,15 @@ def main() -> int:
 
     output = {
         "source": "Uber Careers browser-session API",
-        "retrieval": "Temporary Playwright browser context calling Uber's same-origin paginated jobs API",
+        "retrieval": "Dedicated Playwright browser context calling Uber's same-origin paginated jobs API",
         "input_url": args.url,
         "jobs_fetched": len(jobs),
         "jobs": jobs,
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(output, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    temporary = args.output.with_suffix(".json.tmp")
+    temporary.write_text(json.dumps(output, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    temporary.replace(args.output)
     print(f"Wrote {len(jobs)} jobs to {args.output}", file=sys.stderr)
     return 0
 

@@ -66,6 +66,9 @@ class ResumeGenerationTests(unittest.TestCase):
             )
             generated_tex = output.with_suffix(".tex")
 
+            self.assertEqual(output.name, "Swaroop_Software_Engineer.pdf")
+            self.assertTrue(output.parent.name.startswith("Swaroop_Software_Engineer_"))
+            self.assertEqual(output.parent.parent, Path(directory).resolve())
             self.assertTrue(output.is_file())
             self.assertGreater(output.stat().st_size, 10_000)
             self.assertTrue(generated_tex.is_file())

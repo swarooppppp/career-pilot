@@ -83,6 +83,7 @@ class MicrosoftFetchRetryTests(unittest.TestCase):
             "seniority": "Entry,Senior,Mid-Level", "role_type": "individual contributor",
             "employment_type": "full-time", "timeout": 10, "max_retries": 4,
             "backoff_seconds": 2,
+            "profession": "software engineering",
         })()
         with patch.object(fetch_microsoft_jobs, "get_json", return_value={}) as get_json:
             fetch_microsoft_jobs.search_jobs(args, 0)
@@ -91,6 +92,7 @@ class MicrosoftFetchRetryTests(unittest.TestCase):
         self.assertEqual(params["filter_seniority"], ["Entry", "Senior", "Mid-Level"])
         self.assertEqual(params["filter_roletype"], "individual contributor")
         self.assertEqual(params["filter_employment_type"], "full-time")
+        self.assertEqual(params["filter_profession"], "software engineering")
 
     def test_skips_existing_ids_without_requesting_details(self):
         args = type("Args", (), {"skip_job_id": ["100"], "delay": 0, "timeout": 10, "max_retries": 4, "backoff_seconds": 2, "locale": "en"})()

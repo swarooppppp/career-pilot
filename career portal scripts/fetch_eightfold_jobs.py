@@ -45,7 +45,7 @@ def main()->int:
             job_id=str(summary.get("id") or "")
             if not job_id or job_id in known: print(f"Skipping existing {i}/{len(summaries)}: {job_id}",file=sys.stderr); continue
             print(f"Fetching {i}/{len(summaries)}: {job_id}",file=sys.stderr); item=detail(job_id,args); description=str(item.get("jobDescription") or ""); parser=TextParser(); parser.feed(description); parser.close()
-            if description: jobs.append({"id":job_id,"title":item.get("title") or summary.get("title") or "","company":args.company or args.domain,"location":item.get("location") or summary.get("location") or "","application_url":item.get("publicUrl") or item.get("positionUrl") or "","jobDescriptionHtml":description,"jobDescriptionText":html.unescape(parser.text())})
+            if description: jobs.append({"id":job_id,"title":item.get("title") or item.get("name") or summary.get("title") or summary.get("name") or "","company":args.company or args.domain,"location":item.get("location") or item.get("locations") or summary.get("location") or summary.get("locations") or "","posted_date":summary.get("postedTs") or item.get("postedTs"),"application_url":item.get("publicUrl") or item.get("positionUrl") or "","jobDescriptionHtml":description,"jobDescriptionText":html.unescape(parser.text())})
             if i!=len(summaries):time.sleep(args.delay)
     except RuntimeError as error: print(f"Error: {error}",file=sys.stderr); return 1
     args.output.parent.mkdir(parents=True,exist_ok=True); args.output.write_text(json.dumps({"source":"Eightfold PCSx public API","domain":args.domain,"jobs_fetched":len(jobs),"jobs":jobs},ensure_ascii=False,indent=2)+"\n",encoding="utf-8"); return 0

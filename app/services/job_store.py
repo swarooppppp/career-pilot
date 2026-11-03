@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import math
 import logging
 import os
 import re
@@ -28,11 +29,15 @@ from sqlalchemy import (
     Text,
     create_engine,
     insert,
+    inspect,
     select,
     update,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.engine import Engine
+from sqlalchemy.exc import OperationalError
+
+from app.services.posting_dates import publication_date, utc
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -53,6 +58,8 @@ jobs = Table(
     Column("job_title", String(500), nullable=False),
     Column("location", String(500)),
     Column("application_url", Text),
+    Column("posted_date", DateTime(timezone=True)),
+    Column("posted_date_precision", String(12)),
     Column("job_description", Text, nullable=False),
     Column("content_hash", String(64), nullable=False),
     Column("minimum_years_experience", Float),
@@ -60,6 +67,12 @@ jobs = Table(
     Column("filter_reason", Text, nullable=False),
     Column("analysis_status", String(30), nullable=False, default="pending"),
     Column("user_status", String(30), nullable=False, default="new"),
+    Column("applied", Boolean, nullable=False, default=False, server_default="false"),
+    Column("applied_at", DateTime(timezone=True)),
+    Column("deleted_at", DateTime(timezone=True)),
+    Column("resume_status", String(30)),
+    Column("resume_error", Text),
+    Column("resume_filename", Text),
     Column("match_score", Float),
     Column("match_json", json_column),
     Column("analysis_error", Text),
@@ -70,6 +83,15 @@ jobs = Table(
 )
 Index("jobs_source_external_id", jobs.c.source, jobs.c.external_job_id, unique=True)
 Index("jobs_dashboard_index", jobs.c.experience_eligible, jobs.c.analysis_status, jobs.c.user_status)
+
+job_tombstones = Table(
+    "job_tombstones", metadata,
+    Column("source", String(100), primary_key=True),
+    Column("external_job_id", String(255), primary_key=True),
+    Column("applied", Boolean, nullable=False),
+    Column("applied_at", DateTime(timezone=True)),
+    Column("deleted_at", DateTime(timezone=True)),
+)
 
 job_events = Table(
     "job_events",
@@ -119,6 +141,7 @@ analysis_batch_items = Table(
     # retry. The OpenAI custom ID is therefore unique to a submission, not to
     # the job for all time.
     Column("custom_id", String(100), nullable=False),
+    Column("content_hash", String(64)),
 )
 
 
@@ -170,7 +193,43 @@ def _migrate_sqlite_batch_item_custom_ids(engine: Engine) -> None:
 def initialise() -> None:
     engine = _engine(database_url())
     metadata.create_all(engine)
+    _migrate_posting_dates(engine)
+    _migrate_local_actions(engine)
     _migrate_sqlite_batch_item_custom_ids(engine)
+    if "content_hash" not in {c["name"] for c in inspect(engine).get_columns("analysis_batch_items")}:
+        with engine.begin() as connection:
+            connection.exec_driver_sql("ALTER TABLE analysis_batch_items ADD COLUMN content_hash VARCHAR(64)")
+
+
+def _migrate_posting_dates(engine: Engine) -> None:
+    """Add nullable publication fields to existing SQLite/PostgreSQL databases."""
+    existing = {column["name"] for column in inspect(engine).get_columns("jobs")}
+    types = {"posted_date": "DATETIME" if engine.dialect.name == "sqlite" else "TIMESTAMP WITH TIME ZONE",
+             "posted_date_precision": "VARCHAR(12)"}
+    for name, sql_type in types.items():
+        if name in existing:
+            continue
+        try:
+            with engine.begin() as connection:
+                optional = "IF NOT EXISTS " if engine.dialect.name == "postgresql" else ""
+                connection.exec_driver_sql(f"ALTER TABLE jobs ADD COLUMN {optional}{name} {sql_type}")
+        except OperationalError:
+            # Another local process may have completed the same migration.
+            if name not in {column["name"] for column in inspect(engine).get_columns("jobs")}:
+                raise
+
+
+def _migrate_local_actions(engine: Engine) -> None:
+    existing = {c["name"] for c in inspect(engine).get_columns("jobs")}
+    stamp = "DATETIME" if engine.dialect.name == "sqlite" else "TIMESTAMP WITH TIME ZONE"
+    fields = {"applied": "BOOLEAN NOT NULL DEFAULT FALSE", "applied_at": stamp,
+              "deleted_at": stamp, "resume_status": "VARCHAR(30)", "resume_error": "TEXT", "resume_filename": "TEXT"}
+    for name, kind in fields.items():
+        if name not in existing:
+            with engine.begin() as connection:
+                connection.exec_driver_sql(f"ALTER TABLE jobs ADD COLUMN {name} {kind}")
+    with engine.begin() as connection:
+        connection.execute(update(jobs).where(jobs.c.user_status == "applied", jobs.c.applied.is_(False)).values(applied=True, applied_at=jobs.c.updated_at))
 
 
 def extract_experience_years(description: str) -> tuple[float | None, float | None]:
@@ -228,12 +287,12 @@ def normalise_job(raw_job: dict[str, Any], source: str, candidate_years: float) 
     locations = raw_job.get("locations") or raw_job.get("location") or ""
     location = ", ".join(str(item) for item in locations if item) if isinstance(locations, list) else str(locations)
     minimum_years, maximum_years = extract_experience_years(description)
-    allowed_maximum = candidate_years + 2
-    experience_eligible = maximum_years is None or maximum_years <= allowed_maximum
+    allowed_maximum = math.ceil(candidate_years)
+    experience_eligible = minimum_years is None or minimum_years <= allowed_maximum
     experience_reason = (
         "no explicit experience requirement found"
         if minimum_years is None
-        else f"explicit experience range is {minimum_years:g}-{maximum_years:g} years; maximum allowed is {allowed_maximum:g} years"
+        else f"explicit experience range is {minimum_years:g}-{maximum_years:g} years; minimum requirement allowed is {allowed_maximum:g} years"
     )
     title_red_flag = re.search(r"\b(?:manager|staff)\b", title, flags=re.IGNORECASE)
     eligible = experience_eligible and not title_red_flag
@@ -256,6 +315,7 @@ def normalise_job(raw_job: dict[str, Any], source: str, candidate_years: float) 
     ):
         application_url = _google_job_detail_url(external_id, title)
 
+    posted_date, precision = publication_date(raw_job, source)
     return {
         "source": source,
         "external_job_id": external_id,
@@ -263,6 +323,8 @@ def normalise_job(raw_job: dict[str, Any], source: str, candidate_years: float) 
         "job_title": title,
         "location": location,
         "application_url": application_url,
+        "posted_date": posted_date,
+        "posted_date_precision": precision,
         "job_description": description,
         "content_hash": _hash(description),
         "minimum_years_experience": minimum_years,
@@ -274,7 +336,7 @@ def normalise_job(raw_job: dict[str, Any], source: str, candidate_years: float) 
 def import_jobs(raw_jobs: Iterable[dict[str, Any]], source: str, candidate_years: float) -> dict[str, int]:
     initialise()
     logger.info("Importing %s jobs with candidate threshold %.1f years", source, candidate_years)
-    counts = {"imported": 0, "updated": 0, "skipped": 0, "ineligible": 0}
+    counts = {"imported": 0, "updated": 0, "skipped": 0, "ineligible": 0, "imported_eligible": 0}
     with _engine(database_url()).begin() as connection:
         for raw_job in raw_jobs:
             try:
@@ -286,13 +348,25 @@ def import_jobs(raw_jobs: Iterable[dict[str, Any]], source: str, candidate_years
                 select(
                     jobs.c.id, jobs.c.content_hash, jobs.c.application_url,
                     jobs.c.minimum_years_experience, jobs.c.experience_eligible, jobs.c.filter_reason,
+                    jobs.c.posted_date, jobs.c.posted_date_precision,
                 ).where(
                     jobs.c.source == job["source"], jobs.c.external_job_id == job["external_job_id"]
                 )
             ).mappings().first()
             if not job["experience_eligible"]:
                 counts["ineligible"] += 1
+                if existing:
+                    _remove_jobs(connection, [existing["id"]])
+                continue
+            tombstone = connection.execute(select(job_tombstones.c.source).where(
+                job_tombstones.c.source == job["source"], job_tombstones.c.external_job_id == job["external_job_id"])).first()
+            if tombstone:
+                counts["skipped"] += 1
+                continue
             if existing:
+                if job["posted_date"] is None:
+                    job["posted_date"] = existing["posted_date"]
+                    job["posted_date_precision"] = existing["posted_date_precision"]
                 if existing["content_hash"] == job["content_hash"]:
                     # Refresh deterministic eligibility even if the listing's
                     # contents are unchanged. Keep any completed match intact.
@@ -301,8 +375,11 @@ def import_jobs(raw_jobs: Iterable[dict[str, Any]], source: str, candidate_years
                         "minimum_years_experience": job["minimum_years_experience"],
                         "experience_eligible": job["experience_eligible"],
                         "filter_reason": job["filter_reason"],
+                        "posted_date": job["posted_date"],
+                        "posted_date_precision": job["posted_date_precision"],
                     }
-                    if any(existing[key] != value for key, value in refresh_values.items()):
+                    if any((utc(existing[key]) != utc(value) if isinstance(existing[key], datetime) and isinstance(value, datetime)
+                            else existing[key] != value) for key, value in refresh_values.items()):
                         connection.execute(
                             update(jobs).where(jobs.c.id == existing["id"]).values(
                                 **refresh_values, updated_at=_now()
@@ -315,7 +392,8 @@ def import_jobs(raw_jobs: Iterable[dict[str, Any]], source: str, candidate_years
                 connection.execute(
                     update(jobs).where(jobs.c.id == existing["id"]).values(
                         **job,
-                        analysis_status="pending",
+                        analysis_status="retry_requested",
+                        resume_status=None, resume_filename=None, resume_error=None,
                         match_score=None,
                         match_json=None,
                         analysis_error=None,
@@ -336,12 +414,15 @@ def import_jobs(raw_jobs: Iterable[dict[str, Any]], source: str, candidate_years
                     )
                 )
                 counts["imported"] += 1
+                counts["imported_eligible"] += int(job["experience_eligible"])
     logger.info("Import finished for %s: %s", source, counts)
     return counts
 
 
 def _serialize(row: Any, include_description: bool = False) -> dict[str, Any]:
     job = dict(row)
+    if job.get("posted_date") is not None:
+        job["posted_date"] = utc(job["posted_date"])
     job["match"] = job.pop("match_json", None)
     if not include_description:
         job.pop("job_description", None)
@@ -350,7 +431,7 @@ def _serialize(row: Any, include_description: bool = False) -> dict[str, Any]:
 
 def list_jobs(include_ineligible: bool = False) -> list[dict[str, Any]]:
     initialise()
-    statement = select(jobs).where(jobs.c.user_status != "dismissed")
+    statement = select(jobs).where(jobs.c.user_status != "dismissed", jobs.c.applied.is_(False), jobs.c.deleted_at.is_(None))
     if not include_ineligible:
         statement = statement.where(jobs.c.experience_eligible.is_(True))
     statement = statement.order_by(jobs.c.match_score.desc().nulls_last(), jobs.c.created_at.desc())
@@ -383,7 +464,8 @@ def queue_pending_jobs(limit: int, create_outbox_events: bool = True) -> list[st
             .where(
                 jobs.c.experience_eligible.is_(True),
                 jobs.c.analysis_status.in_(["pending", "retry_requested"]),
-                jobs.c.user_status == "new",
+                jobs.c.user_status.in_(["new", "saved", "resume_generated"]),
+                jobs.c.applied.is_(False), jobs.c.deleted_at.is_(None),
                 # Avoid spending again on a source-refresh regression. A
                 # retry_requested status is set only by the explicit UI retry.
                 (jobs.c.analysis_status == "retry_requested") | ~jobs.c.id.in_(previously_submitted_job_ids),
@@ -426,7 +508,8 @@ def reserve_pending_jobs_for_batch(limit: int) -> list[dict[str, Any]]:
             .where(
                 jobs.c.experience_eligible.is_(True),
                 jobs.c.analysis_status.in_(["pending", "retry_requested"]),
-                jobs.c.user_status == "new",
+                jobs.c.user_status.in_(["new", "saved", "resume_generated"]),
+                jobs.c.applied.is_(False), jobs.c.deleted_at.is_(None),
                 ~jobs.c.id.in_(active_batch_job_ids),
                 # An existing batch record is a durable cost-control boundary.
                 # Only the explicit Retry analysis action may override it.
@@ -459,6 +542,7 @@ def record_analysis_batch(
     job_ids: list[str],
     batch_id: str | None = None,
     custom_ids: dict[str, str] | None = None,
+    content_hashes: dict[str, str] | None = None,
 ) -> str:
     initialise()
     batch_id = batch_id or str(uuid4())
@@ -470,6 +554,7 @@ def record_analysis_batch(
                 "batch_id": batch_id,
                 "job_id": job_id,
                 "custom_id": (custom_ids or {}).get(job_id, batch_item_custom_id(batch_id, job_id)),
+                "content_hash": (content_hashes or {}).get(job_id),
             }
             for job_id in job_ids
         ])
@@ -565,10 +650,10 @@ def requeue_stale_processing_jobs(max_age_seconds: int | None = None) -> int:
     return result.rowcount
 
 
-def save_analysis(job_id: str, analysis: dict[str, Any]) -> None:
+def save_analysis(job_id: str, analysis: dict[str, Any], expected_hash: str | None = None) -> None:
     with _engine(database_url()).begin() as connection:
         connection.execute(
-            update(jobs).where(jobs.c.id == job_id).values(
+            update(jobs).where(jobs.c.id == job_id, jobs.c.content_hash == expected_hash if expected_hash else True).values(
                 analysis_status="completed", match_score=analysis["overall_score"], match_json=analysis,
                 analysis_error=None, processed_at=_now(), updated_at=_now(),
             )
@@ -587,11 +672,16 @@ def save_analysis_error(job_id: str, error: Exception) -> None:
 
 
 def update_user_status(job_id: str, status: str) -> bool:
-    if status not in {"new", "saved", "applied", "dismissed", "resume_generated"}:
+    if status not in {"new", "saved", "applied", "dismissed", "deleted", "resume_generated"}:
         raise ValueError("invalid job action")
+    values = {"user_status": status, "updated_at": _now()}
+    if status == "applied":
+        values.update(applied=True, applied_at=_now())
+    if status == "deleted":
+        values.update(deleted_at=_now())
     with _engine(database_url()).begin() as connection:
         result = connection.execute(
-            update(jobs).where(jobs.c.id == job_id).values(user_status=status, updated_at=_now())
+            update(jobs).where(jobs.c.id == job_id).values(**values)
         )
     return result.rowcount == 1
 
@@ -600,7 +690,7 @@ def mark_resume_generated(job_id: str) -> None:
     with _engine(database_url()).begin() as connection:
         connection.execute(
             update(jobs).where(jobs.c.id == job_id).values(
-                user_status="resume_generated", resume_generated_at=_now(), updated_at=_now()
+                resume_generated_at=_now(), updated_at=_now()
             )
         )
 
@@ -613,3 +703,71 @@ def retry_analysis(job_id: str) -> bool:
             .values(analysis_status="retry_requested", analysis_error=None, updated_at=_now())
         )
     return result.rowcount == 1
+
+
+def batch_item_is_current(batch_id: str, job_id: str) -> bool:
+    with _engine(database_url()).connect() as connection:
+        row = connection.execute(select(analysis_batch_items.c.content_hash, jobs.c.content_hash.label("current_hash"))
+            .join(jobs, jobs.c.id == analysis_batch_items.c.job_id)
+            .where(analysis_batch_items.c.batch_id == batch_id, jobs.c.id == job_id)).first()
+    return bool(row and (row.content_hash is None or row.content_hash == row.current_hash))
+
+
+def set_resume_state(job_id: str, **values: Any) -> None:
+    with _engine(database_url()).begin() as connection:
+        connection.execute(update(jobs).where(jobs.c.id == job_id).values(**values, updated_at=_now()))
+
+
+def recover_untracked_batch_reservations() -> None:
+    """Do not automatically spend again after a crash during provider submission."""
+    with _engine(database_url()).begin() as connection:
+        tracked = select(analysis_batch_items.c.job_id)
+        connection.execute(update(jobs).where(jobs.c.analysis_status == "batch_submitted", ~jobs.c.id.in_(tracked)).values(
+            analysis_status="failed", analysis_error="Submission interrupted before tracking was saved. Check provider batches before retrying.", updated_at=_now()))
+
+
+def delete_jobs(job_ids: list[str]) -> int:
+    """Persist tombstones for a selection in one transaction."""
+    initialise()
+    identifiers = list(dict.fromkeys(job_ids))
+    if not identifiers:
+        return 0
+    now = _now()
+    with _engine(database_url()).begin() as connection:
+        result = connection.execute(update(jobs).where(jobs.c.id.in_(identifiers), jobs.c.deleted_at.is_(None)).values(
+            user_status="deleted", deleted_at=now, updated_at=now))
+    return result.rowcount
+
+
+def eligible_inserts_by_source(started_at: datetime, completed_at: datetime) -> dict[str, int]:
+    initialise()
+    with _engine(database_url()).connect() as connection:
+        rows = connection.execute(select(jobs.c.source, func.count().label("count")).where(
+            jobs.c.created_at >= utc(started_at), jobs.c.created_at <= utc(completed_at),
+            jobs.c.experience_eligible.is_(True)).group_by(jobs.c.source))
+        return {row.source: row.count for row in rows}
+
+
+def _remove_jobs(connection: Any, identifiers: list[str]) -> int:
+    if not identifiers:
+        return 0
+    rows = connection.execute(select(jobs).where(jobs.c.id.in_(identifiers))).mappings().all()
+    for row in rows:
+        if row["applied"] or row["deleted_at"] is not None or row["user_status"] == "dismissed":
+            key = (job_tombstones.c.source == row["source"]) & (job_tombstones.c.external_job_id == row["external_job_id"])
+            values = {"applied": row["applied"], "applied_at": row["applied_at"], "deleted_at": row["deleted_at"] or _now()}
+            if connection.execute(select(job_tombstones.c.source).where(key)).first():
+                connection.execute(update(job_tombstones).where(key).values(**values))
+            else:
+                connection.execute(insert(job_tombstones).values(source=row["source"], external_job_id=row["external_job_id"], **values))
+    connection.execute(delete(job_events).where(job_events.c.job_id.in_(identifiers)))
+    connection.execute(delete(analysis_batch_items).where(analysis_batch_items.c.job_id.in_(identifiers)))
+    return connection.execute(delete(jobs).where(jobs.c.id.in_(identifiers))).rowcount
+
+
+def purge_ineligible_jobs() -> int:
+    """Drop rejected JDs while retaining only minimal Applied/deleted markers."""
+    initialise()
+    with _engine(database_url()).begin() as connection:
+        identifiers = connection.execute(select(jobs.c.id).where(jobs.c.experience_eligible.is_(False))).scalars().all()
+        return _remove_jobs(connection, list(identifiers))

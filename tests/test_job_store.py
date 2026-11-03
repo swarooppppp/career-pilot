@@ -8,7 +8,7 @@ from unittest.mock import patch
 from app.services import job_store
 
 
-def raw_job(job_id="job-1", description="Requires 3+ years of Java experience."):
+def raw_job(job_id="job-1", description="Requires 2+ years of Java experience."):
     return {
         "id": job_id,
         "title": "Software Engineer",
@@ -32,8 +32,51 @@ class JobStoreTests(unittest.TestCase):
         self.environment_patch.stop()
         self.directory.cleanup()
 
-    def test_two_year_experience_buffer_keeps_four_year_role(self):
-        result = job_store.import_jobs([raw_job()], "google", candidate_years=2)
+    def test_publication_date_refresh_preserves_analysis_and_missing_dates(self):
+        job_store.import_jobs([raw_job()], "google", 2)
+        ident = job_store.list_jobs()[0]["id"]
+        job_store.save_analysis(ident, {"overall_score": 91})
+        dated = {**raw_job(), "posted_date": "2026-10-01T10:00:00+05:30"}
+        self.assertEqual(job_store.import_jobs([dated], "google", 2)["updated"], 1)
+        stored = job_store.get_job(ident)
+        self.assertEqual(stored["posted_date"].isoformat(), "2026-10-01T04:30:00+00:00")
+        self.assertEqual(stored["posted_date_precision"], "timestamp")
+        self.assertEqual(stored["analysis_status"], "completed")
+        self.assertEqual(job_store.import_jobs([dated], "google", 2)["skipped"], 1)
+        job_store.import_jobs([raw_job(description="New description")], "google", 2)
+        self.assertEqual(job_store.get_job(ident)["posted_date"], stored["posted_date"])
+
+    def test_publication_columns_migrate_existing_database_idempotently(self):
+        from sqlalchemy import inspect, text
+        job_store.initialise()
+        engine = job_store._engine(self.database_url)
+        with engine.begin() as connection:
+            connection.execute(text("ALTER TABLE jobs DROP COLUMN posted_date"))
+            connection.execute(text("ALTER TABLE jobs DROP COLUMN posted_date_precision"))
+        job_store.initialise()
+        job_store.initialise()
+        self.assertTrue({"posted_date", "posted_date_precision"}.issubset(
+            {c["name"] for c in inspect(engine).get_columns("jobs")}))
+
+    def test_snapshot_backfill_only_fills_existing_missing_dates(self):
+        from backfill_posting_dates import backfill, snapshot_dates
+        import json
+        job_store.import_jobs([raw_job()], "google", 2)
+        ident = job_store.list_jobs()[0]["id"]
+        job_store.save_analysis(ident, {"overall_score": 91})
+        path = Path(self.directory.name) / "google_jobs.json"
+        path.write_text(json.dumps({"jobs": [
+            {**raw_job(), "posted_date": "2026-10-01"},
+            {**raw_job("not-imported"), "posted_date": "2026-10-02"}]}))
+        candidates = snapshot_dates([Path(self.directory.name)])
+        self.assertEqual(backfill(candidates), 1)
+        self.assertEqual(backfill(candidates), 0)
+        self.assertEqual(len(job_store.list_jobs()), 1)
+        self.assertEqual(job_store.get_job(ident)["analysis_status"], "completed")
+        self.assertEqual(job_store.get_job(ident)["posted_date_precision"], "date")
+
+    def test_ceiling_keeps_three_year_role_for_fractional_experience(self):
+        result = job_store.import_jobs([raw_job(description="Requires 3+ years of Java experience.")], "google", candidate_years=2.4)
         jobs = job_store.list_jobs()
 
         self.assertEqual(result["imported"], 1)
@@ -56,22 +99,20 @@ class JobStoreTests(unittest.TestCase):
         self.assertEqual(job_store.extract_minimum_years(requirement), 2.0)
         self.assertEqual(job_store.extract_experience_years(requirement), (2.0, 5.0))
 
-    def test_highest_explicit_requirement_controls_the_deterministic_gate(self):
+    def test_minimum_requirement_above_ceiling_is_rejected(self):
         job_store.import_jobs(
             [raw_job(description="Requires 4 years of Java and 6 years of backend engineering experience.")],
             "google",
             candidate_years=2,
         )
 
-        jobs = job_store.list_jobs(include_ineligible=True)
-        self.assertEqual(jobs[0]["minimum_years_experience"], 4.0)
-        self.assertFalse(jobs[0]["experience_eligible"])
+        self.assertEqual(job_store.list_jobs(include_ineligible=True), [])
 
-    def test_requirement_above_two_year_buffer_is_not_sent_to_dashboard(self):
+    def test_requirement_above_ceiling_is_not_sent_to_dashboard(self):
         job_store.import_jobs([raw_job(description="Requires 5+ years of Java experience.")], "google", 2)
 
         self.assertEqual(job_store.list_jobs(), [])
-        self.assertEqual(len(job_store.list_jobs(include_ineligible=True)), 1)
+        self.assertEqual(len(job_store.list_jobs(include_ineligible=True)), 0)
 
     def test_manager_and_staff_titles_are_eliminated_before_llm_processing(self):
         manager = raw_job(job_id="manager", description="No experience requirement.")
@@ -102,10 +143,9 @@ class JobStoreTests(unittest.TestCase):
         result = job_store.import_jobs([raw_job()], "google", 0)
         stored = job_store.get_job(job_id)
 
-        self.assertEqual(result["updated"], 1)
-        self.assertFalse(stored["experience_eligible"])
-        self.assertEqual(stored["analysis_status"], "completed")
-        self.assertEqual(stored["match_score"], 91)
+        self.assertEqual(result["updated"], 0)
+        self.assertEqual(result["ineligible"], 1)
+        self.assertIsNone(stored)
 
     def test_changed_detail_url_updates_an_unchanged_job(self):
         first_job = raw_job()

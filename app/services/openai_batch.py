@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import threading
+from functools import wraps
 import logging
 import os
 import tempfile
@@ -37,6 +39,17 @@ from app.services.job_store import (
 
 logger = logging.getLogger(__name__)
 ROOT = Path(__file__).resolve().parents[2]
+
+
+_operation_lock = threading.RLock()
+
+
+def serialized(function):
+    @wraps(function)
+    def run(*args, **kwargs):
+        with _operation_lock:
+            return function(*args, **kwargs)
+    return run
 
 
 def _client() -> Any:
@@ -84,17 +97,18 @@ def _output_json(body: dict[str, Any]) -> dict[str, Any]:
     raise ValueError("Batch response contains no structured output text")
 
 
+@serialized
 def submit_pending_batch(limit: int) -> dict[str, Any]:
     jobs = reserve_pending_jobs_for_batch(limit)
     if not jobs:
         return {"submitted": 0, "batch_id": None}
-    client = _client()
     # The same job may be retried in a later Batch. Use one locally generated
     # identifier for the whole submission so every line can be mapped back
     # unambiguously without reusing an old OpenAI custom_id.
     batch_id = str(uuid4())
     temp_path: Path | None = None
     try:
+        client = _client()
         with tempfile.NamedTemporaryFile("w", suffix=".jsonl", encoding="utf-8", delete=False) as handle:
             temp_path = Path(handle.name)
             for job in jobs:
@@ -105,7 +119,8 @@ def submit_pending_batch(limit: int) -> dict[str, Any]:
             input_file_id=input_file.id, endpoint="/v1/responses", completion_window="24h",
             metadata={"workflow": "job_match", "schema": MATCHING_SCHEMA_VERSION, "prompt": MATCHING_PROMPT_VERSION},
         )
-        record_analysis_batch(provider_batch.id, input_file.id, [job["id"] for job in jobs], batch_id=batch_id)
+        record_analysis_batch(provider_batch.id, input_file.id, [job["id"] for job in jobs], batch_id=batch_id,
+                              content_hashes={job["id"]: job["content_hash"] for job in jobs})
         logger.info("Submitted OpenAI batch %s with %s jobs", provider_batch.id, len(jobs))
         return {"submitted": len(jobs), "batch_id": batch_id, "provider_batch_id": provider_batch.id}
     except Exception as error:
@@ -116,6 +131,7 @@ def submit_pending_batch(limit: int) -> dict[str, Any]:
             temp_path.unlink(missing_ok=True)
 
 
+@serialized
 def poll_openai_batches() -> dict[str, int]:
     counts = {"checked": 0, "completed": 0, "failed": 0, "jobs_completed": 0, "jobs_failed": 0}
     batches = active_analysis_batches()
@@ -124,46 +140,54 @@ def poll_openai_batches() -> dict[str, int]:
         return counts
     client = _client()
     for stored in batches:
-        counts["checked"] += 1
-        remote = client.batches.retrieve(stored["provider_batch_id"])
-        status = remote.status
-        if status != "completed":
-            update_analysis_batch(stored["id"], status, error=str(getattr(remote, "errors", None) or "") or None)
-            if status in {"failed", "expired", "cancelled"}:
-                counts["failed"] += 1
-                for job_id in batch_job_ids(stored["id"]).values():
-                    save_analysis_error(job_id, RuntimeError(f"OpenAI Batch {status}"))
-            continue
-        output_file_id = remote.output_file_id
-        if not output_file_id:
-            raise RuntimeError(f"completed batch {remote.id} has no output file")
-        outputs = client.files.content(output_file_id).text.splitlines()
-        job_ids = batch_job_ids(stored["id"])
-        seen: set[str] = set()
-        for line in outputs:
-            item = json.loads(line)
-            custom_id = item.get("custom_id")
-            job_id = job_ids.get(custom_id)
-            if not job_id:
+        try:
+            counts["checked"] += 1
+            remote = client.batches.retrieve(stored["provider_batch_id"])
+            status = remote.status
+            if status != "completed":
+                update_analysis_batch(stored["id"], status, error=str(getattr(remote, "errors", None) or "") or None)
+                if status in {"failed", "expired", "cancelled"}:
+                    counts["failed"] += 1
+                    for job_id in batch_job_ids(stored["id"]).values():
+                        from app.services.job_store import batch_item_is_current
+                        if batch_item_is_current(stored["id"], job_id):
+                            save_analysis_error(job_id, RuntimeError(f"OpenAI Batch {status}"))
                 continue
-            seen.add(custom_id)
-            try:
-                response = item.get("response") or {}
-                if response.get("status_code") != 200:
-                    raise RuntimeError(str(item.get("error") or response.get("body") or "Batch request failed"))
-                from app.services.job_store import get_job
-                job = get_job(job_id)
-                if not job:
-                    raise ValueError("job no longer exists")
-                save_analysis(job_id, build_analysis_result(job["job_description"], _output_json(response["body"])))
-                counts["jobs_completed"] += 1
-            except Exception as error:
-                save_analysis_error(job_id, error)
-                counts["jobs_failed"] += 1
-        for custom_id, job_id in job_ids.items():
-            if custom_id not in seen:
-                save_analysis_error(job_id, RuntimeError("Batch output omitted this job"))
-                counts["jobs_failed"] += 1
-        update_analysis_batch(stored["id"], "completed", output_file_id=output_file_id)
-        counts["completed"] += 1
+            output_file_id = remote.output_file_id
+            if not output_file_id:
+                raise RuntimeError(f"completed batch {remote.id} has no output file")
+            outputs = client.files.content(output_file_id).text.splitlines()
+            job_ids = batch_job_ids(stored["id"])
+            seen: set[str] = set()
+            for line in outputs:
+                item = json.loads(line)
+                custom_id = item.get("custom_id")
+                job_id = job_ids.get(custom_id)
+                if not job_id:
+                    continue
+                seen.add(custom_id)
+                try:
+                    response = item.get("response") or {}
+                    if response.get("status_code") != 200:
+                        raise RuntimeError(str(item.get("error") or response.get("body") or "Batch request failed"))
+                    from app.services.job_store import get_job, batch_item_is_current
+                    if not batch_item_is_current(stored["id"], job_id):
+                        continue
+                    job = get_job(job_id)
+                    if not job:
+                        raise ValueError("job no longer exists")
+                    save_analysis(job_id, build_analysis_result(job["job_description"], _output_json(response["body"])), expected_hash=job["content_hash"])
+                    counts["jobs_completed"] += 1
+                except Exception as error:
+                    save_analysis_error(job_id, error)
+                    counts["jobs_failed"] += 1
+            for custom_id, job_id in job_ids.items():
+                from app.services.job_store import batch_item_is_current
+                if custom_id not in seen and batch_item_is_current(stored["id"], job_id):
+                    save_analysis_error(job_id, RuntimeError("Batch output omitted this job"))
+                    counts["jobs_failed"] += 1
+            update_analysis_batch(stored["id"], "completed", output_file_id=output_file_id)
+            counts["completed"] += 1
+        except Exception:
+            logger.exception("Polling batch %s failed; other batches will continue", stored["id"])
     return counts

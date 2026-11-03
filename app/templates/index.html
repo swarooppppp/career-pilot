@@ -29,6 +29,13 @@
             </details>
             <button type="button" id="clear-company-filter" class="secondary" hidden>Clear</button>
           </div>
+          <div class="bulk-job-actions" aria-label="Bulk job actions">
+            <label><input id="select-all-jobs" type="checkbox"> Select all visible</label>
+            <span id="selected-job-count" role="status">0 selected</span>
+            <button id="delete-selected-jobs" type="button" disabled>Delete selected</button>
+          </div>
+          <section id="collection-stats" class="collection-stats" aria-live="polite"></section>
+          <details id="source-status"></details>
           <div id="job-list" class="job-list"></div>
         </section>
         <section class="unsupported-sources" aria-labelledby="unsupported-sources-title">

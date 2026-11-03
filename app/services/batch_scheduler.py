@@ -25,7 +25,7 @@ def _submission_enabled() -> bool:
 
 def start_batch_scheduler() -> threading.Event:
     """Start one local scheduler; FastAPI stops it during shutdown."""
-    submit_seconds = _positive_minutes("OPENAI_BATCH_SUBMIT_INTERVAL_MINUTES", 60) * 60
+    submit_seconds = _positive_minutes("OPENAI_BATCH_SUBMIT_INTERVAL_MINUTES", 1) * 60
     poll_seconds = _positive_minutes("OPENAI_BATCH_POLL_INTERVAL_MINUTES", 5) * 60
     submit_limit = int(os.getenv("OPENAI_BATCH_SUBMIT_LIMIT", "100"))
     if submit_limit < 1:
@@ -49,7 +49,10 @@ def start_batch_scheduler() -> threading.Event:
             if submission_enabled and elapsed >= next_submit:
                 try:
                     logger.info("Submitting scheduled OpenAI batch (limit=%s)", submit_limit)
-                    submit_pending_batch(submit_limit)
+                    while not stop.is_set():
+                        result = submit_pending_batch(submit_limit)
+                        if result["submitted"] < submit_limit:
+                            break
                 except Exception:
                     logger.exception("OpenAI Batch submission failed; will retry on the next interval")
                 next_submit = elapsed + submit_seconds

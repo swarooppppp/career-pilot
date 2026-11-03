@@ -382,11 +382,11 @@ def replace_resume_items(
 
 def replace_summary(template: str, summary: str, keywords: list[str] | None = None) -> str:
     pattern = re.compile(
-        r"(\\section\{Professional Summary\}\s*)(.*?)(\n\n%-----------EDUCATION-----------)",
+        r"(\\section\{Professional Summary\}\s*)(.*?)(?=\n\s*(?:%-----------|\\section\{))",
         re.DOTALL,
     )
     def replacement(match: re.Match[str]) -> str:
-        return match.group(1) + highlight_text(summary, keywords) + match.group(3)
+        return match.group(1) + highlight_text(summary, keywords)
 
     result, replacements = pattern.subn(replacement, template, count=1)
     if replacements != 1:
@@ -470,8 +470,10 @@ def generate_resume(
             bullet for project in data["projects"] for bullet in project["bullets"]
         )
         output_dir.mkdir(parents=True, exist_ok=True)
-        timestamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
-        output_pdf = output_dir.resolve() / f"Swaroop_SWE_{timestamp}.pdf"
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H%M%S_%f")
+        generation_dir = output_dir.resolve() / f"Swaroop_Software_Engineer_{timestamp}"
+        generation_dir.mkdir(exist_ok=False)
+        output_pdf = generation_dir / "Swaroop_Software_Engineer.pdf"
         response_json = output_pdf.with_suffix(".json")
         response_json.write_text(
             json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8"
