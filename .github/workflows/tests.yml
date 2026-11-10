@@ -32,5 +32,5 @@ jobs:
       - name: Windows service lifecycle
         if: runner.os == 'Windows'
         run: |
-          python -m venv --system-site-packages .venv
+          powershell -NoProfile -ExecutionPolicy Bypass -File .\windows.ps1 setup
           python automation/windows_smoke.py
