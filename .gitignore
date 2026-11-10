@@ -27,3 +27,10 @@ migration-private/
 data/windows-service.*
 .env.*
 !.env.example
+
+# SQLite databases and journal sidecars remain local on every OS
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
