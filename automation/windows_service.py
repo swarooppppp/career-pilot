@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Per-user Windows dashboard service; never schedules job collection."""
 import argparse
+from contextlib import redirect_stdout, redirect_stderr
 from datetime import datetime
 import json
 import os
@@ -121,8 +122,7 @@ def run():
     os.environ['HOST'] = '127.0.0.1'
     os.environ['PYTHONUTF8'] = '1'
     LOG.parent.mkdir(parents=True, exist_ok=True)
-    with lock, LOG.open('a', encoding='utf-8', buffering=1) as log:
-        sys.stdout = sys.stderr = log
+    with lock, LOG.open('a', encoding='utf-8', buffering=1) as log, redirect_stdout(log), redirect_stderr(log):
         import psutil
         import uvicorn
         token = uuid.uuid4().hex
@@ -145,6 +145,10 @@ def run():
             server.run()
             if not server.started:
                 raise RuntimeError('Server failed to start; check the service log.')
+        except BaseException:
+            import traceback
+            traceback.print_exc(file=log)
+            raise
         finally:
             finished.set()
             STATE.unlink(missing_ok=True)
