@@ -11,6 +11,9 @@ const generateButton = document.querySelector("#generate-button");
 const matchDetails = document.querySelector("#match-details");
 const jobList = document.querySelector("#job-list");
 const jobStatus = document.querySelector("#job-status");
+const fetchJobsButton = document.querySelector("#fetch-jobs");
+let fetchStarting = false;
+let collectionRunning = false;
 const refreshJobsButton = document.querySelector("#refresh-jobs");
 const processJobsButton = document.querySelector("#process-jobs");
 const masterExperience = document.querySelector("#master-experience");
@@ -22,6 +25,8 @@ const clearCompanyFilterButton = document.querySelector("#clear-company-filter")
 const COMPANY_FILTER_KEY = "career-pilot-company-filter";
 let resumeGenerating = false;
 let dashboardJobs = [];
+let showingSaved = false;
+let jobsRequest = 0;
 const selectedJobIds = new Set();
 let bulkDeleting = false;
 const selectAllJobs = document.querySelector("#select-all-jobs");
@@ -32,7 +37,13 @@ try { selectedCompanies = new Set(JSON.parse(localStorage.getItem(COMPANY_FILTER
 catch { selectedCompanies = new Set(); }
 
 function setTab(tabName) {
-  for (const panel of document.querySelectorAll(".tab-panel")) panel.hidden = panel.id !== `${tabName}-panel`;
+  if (tabName !== "direct") {
+    showingSaved = tabName === "saved";
+    selectedJobIds.clear();
+    document.querySelector("#jobs-view-title").textContent = showingSaved ? "Saved jobs" : "Job dashboard";
+    loadJobs();
+  }
+  for (const panel of document.querySelectorAll(".tab-panel")) panel.hidden = panel.id !== `${tabName === "saved" ? "dashboard" : tabName}-panel`;
   for (const tab of document.querySelectorAll(".tab")) {
     const active = tab.dataset.tab === tabName;
     tab.classList.toggle("is-active", active);
@@ -108,8 +119,10 @@ function jobButton(label, callback, style = "secondary", isResume = false) {
   if (isResume) button.dataset.resumeAction = ""; button.addEventListener("click", callback); return button;
 }
 async function updateJobStatus(jobId, status) {
-  await readResult(await fetch(`/api/jobs/${jobId}/action`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status }) }));
-  await loadJobs();
+  try {
+    await readResult(await fetch(`/api/jobs/${jobId}/action`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status }) }));
+    await loadJobs();
+  } catch (error) { jobStatus.textContent = `Could not update job: ${error.message}`; }
 }
 async function generateStoredResume(jobId) {
   clearResumeResults(); setResumeBusy(true); jobStatus.textContent = "Generating tailored resume… This may take a minute.";
@@ -140,7 +153,7 @@ function renderJobs(jobs) {
   if (!jobs.length) {
     jobList.textContent = dashboardJobs.length
       ? "No jobs match the selected company filter."
-      : "No eligible jobs yet. Import a portal JSON file, then refresh.";
+      : (showingSaved ? "No saved jobs yet. Save a job from the dashboard to find it here." : "No eligible jobs yet. Use Fetch jobs now to collect jobs.");
     return;
   }
   for (const job of jobs) {
@@ -173,7 +186,7 @@ function renderJobs(jobs) {
     }
     if (job.resume_error) { const error = document.createElement("p"); error.textContent = job.resume_error; card.append(error); }
     if (job.analysis_status === "failed") actions.append(jobButton("Retry analysis", () => retryAnalysis(job.id)));
-    actions.append(jobButton("Applied", () => updateJobStatus(job.id, "applied")), jobButton("Delete", async () => {
+    actions.append(jobButton(showingSaved ? "Unsave" : "Save job", () => updateJobStatus(job.id, showingSaved ? "new" : "saved")), jobButton("Applied", () => updateJobStatus(job.id, "applied")), jobButton("Delete", async () => {
       try { await readResult(await fetch(`/api/jobs/${job.id}`, { method: "DELETE" })); await loadJobs(); }
       catch (error) { jobStatus.textContent = error.message; }
     }));
@@ -181,8 +194,11 @@ function renderJobs(jobs) {
   }
 }
 async function loadJobs() {
+  const request = ++jobsRequest;
   try {
-    dashboardJobs = (await readResult(await fetch("/api/jobs"))).jobs;
+    const result = await readResult(await fetch(`/api/jobs?saved=${showingSaved}`));
+    if (request !== jobsRequest) return;
+    dashboardJobs = result.jobs;
     renderCompanyControls();
     renderJobs(visibleJobs());
   } catch (error) { jobStatus.textContent = `Could not load jobs: ${error.message}`; }
@@ -217,18 +233,22 @@ loadJobs(); loadMasterExperience(); window.setInterval(loadJobs, 15_000);
 async function loadSourceStatus() {
   try {
     const state = await readResult(await fetch("/api/jobs/sources/status"));
+    collectionRunning = Boolean(state.is_running);
+    fetchJobsButton.disabled = fetchStarting || collectionRunning;
+    fetchJobsButton.textContent = collectionRunning ? "Fetching jobs…" : "Fetch jobs now";
     const stats = document.querySelector("#collection-stats");
     stats.replaceChildren();
     const total = document.createElement("strong");
     total.textContent = `${state.statistics?.new_eligible_jobs_total || 0} new eligible jobs added`;
     const run = document.createElement("p");
-    const slot = state.last_slot ? new Date(state.last_slot).toLocaleString("en-IN", {timeZone: "Asia/Kolkata"}) + " IST" : "Not run yet";
-    run.textContent = `${state.status === "running" ? "Current run" : "Last run"}: ${slot} · ${state.statistics?.companies_completed || 0}/${state.statistics?.companies_total || 0} companies processed`;
-    const note = document.createElement("p"); note.textContent = `${dashboardJobs.length} eligible jobs currently on the dashboard (excluding Applied/deleted). ${state.statistics?.new_jobs_total || 0} total new records imported. New eligible counts exclude updates and duplicates.`;
+    const runAt = state.run_at || state.last_slot;
+    const slot = runAt ? new Date(runAt).toLocaleString("en-IN", {timeZone: "Asia/Kolkata"}) + " IST" : "Not run yet";
+    run.textContent = `${state.status === "running" ? "Current run" : "Last run"}${state.trigger === "manual" ? " (manual)" : ""}: ${slot} · ${state.statistics?.companies_completed || 0}/${state.statistics?.companies_total || 0} companies processed`;
+    const note = document.createElement("p"); note.textContent = `${dashboardJobs.length} eligible jobs in this view (excluding Applied/deleted). ${state.statistics?.new_jobs_total || 0} total new records imported. New eligible counts exclude updates and duplicates.`;
     stats.append(total, run, note);
     const panel = document.querySelector("#source-status");
     panel.replaceChildren();
-    const summary = document.createElement("summary"); summary.textContent = `Portal collection: ${state.status || "waiting"} · six runs daily (India time)`; panel.append(summary);
+    const summary = document.createElement("summary"); summary.textContent = `Portal collection: ${state.status || "waiting"} · ${state.schedule_enabled ? "scheduled collection enabled" : "manual collection only"}`; panel.append(summary);
     for (const [slug, source] of Object.entries(state.sources || {})) {
       const line = document.createElement("p");
       line.textContent = `${source.company || slug}: ${source.status} · ${source.new_eligible_jobs || 0} new eligible · ${source.jobs_count || 0} fetched · last success: ${source.last_success_at || "none"}${source.error ? " · " + source.error : ""}`;
@@ -261,4 +281,20 @@ deleteSelectedJobs.addEventListener("click", async () => {
     jobStatus.textContent = `Deleted ${deleted} ${deleted === 1 ? "job" : "jobs"}.`;
   } catch (error) { jobStatus.textContent = `Deleted ${deleted} jobs. ${error.message}`; }
   finally { bulkDeleting = false; await loadJobs(); updateBulkControls(); }
+});
+
+fetchJobsButton.addEventListener("click", async () => {
+  if (fetchStarting || collectionRunning) return;
+  fetchStarting = true; fetchJobsButton.disabled = true; fetchJobsButton.textContent = "Starting…";
+  try {
+    await readResult(await fetch("/api/jobs/sources/fetch", {method: "POST"}));
+    collectionRunning = true;
+    jobStatus.textContent = "Fetching jobs from all connected companies. New eligible jobs will appear as each company finishes.";
+  } catch (error) { jobStatus.textContent = `Could not start collection: ${error.message}`; }
+  finally {
+    fetchStarting = false;
+    fetchJobsButton.disabled = collectionRunning;
+    fetchJobsButton.textContent = collectionRunning ? "Fetching jobs…" : "Fetch jobs now";
+    await loadSourceStatus();
+  }
 });

@@ -5,6 +5,12 @@ import json
 from pathlib import Path
 from urllib.request import Request, urlopen
 
+# The local collector routes all network I/O through its shared Chrome session.
+import os as _transport_os
+if _transport_os.environ.get("CAREER_PORTAL_TRANSPORT") == "browser":
+    from portal_http import browser_urlopen as urlopen
+
+
 from common import newest_first, plain_text, write_snapshot
 from filters import in_india
 

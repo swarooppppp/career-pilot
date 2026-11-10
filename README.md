@@ -1,3 +1,7 @@
+# Windows migration
+
+For native Windows installation, existing-data transfer, login startup, and future Git updates, follow [WINDOWS_SETUP.md](WINDOWS_SETUP.md). Collection remains manual.
+
 # Career Pilot
 
 Career Pilot analyses a job description against a candidate's complete master
@@ -223,13 +227,12 @@ Atlassian, Rippling, and LinkedIn fetches retain explicit publication dates wher
 the source supplies them. Legacy Databricks/Atlassian update dates mislabeled as
 posting dates are excluded from backfill.
 
-## Scheduled local portal collection
+## Manual local portal collection
 
-The local app collects every available company in `local_career_portals/companies.json`
-at **07:00, 10:00, 13:00, 16:00, 19:00 and 22:00 Asia/Kolkata**. It checks the
-persisted calendar state each minute; after sleep/login it runs one catch-up for
-missed slots. The Mac must be awake with a logged-in session. It does not wake
-or power on the laptop. A first start performs a catch-up immediately.
+Collection is manual by default. Use **Fetch jobs now** to collect every available
+company in `local_career_portals/companies.json`. Login and wake do not trigger
+collection. The local app can still run as a LaunchAgent to keep the dashboard
+available; the legacy standalone Uber timer has been disabled.
 
 ```sh
 .venv/bin/python automation/local_service.py install
@@ -245,10 +248,9 @@ and restarts it after login or an unexpected exit. Alternatively run
 `.venv/bin/python run_local.py` manually. Do not run both on the same port.
 
 Defaults in `.env`: `PORTAL_WORKERS=3`, `PORTAL_SOURCE_TIMEOUT=600`,
-`PORTAL_SCHEDULER_ENABLED=true`, `OPENAI_BATCH_SUBMIT_INTERVAL_MINUTES=1`,
-`OPENAI_BATCH_SUBMIT_LIMIT=100`, and `OPENAI_BATCH_POLL_INTERVAL_MINUTES=5`.
-The existing database and OpenAI settings are reused. Set
-`PORTAL_SCHEDULER_ENABLED=false` to pause collection. Each company runs in an
+`PORTAL_SCHEDULER_ENABLED=false`, `OPENAI_BATCH_SUBMIT_INTERVAL_MINUTES=60`,
+`OPENAI_BATCH_SUBMIT_LIMIT=100`, and `OPENAI_BATCH_POLL_INTERVAL_MINUTES=60`.
+The existing database and OpenAI settings are reused. Automatic collection remains disabled unless explicitly re-enabled. Each company runs in an
 isolated subprocess, preserving its configured browser mode; Uber remains headed
 and minimized. Source failures and last successful runs appear on the dashboard.
 Fetch logs/snapshots are under `local_career_portals/data/scheduled/`; durable
@@ -281,3 +283,27 @@ existing job becomes ineligible, its job row and matching links are removed;
 minimal source/portal-ID markers preserve any Applied/deleted action. Raw portal
 snapshots and fetch logs remain separate from the database. Import statistics
 count new eligible inserts, excluding repeats and updates.
+
+All available companies now run browser-first on the Mac: one reused browser
+session per company and three concurrent company subprocesses, without an initial
+HTTP attempt. Uber keeps its headed/minimized browser. This avoids the VPN's
+observed direct-Python connection timeouts. Genuine portal 403/429 responses are
+still reported; browser transport does not guarantee access to a blocked site.
+
+Use **Fetch jobs now** on the dashboard to start a background collection. It uses the same browser-first
+adapters and imports results as companies finish. The button is disabled during
+any active collection; the server also rejects overlapping requests. A manual
+run is labeled in the statistics.
+
+Use **Save job** on any dashboard card to hide it from the dashboard while keeping
+it in the database. Open **Saved jobs** in the home-page navigation to access saved
+roles, view them, generate resumes, mark Applied, or delete them. **Unsave** moves
+a role back to the dashboard. Repeated imports preserve saved status.
+
+The matching scheduler submits pending work when a collection finishes with new
+eligible jobs or updates, and when analysis is explicitly retried. It also checks
+the database queue and existing batch results once an hour (and at startup). Empty queues create no OpenAI client, upload or batch,
+and routine empty checks are silent at INFO level. Pending eligible jobs are
+drained in chunks of 100: 400 waiting jobs create four provider batches, 450
+create five. Completed/applied/deleted jobs are excluded by the existing queue
+rules; explicit analysis retries continue to work.

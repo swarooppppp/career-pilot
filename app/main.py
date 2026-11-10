@@ -2,6 +2,7 @@
 
 from contextlib import asynccontextmanager
 import hmac
+import hashlib
 import os
 from pathlib import Path
 from urllib.parse import parse_qs
@@ -44,6 +45,9 @@ async def lifespan(_: FastAPI):
     finally:
         stop_scheduler.set()
         stop_portals.set()
+        # Finish persisting any in-flight provider batch before a migration backup.
+        if getattr(stop_scheduler, "thread", None):
+            stop_scheduler.thread.join()
 
 
 app = FastAPI(title="Career Pilot", version="0.1.0", lifespan=lifespan)
@@ -97,8 +101,12 @@ def logout(request: Request) -> RedirectResponse:
 
 
 @app.get("/", response_class=HTMLResponse)
-def home() -> str:
-    return TEMPLATE_PATH.read_text(encoding="utf-8")
+def home() -> HTMLResponse:
+    content = TEMPLATE_PATH.read_text(encoding="utf-8")
+    for asset in ("app.js", "styles.css"):
+        version = hashlib.sha256((STATIC_DIR / asset).read_bytes()).hexdigest()[:12]
+        content = content.replace(f"/static/{asset}", f"/static/{asset}?v={version}")
+    return HTMLResponse(content, headers={"Cache-Control": "no-cache"})
 
 
 @app.get("/health")

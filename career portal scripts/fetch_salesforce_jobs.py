@@ -20,6 +20,12 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qs, urlparse
 from urllib.request import Request, urlopen
 
+# The local collector routes all network I/O through its shared Chrome session.
+import os as _transport_os
+if _transport_os.environ.get("CAREER_PORTAL_TRANSPORT") == "browser":
+    from portal_http import browser_urlopen as urlopen
+
+
 
 DATASET_URLS = (
     "https://a.sfdcstatic.com/digital/xsf/careers/prod/jobs_1.json",

@@ -10,3 +10,7 @@ sqlalchemy
 psycopg[binary]
 kafka-python-ng
 playwright
+
+# Native Windows timezone database and scoped browser process cleanup
+tzdata
+psutil

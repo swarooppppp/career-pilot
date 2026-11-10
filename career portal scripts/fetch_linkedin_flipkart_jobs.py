@@ -22,6 +22,12 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit, urlunsplit
 from urllib.request import Request, urlopen
 
+# The local collector routes all network I/O through its shared Chrome session.
+import os as _transport_os
+if _transport_os.environ.get("CAREER_PORTAL_TRANSPORT") == "browser":
+    from portal_http import browser_urlopen as urlopen
+
+
 
 DEFAULT_URL = "https://www.linkedin.com/jobs/search?keywords=Flipkart%20Software%20Engineer&location=Worldwide&geoId=92000000&f_C=321062&activeFilter=f_C&position=1&pageNum=0"
 USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"

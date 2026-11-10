@@ -155,6 +155,11 @@ def _hash(value: str) -> str:
 
 @lru_cache(maxsize=4)
 def _engine(database_url: str) -> Engine:
+    # Release file handles between transactions so Windows can back up/replace
+    # SQLite files after shutdown; retain normal pooling for PostgreSQL.
+    if database_url.startswith("sqlite:") and ":memory:" not in database_url:
+        from sqlalchemy.pool import NullPool
+        return create_engine(database_url, pool_pre_ping=True, poolclass=NullPool)
     return create_engine(database_url, pool_pre_ping=True)
 
 
@@ -429,9 +434,10 @@ def _serialize(row: Any, include_description: bool = False) -> dict[str, Any]:
     return job
 
 
-def list_jobs(include_ineligible: bool = False) -> list[dict[str, Any]]:
+def list_jobs(include_ineligible: bool = False, saved: bool = False) -> list[dict[str, Any]]:
     initialise()
     statement = select(jobs).where(jobs.c.user_status != "dismissed", jobs.c.applied.is_(False), jobs.c.deleted_at.is_(None))
+    statement = statement.where(jobs.c.user_status == "saved" if saved else jobs.c.user_status != "saved")
     if not include_ineligible:
         statement = statement.where(jobs.c.experience_eligible.is_(True))
     statement = statement.order_by(jobs.c.match_score.desc().nulls_last(), jobs.c.created_at.desc())

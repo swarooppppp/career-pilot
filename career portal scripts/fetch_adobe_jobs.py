@@ -19,6 +19,12 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qsl, quote, urlencode, urlparse, urlunparse
 from urllib.request import Request, urlopen
 
+# The local collector routes all network I/O through its shared Chrome session.
+import os as _transport_os
+if _transport_os.environ.get("CAREER_PORTAL_TRANSPORT") == "browser":
+    from portal_http import browser_urlopen as urlopen
+
+
 
 DEFAULT_URL = "https://careers.adobe.com/us/en/c/engineering-and-product-jobs?from=10&s=1"
 USER_AGENT = "Mozilla/5.0 (compatible; CareerPilotAdobeFetcher/1.0)"

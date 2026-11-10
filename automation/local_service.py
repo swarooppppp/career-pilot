@@ -26,7 +26,7 @@ def main():
         document = {"Label": LABEL, "ProgramArguments": [str(ROOT / ".venv" / "bin" / "python"), str(ROOT / "run_local.py")],
                     "WorkingDirectory": str(ROOT), "RunAtLoad": True, "KeepAlive": True,
                     "ThrottleInterval": 30, "StandardOutPath": str(LOG), "StandardErrorPath": str(LOG),
-                    "EnvironmentVariables": {"PATH": str(ROOT / ".venv" / "bin") + ":/opt/homebrew/bin:/Library/TeX/texbin:/usr/local/bin:/usr/bin:/bin", "PYTHONUNBUFFERED": "1", "HOST": "127.0.0.1", "PORTAL_SCHEDULER_ENABLED": "true"}}
+                    "EnvironmentVariables": {"PATH": str(ROOT / ".venv" / "bin") + ":/opt/homebrew/bin:/Library/TeX/texbin:/usr/local/bin:/usr/bin:/bin", "PYTHONUNBUFFERED": "1", "HOST": "127.0.0.1", "PORTAL_SCHEDULER_ENABLED": "false"}}
         with PLIST.open("wb") as handle:
             plistlib.dump(document, handle)
         subprocess.run(["launchctl", "bootout", DOMAIN + "/" + LABEL], capture_output=True)

@@ -3,7 +3,7 @@
 import argparse
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
-import fcntl
+from runtime_support import FileLock
 import importlib.util
 import json
 import math
@@ -204,10 +204,8 @@ def main():
     if args.max_pages < 1 or args.max_jobs < 0 or args.timeout < 1 or min(args.delay, args.cache_hours, args.max_retry_wait, args.max_retries) < 0:
         parser.error("Invalid limits, timing, or retry settings")
     args.state_file.parent.mkdir(parents=True, exist_ok=True)
-    with args.state_file.with_suffix(".lock").open("w") as lock:
-        try:
-            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except BlockingIOError:
+    with FileLock(args.state_file.with_suffix(".lock")) as lock:
+        if not lock.acquire():
             raise RuntimeError("Another Microsoft fetch is already running")
         state = json.loads(args.state_file.read_text()) if args.state_file.exists() else {"details": {}}
         if state.get("cooldown_until", 0) > time.time():

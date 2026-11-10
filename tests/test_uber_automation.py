@@ -1,4 +1,8 @@
 """Safety boundaries for macOS process targeting and lock recovery."""
+import os
+import unittest
+if os.name == "nt":
+    raise unittest.SkipTest("Legacy macOS LaunchAgent only; Windows uses the registry Uber adapter")
 import fcntl
 import importlib.util
 from pathlib import Path

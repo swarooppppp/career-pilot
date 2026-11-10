@@ -12,6 +12,12 @@ from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
+# The local collector routes all network I/O through its shared Chrome session.
+import os as _transport_os
+if _transport_os.environ.get("CAREER_PORTAL_TRANSPORT") == "browser":
+    from portal_http import browser_urlopen as urlopen
+
+
 FEED = "https://www.postman.com/_mk-www-next/api-cache/careers-jobs.json"
 USER_AGENT = "Mozilla/5.0 (compatible; CareerPilot/1.0)"
 

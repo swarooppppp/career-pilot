@@ -20,3 +20,10 @@ local_career_portals/data/scheduled/
 
 # Local database snapshots
 data/backups/
+
+# Private migration exports and local service control
+migration-private/
+*.migration.zip
+data/windows-service.*
+.env.*
+!.env.example

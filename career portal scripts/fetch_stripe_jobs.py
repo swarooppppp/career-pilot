@@ -5,6 +5,12 @@ import argparse, html, json, re, sys
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
+
+# The local collector routes all network I/O through its shared Chrome session.
+import os as _transport_os
+if _transport_os.environ.get("CAREER_PORTAL_TRANSPORT") == "browser":
+    from portal_http import browser_urlopen as urlopen
+
 UA="Mozilla/5.0 (compatible; CareerPilot/1.0)"
 def page(url:str,timeout:int)->str:
     try:
@@ -22,10 +28,17 @@ def ld(html_doc:str)->dict:
 def clean(v:str)->str:return " ".join(html.unescape(re.sub(r"<[^>]+>"," ",v)).split())
 def filtered_links(url: str, timeout: int) -> list[tuple[str, str]]:
     """Let Stripe apply the supplied URL filters, then read stable role URLs."""
+    if _transport_os.environ.get("CAREER_PORTAL_TRANSPORT") == "browser":
+        from portal_http import browser_page
+        tab = browser_page()
+        tab.goto(url, wait_until="domcontentloaded", timeout=timeout * 1000)
+        tab.locator('a[href*="/careers/listing/"]').first.wait_for(timeout=timeout * 1000)
+        hrefs = tab.locator('a[href*="/careers/listing/"]').evaluate_all("els => els.map(e => e.getAttribute('href'))")
+        return list(dict.fromkeys((m.group(1),m.group(2)) for href in hrefs if href and (m:=re.search(r"/careers/listing/([^?#/]+)/([0-9]+)",href))))
     try:
         from playwright.sync_api import sync_playwright
         with sync_playwright() as pw:
-            browser=pw.chromium.launch(headless=True, executable_path="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
+            browser=pw.chromium.launch(headless=True, channel="chrome")
             tab=browser.new_page(); tab.goto(url, wait_until="networkidle", timeout=timeout * 1000)
             hrefs=tab.locator('a[href*="/careers/listing/"]').evaluate_all("els => els.map(e => e.getAttribute('href'))")
             browser.close()

@@ -7,6 +7,7 @@ from pathlib import Path
 import subprocess
 import sys
 
+from runtime_support import process_options, stop_process_tree
 from common import newest_first, write_snapshot
 from filters import apply_policy
 
@@ -16,8 +17,8 @@ ROOT = HERE.parent
 
 def environment(company):
     values = dict(os.environ)
-    if company.get("transport"):
-        values["CAREER_PORTAL_TRANSPORT"] = company["transport"]
+    values["CAREER_PORTAL_TRANSPORT"] = company.get("transport", "browser")
+    values["PYTHONPATH"] = os.pathsep.join([str(HERE), str(ROOT)] + ([values["PYTHONPATH"]] if values.get("PYTHONPATH") else []))
     return values
 
 
@@ -62,7 +63,14 @@ def main():
             continue
         try:
             pending.unlink(missing_ok=True)
-            subprocess.run(cmd, cwd=ROOT, check=True, timeout=args.source_timeout, env=environment(company))
+            process = subprocess.Popen(cmd, cwd=ROOT, env=environment(company), **process_options())
+            try:
+                code = process.wait(timeout=args.source_timeout)
+            except subprocess.TimeoutExpired:
+                stop_process_tree(process)
+                raise
+            if code:
+                raise subprocess.CalledProcessError(code, cmd)
             snapshot = json.loads(pending.read_text())
             candidates = snapshot.pop("jobs")
             jobs = newest_first(apply_policy(candidates, company["filter_policy"]))

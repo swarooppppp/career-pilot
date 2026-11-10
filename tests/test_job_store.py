@@ -32,6 +32,33 @@ class JobStoreTests(unittest.TestCase):
         self.environment_patch.stop()
         self.directory.cleanup()
 
+    def test_saved_jobs_survive_imports_and_hide_from_dashboard(self):
+        job_store.import_jobs([raw_job()], "google", 2)
+        ident = job_store.list_jobs()[0]["id"]
+        job_store.save_analysis(ident, {"overall_score": 91})
+        self.assertTrue(job_store.update_user_status(ident, "saved"))
+        self.assertEqual(job_store.list_jobs(), [])
+        self.assertEqual(job_store.list_jobs(saved=True)[0]["id"], ident)
+        job_store.import_jobs([raw_job(description="Requires 2+ years and Python.")], "google", 2)
+        self.assertEqual(job_store.list_jobs(), [])
+        self.assertEqual(job_store.list_jobs(saved=True)[0]["id"], ident)
+        job_store.update_user_status(ident, "new")
+        self.assertEqual(job_store.list_jobs(saved=True), [])
+        self.assertEqual(job_store.list_jobs()[0]["id"], ident)
+        job_store.update_user_status(ident, "saved")
+        job_store.update_user_status(ident, "applied")
+        self.assertEqual(job_store.list_jobs(saved=True), [])
+        self.assertEqual(job_store.list_jobs(), [])
+
+    def test_deleted_saved_job_stays_hidden_after_import(self):
+        job_store.import_jobs([raw_job()], "google", 2)
+        ident = job_store.list_jobs()[0]["id"]
+        job_store.update_user_status(ident, "saved")
+        job_store.update_user_status(ident, "deleted")
+        job_store.import_jobs([raw_job()], "google", 2)
+        self.assertEqual(job_store.list_jobs(saved=True), [])
+        self.assertEqual(job_store.list_jobs(), [])
+
     def test_publication_date_refresh_preserves_analysis_and_missing_dates(self):
         job_store.import_jobs([raw_job()], "google", 2)
         ident = job_store.list_jobs()[0]["id"]

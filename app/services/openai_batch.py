@@ -136,7 +136,7 @@ def poll_openai_batches() -> dict[str, int]:
     counts = {"checked": 0, "completed": 0, "failed": 0, "jobs_completed": 0, "jobs_failed": 0}
     batches = active_analysis_batches()
     if not batches:
-        logger.info("No active OpenAI analysis batches to poll")
+        logger.debug("No active OpenAI analysis batches to poll")
         return counts
     client = _client()
     for stored in batches:

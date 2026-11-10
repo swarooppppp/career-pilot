@@ -532,3 +532,21 @@ and no India locations. Flexport has 190 global listings and four India jobs,
 all in ocean operations or sales, so none pass the engineering filter. These are
 valid filtered empty results, not failed fetches. The nine-source report contains
 no source failures. Seventy-seven adapter/filter regression tests pass.
+
+## Browser-first local collection
+
+All 96 available registry entries now use browser transport. Each company runs
+in its own subprocess and reuses one Chrome session for public APIs, listing
+pages and detail pages. The runner supplies the shared transport on PYTHONPATH;
+there is no initial HTTP attempt or VPN timeout before browser startup.
+
+The default remains three company subprocesses in parallel. Uber retains its
+headed/minimized browser; Nutanix retains its headed fallback. The shared browser
+transport preserves HTTP error codes and Retry-After headers, so existing rate
+limit handling still applies. Chrome does not guarantee access when a portal
+returns a genuine 403 or 429. Legacy standalone scripts retain HTTP behavior
+unless invoked with the browser transport configured by the registry runner.
+
+MongoDB uses the shared page for both its feed and native UI filters, and Stripe
+uses the same session for its listings and detail pages. These avoid nesting
+Playwright runtimes or mixing browser requests with direct HTTP under the VPN.

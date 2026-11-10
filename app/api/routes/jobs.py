@@ -38,8 +38,8 @@ def bulk_delete(request: BulkDeleteRequest) -> dict:
 
 
 @router.get("")
-def dashboard_jobs(include_ineligible: bool = False) -> dict:
-    return {"jobs": list_jobs(include_ineligible=include_ineligible)}
+def dashboard_jobs(include_ineligible: bool = False, saved: bool = False) -> dict:
+    return {"jobs": list_jobs(include_ineligible=include_ineligible, saved=saved)}
 
 
 @router.post("/process")
@@ -73,6 +73,8 @@ def take_action(job_id: str, action: JobAction) -> dict[str, str]:
 def retry_job_analysis(job_id: str) -> dict[str, str]:
     if not retry_analysis(job_id):
         raise HTTPException(status_code=404, detail="failed job not found")
+    from app.services.batch_scheduler import notify_matching_work
+    notify_matching_work()
     return {"status": "pending"}
 
 
@@ -87,10 +89,20 @@ def generate_job_resume(job_id: str) -> dict:
         raise HTTPException(status_code=422, detail=str(error)) from error
 
 
+@router.post("/sources/fetch", status_code=202)
+def fetch_sources_now() -> dict:
+    from app.services.portal_scheduler import trigger_manual_collection
+    if not trigger_manual_collection():
+        raise HTTPException(status_code=409, detail="A job collection is already running")
+    return {"status": "started"}
+
+
 @router.get("/sources/status")
 def source_status() -> dict:
-    from app.services.portal_scheduler import read_state
-    return read_state()
+    from app.services.portal_scheduler import read_state, collection_is_running
+    import os
+    return {**read_state(), "is_running": collection_is_running(),
+            "schedule_enabled": os.getenv("PORTAL_SCHEDULER_ENABLED", "false").lower() in {"true", "1", "yes"}}
 
 
 @router.get("/{job_id}")

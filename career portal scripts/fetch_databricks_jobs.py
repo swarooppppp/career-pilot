@@ -14,6 +14,12 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qs, urlparse
 from urllib.request import Request, urlopen
 
+# The local collector routes all network I/O through its shared Chrome session.
+import os as _transport_os
+if _transport_os.environ.get("CAREER_PORTAL_TRANSPORT") == "browser":
+    from portal_http import browser_urlopen as urlopen
+
+
 
 DEFAULT_URL = "https://www.databricks.com/company/careers/open-positions?department=Engineering&location=India&search=Software%20Engineer"
 API_URL = "https://boards-api.greenhouse.io/v1/boards/databricks/jobs?content=true"

@@ -7,6 +7,12 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
+# The local collector routes all network I/O through its shared Chrome session.
+import os as _transport_os
+if _transport_os.environ.get("CAREER_PORTAL_TRANSPORT") == "browser":
+    from portal_http import browser_urlopen as urlopen
+
+
 UA = "Mozilla/5.0 (compatible; CareerPilot/1.0)"
 def get(url: str, timeout: int) -> dict:
     try:

@@ -14,7 +14,8 @@
         "country": "India",
         "engineering": "native",
         "method": "department=Engineering & location=India, checked locally by adapter"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Rubrik",
@@ -31,7 +32,8 @@
         "country": "India",
         "engineering": "native",
         "method": "exact Engineering department & --location India"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Uber",
@@ -48,7 +50,8 @@
         "country": "India",
         "engineering": "native",
         "method": "team=Engineer & countries=India"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Google",
@@ -65,7 +68,8 @@
         "country": "India",
         "engineering": "title",
         "method": "Software Engineer query & India location + engineering-title validation"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Atlassian",
@@ -81,7 +85,8 @@
         "country": "India",
         "engineering": "native",
         "method": "team=Engineering & location=India, checked locally by adapter"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "LinkedIn",
@@ -104,7 +109,8 @@
         "country": "India",
         "engineering": "title",
         "method": "Engineering keyword & India geo filter + engineering-title validation"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Snowflake",
@@ -131,7 +137,8 @@
         "country": "India",
         "engineering": "title",
         "method": "Software Engineer query & India location + engineering-title validation"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Rippling",
@@ -145,7 +152,8 @@
         "country": "India",
         "engineering": "native",
         "method": "Algolia departmentName=Engineering & Bangalore, India"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "IBM",
@@ -182,7 +190,8 @@
         "country": "India",
         "engineering": "native",
         "method": "Exact Engineering board department & India location"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Abnormal AI",
@@ -199,7 +208,8 @@
         "country": "India",
         "engineering": "native",
         "method": "portal category membership & exact supplied India location"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Microsoft",
@@ -218,7 +228,8 @@
         "engineering": "native",
         "method": "Verified filter_profession=software engineering, India, Mid-Level/Senior/Entry, remote included, relocation excluded; output India check"
       },
-      "url": "https://apply.careers.microsoft.com/careers?query=Software+Engineering&start=0&location=India&pid=1970393557043583&sort_by=timestamp&filter_include_remote=1&filter_include_relocation=0&filter_profession=software+engineering&filter_seniority=Mid-Level%2CSenior%2CEntry"
+      "url": "https://apply.careers.microsoft.com/careers?query=Software+Engineering&start=0&location=India&pid=1970393557043583&sort_by=timestamp&filter_include_remote=1&filter_include_relocation=0&filter_profession=software+engineering&filter_seniority=Mid-Level%2CSenior%2CEntry",
+      "transport": "browser"
     },
     {
       "company": "Amazon",
@@ -235,7 +246,8 @@
         "country": "India",
         "engineering": "native",
         "method": "software-development category & country IND"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Airbnb",
@@ -252,7 +264,8 @@
         "country": "India",
         "engineering": "native",
         "method": "Public Greenhouse board with canonical Airbnb career links; Software Engineering and Engineering & Technology departments, India location, first publication descending."
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Cloudflare",
@@ -269,7 +282,8 @@
         "country": "India",
         "engineering": "native",
         "method": "Career Site Department and Job Posting Location metadata"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "MongoDB",
@@ -286,7 +300,8 @@
         "country": "India",
         "engineering": "native",
         "method": "native Engineering UI filter + India and Indian city facets"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Intuit",
@@ -303,7 +318,8 @@
         "country": "India",
         "engineering": "title",
         "method": "saved category facets & --country India + engineering-title validation"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Postman",
@@ -316,7 +332,8 @@
         "country": "India",
         "engineering": "native",
         "method": "exact Engineering department & Bangalore/Hyderabad"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Salesforce",
@@ -330,7 +347,8 @@
         "country": "India",
         "engineering": "native",
         "method": "Software Engineering team & India country, checked locally by adapter"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Adobe",
@@ -344,7 +362,8 @@
         "engineering": "title",
         "method": "All bounded listing pages filtered to engineering titles and India, sorted by postedDate before full-description hydration."
       },
-      "url": "https://careers.adobe.com/us/en/c/engineering-and-product-jobs?from=10&s=1"
+      "url": "https://careers.adobe.com/us/en/c/engineering-and-product-jobs?from=10&s=1",
+      "transport": "browser"
     },
     {
       "company": "Harness",
@@ -367,7 +386,8 @@
         "country": "India",
         "engineering": "native",
         "method": "Exact Engineering board department and India location before limiting."
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Nutanix",
@@ -383,7 +403,8 @@
         "engineering": "native",
         "method": "Native India/Engineering search; headless first, one minimized headed attempt after HTTP 403. Structured locations and dates retained. First listing page only."
       },
-      "url": "https://careers.nutanix.com/en/jobs/?search=&country=India&team=Engineering&type=Full-Time&pagesize=20"
+      "url": "https://careers.nutanix.com/en/jobs/?search=&country=India&team=Engineering&type=Full-Time&pagesize=20",
+      "transport": "browser"
     },
     {
       "company": "Palo Alto Networks",
@@ -400,7 +421,8 @@
         "engineering": "title",
         "method": "Software Engineer search, explicit India structured-country check, engineering-title output guard."
       },
-      "url": "https://jobs.paloaltonetworks.com/en/search-jobs/Software%20Engineer/47263/1"
+      "url": "https://jobs.paloaltonetworks.com/en/search-jobs/Software%20Engineer/47263/1",
+      "transport": "browser"
     },
     {
       "company": "Eightfold AI",
@@ -428,7 +450,8 @@
         "country": "India",
         "engineering": "title",
         "method": "Existing Eightfold tenant API, engineering query and India search; conservative title/location output checks."
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "PhonePe",
@@ -445,7 +468,8 @@
         "engineering": "native",
         "method": "Official Apollo feed: PUBLIC Engineering roles in India; full SmartRecruiters descriptions."
       },
-      "url": "https://www.phonepe.com/careers/job-openings/"
+      "url": "https://www.phonepe.com/careers/job-openings/",
+      "transport": "browser"
     },
     {
       "company": "Razorpay",
@@ -462,7 +486,8 @@
         "engineering": "native",
         "method": "Supplied Engineering department ID and descendants; India locations; recent publication first."
       },
-      "url": "https://job-boards.greenhouse.io/razorpaysoftwareprivatelimited?departments%5B%5D=4024806005"
+      "url": "https://job-boards.greenhouse.io/razorpaysoftwareprivatelimited?departments%5B%5D=4024806005",
+      "transport": "browser"
     },
     {
       "company": "Fivetran",
@@ -479,7 +504,8 @@
         "engineering": "native",
         "method": "Engineering Department, OR of all three supplied locations, Employee Type Regular; publication date descending."
       },
-      "url": "https://www.fivetran.com/careers?dept=Engineering+Department&loc=Bangalore%2C+India&loc=Bengaluru%2C+Karnataka%2C+India&loc=Remote%2C+India&type=Regular#jobs"
+      "url": "https://www.fivetran.com/careers?dept=Engineering+Department&loc=Bangalore%2C+India&loc=Bengaluru%2C+Karnataka%2C+India&loc=Remote%2C+India&type=Regular#jobs",
+      "transport": "browser"
     },
     {
       "company": "Cockroach Labs",
@@ -496,7 +522,8 @@
         "engineering": "native",
         "method": "Exact Engineering department and India locations; publication date descending."
       },
-      "url": "https://www.cockroachlabs.com/careers/open-positions/"
+      "url": "https://www.cockroachlabs.com/careers/open-positions/",
+      "transport": "browser"
     },
     {
       "company": "ServiceNow",
@@ -513,7 +540,8 @@
         "engineering": "native",
         "method": "Public SmartRecruiters feed; Engineering function, India, Software Engineer query, supplied city OR filter; website challenge avoided by using separate public feed."
       },
-      "url": "https://careers.servicenow.com/jobs/?search=Software+Engineer&country=India&region=Karnataka&location=Bangalore&region=&location=Bangalore%2C+Karnataka%2C+India&region=&location=Hyderabad&region=Maharashtra&location=Mumbai&region=&location=Gurgaon&origin=global"
+      "url": "https://careers.servicenow.com/jobs/?search=Software+Engineer&country=India&region=Karnataka&location=Bangalore&region=&location=Bangalore%2C+Karnataka%2C+India&region=&location=Hyderabad&region=Maharashtra&location=Mumbai&region=&location=Gurgaon&origin=global",
+      "transport": "browser"
     },
     {
       "company": "CrowdStrike",
@@ -534,7 +562,8 @@
         "status": "ok",
         "sample_jobs": 12,
         "sample_file": "local_career_portals/data/samples/batch4_20261101_100810/batch4_top50.json"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "NVIDIA",
@@ -558,7 +587,8 @@
         "status": "ok",
         "sample_jobs": 50,
         "sample_file": "local_career_portals/data/samples/batch4_20261101_100810/batch4_top50.json"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Apple",
@@ -582,7 +612,8 @@
         "status": "ok",
         "sample_jobs": 45,
         "sample_file": "local_career_portals/data/samples/batch4_20261101_100810/batch4_top50.json"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Coinbase",
@@ -606,7 +637,8 @@
         "status": "ok",
         "sample_jobs": 8,
         "sample_file": "local_career_portals/data/samples/batch4_20261101_100810/batch4_top50.json"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "D. E. Shaw",
@@ -627,7 +659,8 @@
         "status": "ok",
         "sample_jobs": 30,
         "sample_file": "local_career_portals/data/samples/batch4_20261101_100810/batch4_top50.json"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Squarepoint Capital",
@@ -651,7 +684,8 @@
         "status": "ok",
         "sample_jobs": 7,
         "sample_file": "local_career_portals/data/samples/batch4_20261101_100810/batch4_top50.json"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Tower Research",
@@ -675,7 +709,8 @@
         "status": "ok",
         "sample_jobs": 9,
         "sample_file": "local_career_portals/data/samples/batch4_20261101_100810/batch4_top50.json"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Millennium Management",
@@ -699,7 +734,8 @@
         "status": "ok",
         "sample_jobs": 13,
         "sample_file": "local_career_portals/data/samples/batch4_20261101_100810/batch4_top50.json"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Moloco",
@@ -723,7 +759,8 @@
         "status": "empty",
         "sample_jobs": 0,
         "sample_file": "local_career_portals/data/samples/batch4_20261101_100810/batch4_top50.json"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Arcesium",
@@ -747,7 +784,8 @@
         "status": "ok",
         "sample_jobs": 3,
         "sample_file": "local_career_portals/data/samples/batch4_20261101_100810/batch4_top50.json"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Adyen",
@@ -771,7 +809,8 @@
         "status": "empty",
         "sample_jobs": 0,
         "sample_file": "local_career_portals/data/samples/batch5_20261103_141702/batch5_top50.json"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Canva",
@@ -792,7 +831,8 @@
         "status": "empty",
         "sample_jobs": 0,
         "sample_file": "local_career_portals/data/samples/batch5_20261103_141702/batch5_top50.json"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Notion",
@@ -816,7 +856,8 @@
         "status": "ok",
         "sample_jobs": 1,
         "sample_file": "local_career_portals/data/samples/batch5_20261103_141702/batch5_top50.json"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Anyscale",
@@ -840,7 +881,8 @@
         "status": "ok",
         "sample_jobs": 5,
         "sample_file": "local_career_portals/data/samples/batch5_20261103_141702/batch5_top50.json"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "ElevenLabs",
@@ -864,7 +906,8 @@
         "status": "empty",
         "sample_jobs": 0,
         "sample_file": "local_career_portals/data/samples/batch5_20261103_141702/batch5_top50.json"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Samsara",
@@ -888,7 +931,8 @@
         "status": "ok",
         "sample_jobs": 3,
         "sample_file": "local_career_portals/data/samples/batch5_20261103_141702/batch5_top50.json"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Wiz",
@@ -912,7 +956,8 @@
         "status": "empty",
         "sample_jobs": 0,
         "sample_file": "local_career_portals/data/samples/batch5_20261103_141702/batch5_top50.json"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "CyberArk",
@@ -933,7 +978,8 @@
         "status": "empty",
         "sample_jobs": 0,
         "sample_file": "local_career_portals/data/samples/batch5_20261103_141702/batch5_top50.json"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Okta",
@@ -957,7 +1003,8 @@
         "status": "ok",
         "sample_jobs": 50,
         "sample_file": "local_career_portals/data/samples/batch5_20261103_141702/batch5_top50.json"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Snyk",
@@ -981,7 +1028,8 @@
         "status": "empty",
         "sample_jobs": 0,
         "sample_file": "local_career_portals/data/samples/batch5_20261103_141702/batch5_top50.json"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "JFrog",
@@ -1005,7 +1053,8 @@
         "status": "empty",
         "sample_jobs": 0,
         "sample_file": "local_career_portals/data/samples/batch6_20261103_153907/batch6_top50.json"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Netskope",
@@ -1029,7 +1078,8 @@
         "status": "ok",
         "sample_jobs": 15,
         "sample_file": "local_career_portals/data/samples/batch6_20261103_153907/batch6_top50.json"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "SentinelOne",
@@ -1053,7 +1103,8 @@
         "status": "ok",
         "sample_jobs": 9,
         "sample_file": "local_career_portals/data/samples/batch6_20261103_153907/batch6_top50.json"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Pure Storage",
@@ -1077,7 +1128,8 @@
         "status": "ok",
         "sample_jobs": 40,
         "sample_file": "local_career_portals/data/samples/batch6_20261103_153907/batch6_top50.json"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Arista Networks",
@@ -1098,7 +1150,8 @@
         "status": "ok",
         "sample_jobs": 20,
         "sample_file": "local_career_portals/data/samples/batch6_20261103_153907/batch6_top50.json"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Cohesity",
@@ -1122,7 +1175,8 @@
         "status": "ok",
         "sample_jobs": 6,
         "sample_file": "local_career_portals/data/samples/batch6_20261103_153907/batch6_top50.json"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Broadcom",
@@ -1146,7 +1200,8 @@
         "status": "ok",
         "sample_jobs": 50,
         "sample_file": "local_career_portals/data/samples/batch6_20261103_153907/batch6_top50.json"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Workday",
@@ -1170,7 +1225,8 @@
         "status": "ok",
         "sample_jobs": 1,
         "sample_file": "local_career_portals/data/samples/batch6_20261103_153907/batch6_top50.json"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Docusign",
@@ -1191,7 +1247,8 @@
         "status": "ok",
         "sample_jobs": 29,
         "sample_file": "local_career_portals/data/samples/batch6_20261103_153907/batch6_top50.json"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Dynatrace",
@@ -1212,7 +1269,8 @@
         "status": "empty",
         "sample_jobs": 0,
         "sample_file": "local_career_portals/data/samples/batch7_20261103_183101/batch7_top50.json"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "PayPal",
@@ -1238,7 +1296,8 @@
         "status": "ok",
         "sample_jobs": 9,
         "sample_file": "local_career_portals/data/samples/batch7_20261103_183101/batch7_top50.json"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "eBay",
@@ -1264,7 +1323,8 @@
         "status": "ok",
         "sample_jobs": 50,
         "sample_file": "local_career_portals/data/samples/batch7_20261103_183101/batch7_top50.json"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Commvault",
@@ -1288,7 +1348,8 @@
         "status": "ok",
         "sample_jobs": 9,
         "sample_file": "local_career_portals/data/samples/batch7_20261103_183101/batch7_top50.json"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Veeam Software",
@@ -1312,7 +1373,8 @@
         "status": "ok",
         "sample_jobs": 6,
         "sample_file": "local_career_portals/data/samples/batch7_20261103_183101/batch7_top50.json"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Red Hat",
@@ -1338,7 +1400,8 @@
         "status": "ok",
         "sample_jobs": 1,
         "sample_file": "local_career_portals/data/samples/batch7_20261103_183101/batch7_top50.json"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "GitLab",
@@ -1362,7 +1425,8 @@
         "status": "ok",
         "sample_jobs": 20,
         "sample_file": "local_career_portals/data/samples/batch7_20261103_183101/batch7_top50.json"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Automattic",
@@ -1383,7 +1447,8 @@
         "status": "ok",
         "sample_jobs": 1,
         "sample_file": "local_career_portals/data/samples/batch7_20261103_183101/batch7_top50.json"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Grafana Labs",
@@ -1407,7 +1472,8 @@
         "status": "empty",
         "sample_jobs": 0,
         "sample_file": "local_career_portals/data/samples/batch7_20261103_183101/batch7_top50.json"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Elastic",
@@ -1431,7 +1497,8 @@
         "status": "ok",
         "sample_jobs": 3,
         "sample_file": "local_career_portals/data/samples/batch7_20261103_183101/batch7_top50.json"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Yugabyte",
@@ -1455,7 +1522,8 @@
         "status": "ok",
         "sample_jobs": 2,
         "sample_file": "local_career_portals/data/samples/batch8_20261103_184255/batch8_top50.json"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Redis",
@@ -1479,7 +1547,8 @@
         "status": "empty",
         "sample_jobs": 0,
         "sample_file": "local_career_portals/data/samples/batch8_20261103_184255/batch8_top50.json"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "SingleStore",
@@ -1503,7 +1572,8 @@
         "status": "ok",
         "sample_jobs": 6,
         "sample_file": "local_career_portals/data/samples/batch8_20261103_184255/batch8_top50.json"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "StarTree",
@@ -1527,7 +1597,8 @@
         "status": "ok",
         "sample_jobs": 3,
         "sample_file": "local_career_portals/data/samples/batch8_20261103_184255/batch8_top50.json"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "ThoughtSpot",
@@ -1548,7 +1619,8 @@
         "status": "ok",
         "sample_jobs": 7,
         "sample_file": "local_career_portals/data/samples/batch8_20261103_184255/batch8_top50.json"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Instabase",
@@ -1596,7 +1668,8 @@
         "status": "empty",
         "sample_jobs": 0,
         "sample_file": "local_career_portals/data/samples/batch8_20261103_184255/batch8_top50.json"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "DevRev",
@@ -1620,7 +1693,8 @@
         "status": "ok",
         "sample_jobs": 9,
         "sample_file": "local_career_portals/data/samples/batch8_20261103_184255/batch8_top50.json"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Ema",
@@ -1644,7 +1718,8 @@
         "status": "ok",
         "sample_jobs": 9,
         "sample_file": "local_career_portals/data/samples/batch8_20261103_184255/batch8_top50.json"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Endor Labs",
@@ -1668,7 +1743,8 @@
         "status": "ok",
         "sample_jobs": 8,
         "sample_file": "local_career_portals/data/samples/batch8_20261103_184255/batch8_top50.json"
-      }
+      },
+      "transport": "browser"
     },
     {
       "company": "Kong",

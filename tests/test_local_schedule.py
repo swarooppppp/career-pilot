@@ -29,11 +29,11 @@ class LocalScheduleTests(unittest.TestCase):
                 self.assertFalse(scheduler.collect(slot, threading.Event()))
 
     def test_process_lock_prevents_overlapping_runs(self):
-        import fcntl
+        from local_career_portals.runtime_support import FileLock
         with TemporaryDirectory() as directory:
             state = Path(directory) / 'state.json'
-            with state.with_suffix('.lock').open('a') as lock:
-                fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            with FileLock(state.with_suffix('.lock')) as lock:
+                self.assertTrue(lock.acquire())
                 with patch.object(scheduler, 'STATE', state):
                     self.assertFalse(scheduler.collect(datetime.now(scheduler.ZONE), threading.Event()))
 

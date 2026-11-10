@@ -20,6 +20,12 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qsl, urlencode, urljoin, urlparse, urlunparse
 from urllib.request import Request, urlopen
 
+# The local collector routes all network I/O through its shared Chrome session.
+import os as _transport_os
+if _transport_os.environ.get("CAREER_PORTAL_TRANSPORT") == "browser":
+    from portal_http import browser_urlopen as urlopen
+
+
 
 BASE_URL = "https://jobs.intuit.com"
 DEFAULT_URL = "https://jobs.intuit.com/search-jobs?acm=8698512,68357,68358&alrpm=ALL&ascf=%5B%7B%22key%22:%22ALL%22,%22value%22:%22%22%7D%5D"

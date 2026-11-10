@@ -12,13 +12,14 @@
         <a class="brand" href="#dashboard" aria-label="Career Pilot home"><span></span> Career Pilot</a>
         <nav class="tabs" aria-label="Workspace">
           <button type="button" class="tab is-active" data-tab="dashboard" aria-selected="true">Dashboard</button>
+          <button type="button" class="tab" data-tab="saved" aria-selected="false">Saved jobs</button>
           <button type="button" class="tab" data-tab="direct" aria-selected="false">Tailor from JD</button>
         </nav>
       </header>
       <section id="dashboard-panel" class="tab-panel" aria-labelledby="dashboard-title">
         <div class="page-heading"><p class="eyebrow">Your pipeline</p><h1 id="dashboard-title">Find the next role worth pursuing.</h1><p>Review eligible roles, analyse the strongest fits, and make one tailored resume at a time.</p></div>
         <section class="dashboard" aria-label="Job dashboard">
-          <div class="section-heading"><div><h2>Job dashboard</h2><p>Only jobs that pass your experience and seniority filters appear here.</p></div><div class="actions compact-actions"><button type="button" id="refresh-jobs" class="secondary">Refresh</button><button type="button" id="process-jobs">Analyse pending jobs</button></div></div>
+          <div class="section-heading"><div><h2 id="jobs-view-title">Job dashboard</h2><p>Only jobs that pass your experience and seniority filters appear here.</p></div><div class="actions compact-actions"><button type="button" id="fetch-jobs">Fetch jobs now</button><button type="button" id="refresh-jobs" class="secondary">Refresh</button><button type="button" id="process-jobs">Analyse pending jobs</button></div></div>
           <p id="job-status" role="status"></p>
           <div id="job-resume-result" class="resume-result" hidden aria-live="polite"><span>Tailored resume ready</span><a id="job-download-link" class="download">Download PDF</a></div>
           <div class="company-filter" aria-label="Company filter">

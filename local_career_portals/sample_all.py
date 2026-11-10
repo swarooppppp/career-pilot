@@ -7,11 +7,11 @@ import json
 import os
 import re
 from pathlib import Path
-import signal
 import subprocess
 import time
 from zoneinfo import ZoneInfo
 
+from runtime_support import process_options, stop_process_tree
 from common import newest_first, timestamp, write_snapshot
 from filters import apply_policy
 from run import command, environment, HERE
@@ -28,42 +28,8 @@ def classification(text):
     return 'fetch_failed'
 
 
-def descendants(pid):
-    result = subprocess.run(['/bin/ps', '-axo', 'pid=,ppid='], capture_output=True, text=True)
-    pairs = [tuple(map(int, line.split())) for line in result.stdout.splitlines() if len(line.split()) == 2]
-    found = {pid}
-    while True:
-        children = {child for child, parent in pairs if parent in found}
-        if children <= found:
-            return found - {pid}
-        found.update(children)
-
-
 def stop(process):
-    # Only this worker's process tree, including its Playwright Chromium.
-    children = descendants(process.pid)
-    for pid in children:
-        try:
-            os.kill(pid, signal.SIGTERM)
-        except ProcessLookupError:
-            pass
-    try:
-        os.killpg(process.pid, signal.SIGTERM)
-    except ProcessLookupError:
-        pass
-    try:
-        process.wait(timeout=5)
-    except subprocess.TimeoutExpired:
-        for pid in children:
-            try:
-                os.kill(pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
-        try:
-            os.killpg(process.pid, signal.SIGKILL)
-        except ProcessLookupError:
-            pass
-        process.wait()
+    stop_process_tree(process)
 
 
 def fetch(company, directory, limit, timeout):
@@ -81,7 +47,7 @@ def fetch(company, directory, limit, timeout):
         source_limit = 0 if Path(company['existing_script']).name == 'fetch_greenhouse_jobs.py' else limit
         with log.open('w') as handle:
             process = subprocess.Popen(command(company, source_limit, raw), stdout=handle, stderr=subprocess.STDOUT,
-                                       cwd=HERE.parent, start_new_session=True, env=environment(company))
+                                       cwd=HERE.parent, **process_options(), env=environment(company))
             try:
                 code = process.wait(timeout=timeout)
             except subprocess.TimeoutExpired:

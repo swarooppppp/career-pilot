@@ -15,6 +15,12 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qsl, quote, urlencode, urlparse, urlunparse
 from urllib.request import Request, urlopen
 
+# The local collector routes all network I/O through its shared Chrome session.
+import os as _transport_os
+if _transport_os.environ.get("CAREER_PORTAL_TRANSPORT") == "browser":
+    from portal_http import browser_urlopen as urlopen
+
+
 
 DEFAULT_URL = "https://jobs.apple.com/en-in/search?location=india-INDC&key=Software%2520Engineer"
 BASE_URL = "https://jobs.apple.com"

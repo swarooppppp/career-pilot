@@ -16,6 +16,12 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qs, urlencode, urljoin, urlparse
 from urllib.request import Request, urlopen
 
+# The local collector routes all network I/O through its shared Chrome session.
+import os as _transport_os
+if _transport_os.environ.get("CAREER_PORTAL_TRANSPORT") == "browser":
+    from portal_http import browser_urlopen as urlopen
+
+
 
 DEFAULT_URL = "https://www.rippling.com/en-GB/careers/open-roles?search=Software%20Engineer&department=Engineering&location=Bangalore%2C%20India"
 ALGOLIA_ENDPOINT = "https://6fnax3tbef-1.algolianet.com/1/indexes/*/queries"

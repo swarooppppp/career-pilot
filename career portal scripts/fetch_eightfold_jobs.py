@@ -8,6 +8,12 @@ from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
+
+# The local collector routes all network I/O through its shared Chrome session.
+import os as _transport_os
+if _transport_os.environ.get("CAREER_PORTAL_TRANSPORT") == "browser":
+    from portal_http import browser_urlopen as urlopen
+
 BASE_URL="https://app.eightfold.ai"; PAGE_SIZE=10
 class TextParser(HTMLParser):
     def __init__(self)->None: super().__init__(convert_charrefs=True); self.parts:list[str]=[]

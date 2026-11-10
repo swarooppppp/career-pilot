@@ -8,6 +8,12 @@ import re
 from urllib.parse import parse_qs, urlparse
 from urllib.request import Request, urlopen
 
+# The local collector routes all network I/O through its shared Chrome session.
+import os as _transport_os
+if _transport_os.environ.get("CAREER_PORTAL_TRANSPORT") == "browser":
+    from portal_http import browser_urlopen as urlopen
+
+
 from common import newest_first, plain_text, write_snapshot
 from filters import in_india
 import portal_http
@@ -53,56 +59,50 @@ def cloudflare_matches(job, location):
 
 def mongodb_membership(url, timeout):
     """Use the actual UI taxonomy, which differs from Greenhouse departments."""
-    from playwright.sync_api import sync_playwright
-    with sync_playwright() as playwright:
-        browser = playwright.chromium.launch(headless=True)
-        try:
-            page = browser.new_page()
-            page.goto(url, wait_until="domcontentloaded", timeout=timeout * 1000)
-            engineering = page.locator('label[for="department-3"]')
-            engineering.wait_for(timeout=timeout * 1000)
-            if engineering.inner_text().strip() != "Engineering":
-                raise RuntimeError("MongoDB department mapping changed")
-            # SSR checkboxes can toggle before event handlers are attached.
-            # Wait for hydration and verify the result set actually changes.
-            page.wait_for_function("() => Object.keys(document.querySelector('input#department-3') || {}).some(k => k.startsWith('__react') || k === 'l' || k === '__l')", timeout=timeout * 1000)
-            initial = re.search(r"Displaying\s*(\d+)\s*positions", page.locator("body").inner_text())
-            if not initial:
-                raise RuntimeError("MongoDB initial result count unavailable")
-            engineering.click()
-            page.wait_for_function("previous => { const m = document.body.innerText.match(/Displaying\\s*(\\d+)\\s*positions/); return m && m[1] !== previous; }", arg=initial.group(1), timeout=timeout * 1000)
-            # The portal's India checkbox is an exact location, not a country
-            # umbrella. Include its Indian city facets as an OR selection.
-            labels = page.locator('label[for^="location-"]')
-            selected = []
-            for label in labels.all():
-                if in_india({"location": label.inner_text()}):
-                    selected.append(label.get_attribute("for"))
-            if not selected:
-                raise RuntimeError("MongoDB has no recognized India location facets")
-            for ident in selected:
-                page.locator('label[for="' + ident + '"]').click()
-            text = page.locator("body").inner_text()
-            match = re.search(r"Displaying\s*(\d+)\s*positions", text)
-            if not match:
-                raise RuntimeError("MongoDB filtered result count unavailable")
-            total = int(match.group(1))
-            ids = set()
-            for _ in range((total + 9) // 10):
-                urls = page.locator('a[href*="gh_jid="]').evaluate_all("els => els.map(e => e.href)")
-                before = len(ids)
-                ids.update(parse_qs(urlparse(link).query)["gh_jid"][0] for link in urls)
-                if len(ids) >= total:
-                    break
-                if len(ids) == before:
-                    raise RuntimeError("MongoDB pagination did not advance")
-                page.locator('svg[aria-label="right arrow"]').click()
-                page.wait_for_function("previous => { const el = document.querySelector('a[href*=\"gh_jid=\"]'); return el && el.href !== previous; }", arg=urls[0], timeout=timeout * 1000)
-            if len(ids) != total:
-                raise RuntimeError("MongoDB filtered result collection was incomplete")
-            return ids
-        finally:
-            browser.close()
+    page = portal_http.browser_page()
+    page.goto(url, wait_until="domcontentloaded", timeout=timeout * 1000)
+    engineering = page.locator('label[for="department-3"]')
+    engineering.wait_for(timeout=timeout * 1000)
+    if engineering.inner_text().strip() != "Engineering":
+        raise RuntimeError("MongoDB department mapping changed")
+    # SSR checkboxes can toggle before event handlers are attached.
+    # Wait for hydration and verify the result set actually changes.
+    page.wait_for_function("() => Object.keys(document.querySelector('input#department-3') || {}).some(k => k.startsWith('__react') || k === 'l' || k === '__l')", timeout=timeout * 1000)
+    initial = re.search(r"Displaying\s*(\d+)\s*positions", page.locator("body").inner_text())
+    if not initial:
+        raise RuntimeError("MongoDB initial result count unavailable")
+    engineering.click()
+    page.wait_for_function("previous => { const m = document.body.innerText.match(/Displaying\\s*(\\d+)\\s*positions/); return m && m[1] !== previous; }", arg=initial.group(1), timeout=timeout * 1000)
+    # The portal's India checkbox is an exact location, not a country
+    # umbrella. Include its Indian city facets as an OR selection.
+    labels = page.locator('label[for^="location-"]')
+    selected = []
+    for label in labels.all():
+        if in_india({"location": label.inner_text()}):
+            selected.append(label.get_attribute("for"))
+    if not selected:
+        raise RuntimeError("MongoDB has no recognized India location facets")
+    for ident in selected:
+        page.locator('label[for="' + ident + '"]').click()
+    text = page.locator("body").inner_text()
+    match = re.search(r"Displaying\s*(\d+)\s*positions", text)
+    if not match:
+        raise RuntimeError("MongoDB filtered result count unavailable")
+    total = int(match.group(1))
+    ids = set()
+    for _ in range((total + 9) // 10):
+        urls = page.locator('a[href*="gh_jid="]').evaluate_all("els => els.map(e => e.href)")
+        before = len(ids)
+        ids.update(parse_qs(urlparse(link).query)["gh_jid"][0] for link in urls)
+        if len(ids) >= total:
+            break
+        if len(ids) == before:
+            raise RuntimeError("MongoDB pagination did not advance")
+        page.locator('svg[aria-label="right arrow"]').click()
+        page.wait_for_function("previous => { const el = document.querySelector('a[href*=\"gh_jid=\"]'); return el && el.href !== previous; }", arg=urls[0], timeout=timeout * 1000)
+    if len(ids) != total:
+        raise RuntimeError("MongoDB filtered result collection was incomplete")
+    return ids
 
 
 def normalize(job, company, location=None):
