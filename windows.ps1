@@ -12,11 +12,16 @@ $Python = Join-Path $PSScriptRoot '.venv\Scripts\python.exe'
 function Invoke-Checked {
     param([string]$Exe, [string[]]$Arguments)
     & $Exe @Arguments
-    if ($LASTEXITCODE -ne 0) { throw "Command failed ($LASTEXITCODE). See the message above." }
+    $ExitCode = $LASTEXITCODE
+    if ($ExitCode -eq 103) {
+        throw "Python could not locate its interpreter (103). Failed executable: $Exe. Run 'py -0p' and 'py -3.12 --version'. Install Python 3.12 if it is missing. If only .venv's Python fails, its base Python installation is missing; recreate the Windows virtual environment after repairing Python."
+    }
+    if ($ExitCode -ne 0) { throw "Command failed ($ExitCode): $Exe $($Arguments -join ' '). See the original error above." }
 }
 if ($Action -eq 'setup') {
     if (-not (Get-Command py -ErrorAction SilentlyContinue)) { throw 'Install Python 3.12 from python.org with the Python launcher, then reopen PowerShell.' }
     if (-not (Get-Command git -ErrorAction SilentlyContinue)) { throw 'Install Git for Windows and reopen PowerShell.' }
+    Invoke-Checked 'py' @('-3.12','--version')
     if (-not (Test-Path -LiteralPath $Python)) { Invoke-Checked 'py' @('-3.12','-m','venv','.venv') }
     Invoke-Checked $Python @('-c','import sys; assert sys.version_info[:2] == (3,12), "Use a Python 3.12 virtual environment"')
     Invoke-Checked $Python @('-m','pip','install','--upgrade','pip')
