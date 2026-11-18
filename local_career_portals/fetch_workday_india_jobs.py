@@ -84,7 +84,7 @@ def normalize(summary, detail, host, site, company):
             "jobDescriptionHtml": description, "jobDescriptionText": plain_text(description)}
 
 
-def main():
+def main(argv=None, requester=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("url")
     parser.add_argument("--company", required=True)
@@ -95,13 +95,14 @@ def main():
     parser.add_argument("--timeout", type=int, default=30)
     parser.add_argument("--delay", type=float, default=0.5)
     parser.add_argument("--output", type=Path, required=True)
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
+    request = requester or request_json
     if args.max_jobs < 0 or args.max_pages < 1 or args.timeout < 1 or args.delay < 0:
         parser.error("Invalid limits")
     host, tenant, site, query = transport.site_config(args.url)
     base = f"https://{host}/wday/cxs/{tenant}/{site}"
     payload = {"limit": 20, "offset": 0, "searchText": args.search_text if args.search_text is not None else query.get("q", "Engineer")}
-    discovery = request_json(base + "/jobs", payload, args.timeout)
+    discovery = request(base + "/jobs", payload, args.timeout)
     if not isinstance(discovery.get("facets"), list) or not isinstance(discovery.get("jobPostings"), list):
         raise RuntimeError("Workday discovery response shape changed")
     facets = native_facets(discovery["facets"])
@@ -109,7 +110,7 @@ def main():
     if facets:
         for number in range(args.max_pages):
             time.sleep(args.delay)
-            page = request_json(base + "/jobs", {**payload, "offset": number * 20, "appliedFacets": facets}, args.timeout)
+            page = request(base + "/jobs", {**payload, "offset": number * 20, "appliedFacets": facets}, args.timeout)
             if not isinstance(page.get("jobPostings"), list) or "total" not in page:
                 raise RuntimeError("Workday filtered response shape changed")
             # Some tenants (including eBay) report total=0 on every page after
@@ -126,7 +127,7 @@ def main():
                 break
         for summary in summaries:
             time.sleep(args.delay)
-            detail = request_json(base + summary["externalPath"], None, args.timeout).get("jobPostingInfo", {})
+            detail = request(base + summary["externalPath"], None, args.timeout).get("jobPostingInfo", {})
             job = normalize(summary, detail, host, site, args.company)
             if job and args.require_brand:
                 evidence = brand_evidence(detail, args.require_brand)

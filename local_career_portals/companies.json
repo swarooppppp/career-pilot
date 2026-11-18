@@ -2269,6 +2269,1513 @@
         "sample_jobs": 17,
         "sample_file": "local_career_portals/data/samples/batch10_20261103_211801/batch10_top50.json"
       }
+    },
+    {
+      "company": "Akamai",
+      "slug": "akamai",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_oracle_india_jobs.py",
+      "url": "https://fa-extu-saasfaprod1.fa.ocs.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1/jobs",
+      "args": [
+        "--company",
+        "Akamai"
+      ],
+      "transport": "http",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Hydrated Oracle country/locations and conservative engineering titles before limiting"
+      },
+      "note": "Official Oracle Candidate Experience feed; complete pagination and full descriptions; publication date descending before cap.",
+      "validation": {
+        "status": "passed",
+        "checked_on": "2026-11-17",
+        "jobs": 15,
+        "source_total": 296,
+        "full_descriptions": true,
+        "publication_dates": true
+      }
+    },
+    {
+      "company": "Cloudera",
+      "slug": "cloudera",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_cloudera_jobs.py",
+      "url": "https://cloudera.wd5.myworkdayjobs.com/External_Career",
+      "args": [],
+      "transport": "browser",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Discovered native India/engineering facets, hydrated geography and engineering titles"
+      },
+      "note": "Playwright-only native careers-page navigation and response capture; India geography and engineering-title checks. Normal page verified at HTTP 200 with 49 listings; subsequent Cloudflare Security Check/429 prevents complete filtered live verification.",
+      "validation": {
+        "status": "partial_security_challenge",
+        "checked_on": "2026-11-17",
+        "native_listing_http_status": 200,
+        "global_listings_observed": 49,
+        "full_filtered_run_verified": false,
+        "error": "Subsequent native navigation returned HTTP 429 and Cloudflare Security Check. Live retries stopped; no challenge interaction or direct HTTP fallback."
+      }
+    },
+    {
+      "company": "Fortinet",
+      "slug": "fortinet",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_security_portals.py",
+      "url": "https://www.fortinet.com/corporate/careers",
+      "args": [
+        "--source",
+        "fortinet"
+      ],
+      "transport": "browser",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Native Research/Development (RD) function confirmed in Oracle response; technical titles and hydrated primary/secondary India geography"
+      },
+      "note": "Verified 18 November 2026: 2 matching jobs saved using headless Playwright; full descriptions and explicit publication dates. Headless first, one headed fallback. Complete scan of 182 R&D listings.",
+      "validation": {
+        "exit_code": 0,
+        "checked_on": "2026-11-18",
+        "seconds": 0.0,
+        "status": "passed",
+        "jobs": 2,
+        "full_descriptions": true,
+        "explicit_publication_dates": 2,
+        "browser_mode": "headless",
+        "global_results": 182,
+        "prior_attempt_errors": [],
+        "official_careers_url": "https://www.fortinet.com/corporate/careers",
+        "snapshot_file": "local_career_portals/data/fortinet_jobs.json",
+        "source_count_scope": "Native Research/Development function, not all Fortinet roles"
+      }
+    },
+    {
+      "company": "Arctic Wolf",
+      "slug": "arctic_wolf",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_security_portals.py",
+      "url": "https://arcticwolf.com/company/hiring/",
+      "args": [
+        "--source",
+        "arctic_wolf"
+      ],
+      "transport": "browser",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Explicit India geography and conservative engineering titles; sales/support excluded"
+      },
+      "note": "Verified 18 November 2026: 20 matching jobs saved using headed Playwright; full descriptions and explicit publication dates. Headless first, one headed fallback.",
+      "validation": {
+        "exit_code": 0,
+        "checked_on": "2026-11-18",
+        "seconds": 47.5,
+        "status": "passed",
+        "jobs": 20,
+        "full_descriptions": true,
+        "explicit_publication_dates": 20,
+        "browser_mode": "headed",
+        "global_results": 102,
+        "prior_attempt_errors": [
+          {
+            "mode": "headless",
+            "error": "RuntimeError: HTTP 429 at https://arcticwolf.wd1.myworkdayjobs.com/en-US/External; Retry-After=unspecified"
+          }
+        ],
+        "official_careers_url": "https://arcticwolf.com/company/hiring/",
+        "snapshot_file": "local_career_portals/data/arctic_wolf_jobs.json"
+      }
+    },
+    {
+      "company": "Rapid7",
+      "slug": "rapid7",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_security_portals.py",
+      "url": "https://careers.rapid7.com/jobs/search",
+      "args": [
+        "--source",
+        "rapid7"
+      ],
+      "transport": "browser",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Explicit India geography and conservative engineering titles; sales/support excluded"
+      },
+      "note": "Verified 18 November 2026: 4 matching jobs saved using headless Playwright; full descriptions and explicit publication dates. Headless first, one headed fallback.",
+      "validation": {
+        "exit_code": 0,
+        "checked_on": "2026-11-18",
+        "seconds": 10.7,
+        "status": "passed",
+        "jobs": 4,
+        "full_descriptions": true,
+        "explicit_publication_dates": 4,
+        "browser_mode": "headless",
+        "global_results": 48,
+        "prior_attempt_errors": [],
+        "official_careers_url": "https://careers.rapid7.com/jobs/search",
+        "snapshot_file": "local_career_portals/data/rapid7_jobs.json"
+      }
+    },
+    {
+      "company": "Sophos",
+      "slug": "sophos",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_security_portals.py",
+      "url": "https://www.sophos.com/en-us/careers",
+      "args": [
+        "--source",
+        "sophos"
+      ],
+      "transport": "browser",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Explicit India geography and conservative engineering titles; sales/support excluded"
+      },
+      "note": "Verified 18 November 2026: 3 matching jobs saved using headless Playwright; full descriptions and explicit publication dates. Headless first, one headed fallback.",
+      "validation": {
+        "exit_code": 0,
+        "checked_on": "2026-11-18",
+        "seconds": 9.2,
+        "status": "passed",
+        "jobs": 3,
+        "full_descriptions": true,
+        "explicit_publication_dates": 3,
+        "browser_mode": "headless",
+        "global_results": 78,
+        "prior_attempt_errors": [],
+        "official_careers_url": "https://www.sophos.com/en-us/careers",
+        "snapshot_file": "local_career_portals/data/sophos_jobs.json"
+      }
+    },
+    {
+      "company": "Tenable",
+      "slug": "tenable",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_security_portals.py",
+      "url": "https://www.tenable.com/careers",
+      "args": [
+        "--source",
+        "tenable"
+      ],
+      "transport": "browser",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Explicit India geography and conservative engineering titles; sales/support excluded"
+      },
+      "note": "Verified 18 November 2026: 0 matching jobs saved using headless Playwright; full descriptions and explicit publication dates. Headless first, one headed fallback.",
+      "validation": {
+        "exit_code": 0,
+        "checked_on": "2026-11-18",
+        "seconds": 3.3,
+        "status": "verified_empty",
+        "jobs": 0,
+        "full_descriptions": true,
+        "explicit_publication_dates": 0,
+        "browser_mode": "headless",
+        "global_results": 46,
+        "prior_attempt_errors": [],
+        "official_careers_url": "https://www.tenable.com/careers",
+        "snapshot_file": "local_career_portals/data/tenable_jobs.json"
+      }
+    },
+    {
+      "company": "Qualys",
+      "slug": "qualys",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_security_portals.py",
+      "url": "https://www.qualys.com/careers",
+      "args": [
+        "--source",
+        "qualys"
+      ],
+      "transport": "browser",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Explicit India geography and conservative engineering titles; sales/support excluded"
+      },
+      "note": "Verified 18 November 2026: 50 matching jobs saved using headed Playwright; full descriptions and explicit publication dates. Headless first, one headed fallback. Normal 50-job cap applied after sorting.",
+      "validation": {
+        "exit_code": 0,
+        "checked_on": "2026-11-18",
+        "seconds": 176.2,
+        "status": "passed",
+        "jobs": 50,
+        "full_descriptions": true,
+        "explicit_publication_dates": 50,
+        "browser_mode": "headed",
+        "global_results": 206,
+        "prior_attempt_errors": [
+          {
+            "mode": "headless",
+            "error": "RuntimeError: HTTP 429 at https://qualys.wd5.myworkdayjobs.com/en-US/Careers?locations=f92a9a956d98014309d7e8f1f5cdd1cc&locations=f92a9a956d9801a2187d97f1f5cd6ecc&jobFamilyGroup=efd4289a13971001e45dea0086920000; Retry-After=unspecified"
+          }
+        ],
+        "official_careers_url": "https://www.qualys.com/careers",
+        "snapshot_file": "local_career_portals/data/qualys_jobs.json"
+      }
+    },
+    {
+      "company": "SUSE",
+      "slug": "suse",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_security_portals.py",
+      "url": "https://www.suse.com/careers/",
+      "args": [
+        "--source",
+        "suse"
+      ],
+      "transport": "browser",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Explicit India geography and conservative engineering titles; sales/support excluded"
+      },
+      "note": "Verified 18 November 2026: 0 matching jobs saved using headed Playwright; full descriptions and explicit publication dates. Headless first, one headed fallback.",
+      "validation": {
+        "exit_code": 0,
+        "checked_on": "2026-11-18",
+        "seconds": 19.6,
+        "status": "verified_empty",
+        "jobs": 0,
+        "full_descriptions": true,
+        "explicit_publication_dates": 0,
+        "browser_mode": "headed",
+        "global_results": 27,
+        "prior_attempt_errors": [
+          {
+            "mode": "headless",
+            "error": "RuntimeError: HTTP 429 at https://suse.wd3.myworkdayjobs.com/en-US/Jobsatsuse?locations=f71b1fb9e85701e19b1687b99301eb04; Retry-After=unspecified"
+          }
+        ],
+        "official_careers_url": "https://www.suse.com/careers/",
+        "snapshot_file": "local_career_portals/data/suse_jobs.json"
+      }
+    },
+    {
+      "company": "Mirantis",
+      "slug": "mirantis",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_security_portals.py",
+      "url": "https://www.mirantis.com/careers/",
+      "args": [
+        "--source",
+        "mirantis"
+      ],
+      "transport": "browser",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Explicit India geography and conservative engineering titles; sales/support excluded"
+      },
+      "note": "Verified 18 November 2026: 3 matching jobs saved using headless Playwright; full descriptions and explicit publication dates. Headless first, one headed fallback.",
+      "validation": {
+        "exit_code": 0,
+        "checked_on": "2026-11-18",
+        "seconds": 6.3,
+        "status": "passed",
+        "jobs": 3,
+        "full_descriptions": true,
+        "explicit_publication_dates": 3,
+        "browser_mode": "headless",
+        "global_results": null,
+        "prior_attempt_errors": [],
+        "official_careers_url": "https://www.mirantis.com/careers/",
+        "snapshot_file": "local_career_portals/data/mirantis_jobs.json"
+      }
+    },
+    {
+      "company": "Canonical",
+      "slug": "canonical",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_security_portals.py",
+      "url": "https://canonical.com/careers/all",
+      "args": [
+        "--source",
+        "canonical"
+      ],
+      "transport": "browser",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Explicit India geography and conservative engineering titles; sales/support excluded; explicit home-based Worldwide location retained with evidence"
+      },
+      "note": "Verified 18 November 2026: 50 matching jobs saved using headless Playwright; full descriptions and explicit publication dates. Headless first, one headed fallback. Normal 50-job cap applied after sorting. Explicit Home based - Worldwide locations include India; APAC/EMEA-only and support/sales roles excluded.",
+      "validation": {
+        "exit_code": 0,
+        "checked_on": "2026-11-18",
+        "seconds": 0.0,
+        "status": "passed",
+        "jobs": 50,
+        "full_descriptions": true,
+        "explicit_publication_dates": 50,
+        "browser_mode": "headless",
+        "global_results": 316,
+        "prior_attempt_errors": [],
+        "official_careers_url": "https://canonical.com/careers/all",
+        "snapshot_file": "local_career_portals/data/canonical_jobs.json"
+      }
+    },
+    {
+      "company": "Zapier",
+      "slug": "zapier",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_security_portals.py",
+      "url": "https://zapier.com/jobs",
+      "args": [
+        "--source",
+        "zapier"
+      ],
+      "transport": "browser",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Explicit India geography and conservative engineering titles; sales/support excluded"
+      },
+      "note": "Verified 18 November 2026: 0 matching jobs saved using headless Playwright; full descriptions and explicit publication dates. Headless first, one headed fallback.",
+      "validation": {
+        "exit_code": 0,
+        "checked_on": "2026-11-18",
+        "seconds": 4.2,
+        "status": "verified_empty",
+        "jobs": 0,
+        "full_descriptions": true,
+        "explicit_publication_dates": 0,
+        "browser_mode": "headless",
+        "global_results": 11,
+        "prior_attempt_errors": [],
+        "official_careers_url": "https://zapier.com/jobs",
+        "snapshot_file": "local_career_portals/data/zapier_jobs.json"
+      }
+    },
+    {
+      "company": "Agoda",
+      "slug": "agoda",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_security_portals.py",
+      "url": "https://careersatagoda.com/vacancies",
+      "args": [
+        "--source",
+        "agoda"
+      ],
+      "transport": "browser",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Explicit structured India geography and conservative engineering titles; sales/support departments excluded"
+      },
+      "note": "Verified 18 November 2026: 4 jobs with full descriptions, 4 explicit publication dates; headless Playwright. Official Greenhouse agoda board; current Gurugram engineering roles.",
+      "validation": {
+        "exit_code": 0,
+        "checked_on": "2026-11-18",
+        "seconds": 12.3,
+        "status": "passed",
+        "jobs": 4,
+        "full_descriptions": true,
+        "explicit_publication_dates": 4,
+        "browser_mode": "headless",
+        "global_results": 349,
+        "prior_attempt_errors": [],
+        "company": "Agoda",
+        "source_url": "https://careersatagoda.com/vacancies",
+        "source_note": "Official Greenhouse agoda board; current Gurugram engineering roles.",
+        "publication_dates": 4,
+        "snapshot_file": "local_career_portals/data/agoda_jobs.json",
+        "source_listing_count": 349
+      }
+    },
+    {
+      "company": "Twilio",
+      "slug": "twilio",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_security_portals.py",
+      "url": "https://jobs.twilio.com/careers",
+      "args": [
+        "--source",
+        "twilio"
+      ],
+      "transport": "browser",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Explicit structured India geography and conservative engineering titles; sales/support departments excluded"
+      },
+      "note": "Verified 18 November 2026: 5 jobs with full descriptions, 5 explicit publication dates; headless Playwright. Official current jobs.twilio.com Eightfold PCSx source, not the old Greenhouse board. Explicit efcustomTextPostDate retained; index creation kept separate.",
+      "validation": {
+        "exit_code": 0,
+        "checked_on": "2026-11-18",
+        "seconds": 8.1,
+        "status": "passed",
+        "jobs": 5,
+        "full_descriptions": true,
+        "explicit_publication_dates": 5,
+        "browser_mode": "headless",
+        "global_results": null,
+        "prior_attempt_errors": [],
+        "company": "Twilio",
+        "source_url": "https://jobs.twilio.com/careers",
+        "source_note": "Official current jobs.twilio.com Eightfold PCSx source, not the old Greenhouse board. Explicit efcustomTextPostDate retained; index creation kept separate.",
+        "publication_dates": 5,
+        "snapshot_file": "local_career_portals/data/twilio_jobs.json",
+        "source_listing_count": 13
+      }
+    },
+    {
+      "company": "Grab",
+      "slug": "grab",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_security_portals.py",
+      "url": "https://www.grab.careers/jobs",
+      "args": [
+        "--source",
+        "grab"
+      ],
+      "transport": "browser",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Explicit structured India geography and conservative engineering titles; sales/support departments excluded"
+      },
+      "note": "Verified 18 November 2026: 2 jobs with full descriptions, 2 explicit publication dates; headless Playwright. Official SmartRecruiters Grab tenant, country in; detail employer and country verified.",
+      "validation": {
+        "exit_code": 0,
+        "checked_on": "2026-11-18",
+        "seconds": 4.9,
+        "status": "passed",
+        "jobs": 2,
+        "full_descriptions": true,
+        "explicit_publication_dates": 2,
+        "browser_mode": "headless",
+        "global_results": null,
+        "prior_attempt_errors": [],
+        "company": "Grab",
+        "source_url": "https://www.grab.careers/jobs",
+        "source_note": "Official SmartRecruiters Grab tenant, country in; detail employer and country verified.",
+        "publication_dates": 2,
+        "snapshot_file": "local_career_portals/data/grab_jobs.json",
+        "source_listing_count": 10
+      }
+    },
+    {
+      "company": "Roku",
+      "slug": "roku",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_security_portals.py",
+      "url": "https://www.weareroku.com/jobs/search",
+      "args": [
+        "--source",
+        "roku"
+      ],
+      "transport": "browser",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Explicit structured India geography and conservative engineering titles; sales/support departments excluded"
+      },
+      "note": "Verified 18 November 2026: 2 jobs with full descriptions, 2 explicit publication dates; headless Playwright. Native Clinch job tables, all pages, full JobPosting descriptions and geography; actual source departments retained.",
+      "validation": {
+        "exit_code": 0,
+        "checked_on": "2026-11-18",
+        "seconds": 10.2,
+        "status": "passed",
+        "jobs": 2,
+        "full_descriptions": true,
+        "explicit_publication_dates": 2,
+        "browser_mode": "headless",
+        "global_results": 91,
+        "prior_attempt_errors": [],
+        "company": "Roku",
+        "source_url": "https://www.weareroku.com/jobs/search",
+        "source_note": "Native Clinch job tables, all pages, full JobPosting descriptions and geography; actual source departments retained.",
+        "publication_dates": 2,
+        "snapshot_file": "local_career_portals/data/roku_jobs.json",
+        "source_listing_count": 91
+      }
+    },
+    {
+      "company": "WisdomAI",
+      "slug": "wisdom_ai",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_security_portals.py",
+      "url": "https://www.wisdom.ai/",
+      "args": [
+        "--source",
+        "wisdom_ai"
+      ],
+      "transport": "browser",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Explicit structured India geography and conservative engineering titles; sales/support departments excluded"
+      },
+      "note": "Verified 18 November 2026: 4 jobs with full descriptions, 4 explicit publication dates; headless Playwright. Enterprise WisdomAI at wisdom.ai links to Ashby Wisdom-AI; similarly named wisdomai.com is not used.",
+      "validation": {
+        "exit_code": 0,
+        "checked_on": "2026-11-18",
+        "seconds": 4.2,
+        "status": "passed",
+        "jobs": 4,
+        "full_descriptions": true,
+        "explicit_publication_dates": 4,
+        "browser_mode": "headless",
+        "global_results": 21,
+        "prior_attempt_errors": [],
+        "company": "WisdomAI",
+        "source_url": "https://www.wisdom.ai/",
+        "source_note": "Enterprise WisdomAI at wisdom.ai links to Ashby Wisdom-AI; similarly named wisdomai.com is not used.",
+        "publication_dates": 4,
+        "snapshot_file": "local_career_portals/data/wisdom_ai_jobs.json",
+        "source_listing_count": 21
+      }
+    },
+    {
+      "company": "Arcana Analytics",
+      "slug": "arcana",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_security_portals.py",
+      "url": "https://www.arcana.io/",
+      "args": [
+        "--source",
+        "arcana"
+      ],
+      "transport": "browser",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Explicit structured India geography and conservative engineering titles; sales/support departments excluded"
+      },
+      "note": "Verified 18 November 2026: 12 jobs with full descriptions, 12 explicit publication dates; headless Playwright. Arcana Analytics confirmed by user; arcana.io links to Greenhouse arcanaanalytics.",
+      "validation": {
+        "exit_code": 0,
+        "checked_on": "2026-11-18",
+        "seconds": 4.7,
+        "status": "passed",
+        "jobs": 12,
+        "full_descriptions": true,
+        "explicit_publication_dates": 12,
+        "browser_mode": "headless",
+        "global_results": 30,
+        "prior_attempt_errors": [],
+        "company": "Arcana Analytics",
+        "source_url": "https://www.arcana.io/",
+        "source_note": "Arcana Analytics confirmed by user; arcana.io links to Greenhouse arcanaanalytics.",
+        "publication_dates": 12,
+        "snapshot_file": "local_career_portals/data/arcana_jobs.json",
+        "source_listing_count": 30
+      }
+    },
+    {
+      "company": "Spotnana",
+      "slug": "spotnana",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_security_portals.py",
+      "url": "https://www.spotnana.com/careers/careers-listing/",
+      "args": [
+        "--source",
+        "spotnana"
+      ],
+      "transport": "browser",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Explicit structured India geography and conservative engineering titles; sales/support departments excluded"
+      },
+      "note": "Verified 18 November 2026: 4 jobs with full descriptions, 4 explicit publication dates; headless Playwright. Current official careers listing uses the Gem spotnana feed. Previous Greenhouse boards return 404 and are not used.",
+      "validation": {
+        "exit_code": 0,
+        "checked_on": "2026-11-18",
+        "seconds": 4.2,
+        "status": "passed",
+        "jobs": 4,
+        "full_descriptions": true,
+        "explicit_publication_dates": 4,
+        "browser_mode": "headless",
+        "global_results": 16,
+        "prior_attempt_errors": [],
+        "company": "Spotnana",
+        "source_url": "https://www.spotnana.com/careers/careers-listing/",
+        "source_note": "Current official careers listing uses the Gem spotnana feed. Previous Greenhouse boards return 404 and are not used.",
+        "publication_dates": 4,
+        "snapshot_file": "local_career_portals/data/spotnana_jobs.json",
+        "source_listing_count": 16
+      }
+    },
+    {
+      "company": "Zepto",
+      "slug": "zepto",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_security_portals.py",
+      "url": "https://zepto.darwinbox.in/ms/candidatev2/main/careers/allJobs",
+      "args": [
+        "--source",
+        "zepto"
+      ],
+      "transport": "browser",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Explicit structured India geography and conservative engineering titles; sales/support departments excluded"
+      },
+      "note": "Verified 18 November 2026: 0 jobs with full descriptions, 0 explicit publication dates; headed Playwright. Official zepto.com careers link leads to Darwinbox. Its one listed job is delivery-hub operations and fails the engineering-title policy.",
+      "validation": {
+        "exit_code": 0,
+        "checked_on": "2026-11-18",
+        "seconds": 38.7,
+        "status": "verified_empty",
+        "jobs": 0,
+        "full_descriptions": true,
+        "explicit_publication_dates": 0,
+        "browser_mode": "headed",
+        "global_results": 1,
+        "prior_attempt_errors": [
+          {
+            "mode": "headless",
+            "error": "TimeoutError: Timeout 30000ms exceeded while waiting for event \"response\""
+          }
+        ],
+        "company": "Zepto",
+        "source_url": "https://zepto.darwinbox.in/ms/candidatev2/main/careers/allJobs",
+        "source_note": "Official zepto.com careers link leads to Darwinbox. Its one listed job is delivery-hub operations and fails the engineering-title policy.",
+        "publication_dates": 0,
+        "snapshot_file": "local_career_portals/data/zepto_jobs.json",
+        "source_listing_count": 1
+      }
+    },
+    {
+      "company": "Coupang",
+      "slug": "coupang",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_security_portals.py",
+      "url": "https://www.coupang.jobs/en/jobs/",
+      "args": [
+        "--source",
+        "coupang"
+      ],
+      "transport": "browser",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Explicit structured India geography and conservative engineering titles; sales/support departments excluded"
+      },
+      "note": "Verified 18 November 2026: 24 jobs with full descriptions, 24 explicit publication dates; headless Playwright. Current Coupang Greenhouse feed. Complete lightweight listing scan; India or ambiguous-location engineering candidates hydrated and geography rechecked. Known foreign-labelled listings are not hydrated, so secondary locations absent from summaries can be missed.",
+      "validation": {
+        "exit_code": 0,
+        "checked_on": "2026-11-18",
+        "seconds": 19.8,
+        "status": "passed",
+        "jobs": 24,
+        "full_descriptions": true,
+        "explicit_publication_dates": 24,
+        "browser_mode": "headless",
+        "global_results": 687,
+        "prior_attempt_errors": [],
+        "company": "Coupang",
+        "source_url": "https://www.coupang.jobs/en/jobs/",
+        "source_note": "Current Coupang Greenhouse feed. Complete lightweight listing scan; India or ambiguous-location engineering candidates hydrated and geography rechecked. Known foreign-labelled listings are not hydrated, so secondary locations absent from summaries can be missed.",
+        "publication_dates": 24,
+        "snapshot_file": "local_career_portals/data/coupang_jobs.json",
+        "source_listing_count": 687
+      }
+    },
+    {
+      "company": "Wayfair",
+      "slug": "wayfair",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_security_portals.py",
+      "url": "https://www.wayfair.com/careers/jobs",
+      "args": [
+        "--source",
+        "wayfair"
+      ],
+      "transport": "browser",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Explicit structured India geography and conservative engineering titles; sales/support departments excluded"
+      },
+      "note": "Verified 18 November 2026: 1 jobs with full descriptions, 0 explicit publication dates; headed Playwright. Current native Wayfair job_search_data response, Engineering & Technology team and India, active public roles only. Full descriptions and Avature application URLs. Creation/update dates are not promoted to publication dates.",
+      "validation": {
+        "exit_code": 0,
+        "checked_on": "2026-11-18",
+        "seconds": 14.6,
+        "status": "passed",
+        "jobs": 1,
+        "full_descriptions": true,
+        "explicit_publication_dates": 0,
+        "browser_mode": "headed",
+        "global_results": 413,
+        "prior_attempt_errors": [
+          {
+            "mode": "headless",
+            "error": "RuntimeError: HTTP 429 at https://www.wayfair.com/careers/jobs; Retry-After=unspecified"
+          }
+        ],
+        "company": "Wayfair",
+        "source_url": "https://www.wayfair.com/careers/jobs",
+        "source_note": "Current native Wayfair job_search_data response, Engineering & Technology team and India, active public roles only. Full descriptions and Avature application URLs. Creation/update dates are not promoted to publication dates.",
+        "publication_dates": 0,
+        "snapshot_file": "local_career_portals/data/wayfair_jobs.json",
+        "source_listing_count": 413
+      }
+    },
+    {
+      "company": "InMobi",
+      "slug": "inmobi",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_security_portals.py",
+      "url": "https://www.inmobi.com/company/careers",
+      "args": [
+        "--source",
+        "inmobi"
+      ],
+      "transport": "browser",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Explicit structured India geography; conservative engineering titles; sales/support excluded"
+      },
+      "note": "Verified 18 November 2026: 4 jobs, full descriptions, 4 explicit publication dates; headless Playwright. Official InMobi Advertising Greenhouse board; Glance is a separate source.",
+      "validation": {
+        "exit_code": 0,
+        "checked_on": "2026-11-18",
+        "seconds": 5.6,
+        "status": "passed",
+        "jobs": 4,
+        "full_descriptions": true,
+        "explicit_publication_dates": 4,
+        "browser_mode": "headless",
+        "global_results": 75,
+        "prior_attempt_errors": [],
+        "company": "InMobi",
+        "source_url": "https://www.inmobi.com/company/careers",
+        "publication_dates": 4,
+        "source_note": "Official InMobi Advertising Greenhouse board; Glance is a separate source.",
+        "snapshot_file": "local_career_portals/data/inmobi_jobs.json"
+      }
+    },
+    {
+      "company": "Deel",
+      "slug": "deel",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_security_portals.py",
+      "url": "https://www.deel.com/careers/",
+      "args": [
+        "--source",
+        "deel"
+      ],
+      "transport": "browser",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Explicit structured India geography; conservative engineering titles; sales/support excluded"
+      },
+      "note": "Verified 18 November 2026: 4 jobs, full descriptions, 4 explicit publication dates; headless Playwright. Current official careers embedded listings, with full JobPosting details from jobs.deel.com. Old Ashby detail URLs return 404 and are not used.",
+      "validation": {
+        "exit_code": 0,
+        "checked_on": "2026-11-18",
+        "seconds": 9.3,
+        "status": "passed",
+        "jobs": 4,
+        "full_descriptions": true,
+        "explicit_publication_dates": 4,
+        "browser_mode": "headless",
+        "global_results": 241,
+        "prior_attempt_errors": [],
+        "company": "Deel",
+        "source_url": "https://www.deel.com/careers/",
+        "publication_dates": 4,
+        "source_note": "Current official careers embedded listings, with full JobPosting details from jobs.deel.com. Old Ashby detail URLs return 404 and are not used.",
+        "snapshot_file": "local_career_portals/data/deel_jobs.json"
+      }
+    },
+    {
+      "company": "Expedia Group",
+      "slug": "expedia_group",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_security_portals.py",
+      "url": "https://careers.expediagroup.com/jobs/",
+      "args": [
+        "--source",
+        "expedia_group"
+      ],
+      "transport": "browser",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Explicit structured India geography; conservative engineering titles; sales/support excluded"
+      },
+      "note": "Verified 18 November 2026: 0 jobs, full descriptions, 0 explicit publication dates; headed Playwright. Current official Workday wd108/search tenant. Five India listings were also cross-checked on careers.expediagroup.com; none passed the engineering-title guard.",
+      "validation": {
+        "exit_code": 0,
+        "checked_on": "2026-11-18",
+        "seconds": 14.8,
+        "status": "verified_empty",
+        "jobs": 0,
+        "full_descriptions": true,
+        "explicit_publication_dates": 0,
+        "browser_mode": "headed",
+        "global_results": 115,
+        "prior_attempt_errors": [
+          {
+            "mode": "headless",
+            "error": "RuntimeError: HTTP 429 at https://expedia.wd108.myworkdayjobs.com/en-US/search; Retry-After=unspecified"
+          }
+        ],
+        "company": "Expedia Group",
+        "source_url": "https://careers.expediagroup.com/jobs/",
+        "publication_dates": 0,
+        "source_note": "Current official Workday wd108/search tenant. Five India listings were also cross-checked on careers.expediagroup.com; none passed the engineering-title guard.",
+        "snapshot_file": "local_career_portals/data/expedia_group_jobs.json"
+      }
+    },
+    {
+      "company": "JPMorgan Chase",
+      "slug": "jpmorgan_chase",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_security_portals.py",
+      "url": "https://www.jpmorganchase.com/careers",
+      "args": [
+        "--source",
+        "jpmorgan_chase"
+      ],
+      "transport": "browser",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Explicit structured India geography; conservative engineering titles; sales/support excluded"
+      },
+      "note": "Verified 18 November 2026: 50 jobs, full descriptions, 50 explicit publication dates; headless Playwright. Official Oracle CX_1001 site; discovered and confirmed native India country facet, full listing/detail checks. Normal 50-job cap applied after sorting.",
+      "validation": {
+        "exit_code": 0,
+        "checked_on": "2026-11-18",
+        "seconds": 69.8,
+        "status": "passed",
+        "jobs": 50,
+        "full_descriptions": true,
+        "explicit_publication_dates": 50,
+        "browser_mode": "headless",
+        "global_results": 6883,
+        "prior_attempt_errors": [],
+        "company": "JPMorgan Chase",
+        "source_url": "https://www.jpmorganchase.com/careers",
+        "publication_dates": 50,
+        "source_note": "Official Oracle CX_1001 site; discovered and confirmed native India country facet, full listing/detail checks.",
+        "snapshot_file": "local_career_portals/data/jpmorgan_chase_jobs.json"
+      }
+    },
+    {
+      "company": "Goldman Sachs",
+      "slug": "goldman_sachs",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_security_portals.py",
+      "url": "https://higher.gs.com/results",
+      "args": [
+        "--source",
+        "goldman_sachs"
+      ],
+      "transport": "browser",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Explicit structured India geography; conservative engineering titles; sales/support excluded"
+      },
+      "note": "Verified 18 November 2026: 49 jobs, full descriptions, 0 explicit publication dates; headless Playwright. Official Higher GraphQL API used through Playwright browser fetch, India location filter and full detail checks. Publication dates are not provided by the query; no creation dates invented.",
+      "validation": {
+        "exit_code": 0,
+        "checked_on": "2026-11-18",
+        "seconds": 40.7,
+        "status": "passed",
+        "jobs": 49,
+        "full_descriptions": true,
+        "explicit_publication_dates": 0,
+        "browser_mode": "headless",
+        "global_results": null,
+        "prior_attempt_errors": [],
+        "company": "Goldman Sachs",
+        "source_url": "https://higher.gs.com/results",
+        "publication_dates": 0,
+        "source_note": "Official Higher GraphQL API used through Playwright browser fetch, India location filter and full detail checks. Publication dates are not provided by the query; no creation dates invented.",
+        "snapshot_file": "local_career_portals/data/goldman_sachs_jobs.json"
+      }
+    },
+    {
+      "company": "Morgan Stanley",
+      "slug": "morgan_stanley",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_security_portals.py",
+      "url": "https://morganstanley.eightfold.ai/careers",
+      "args": [
+        "--source",
+        "morgan_stanley"
+      ],
+      "transport": "browser",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Explicit structured India geography; conservative engineering titles; sales/support excluded"
+      },
+      "note": "Verified 18 November 2026: 14 jobs, full descriptions, 14 explicit publication dates; headless Playwright. Officially linked Eightfold PCSx source, explicit India geography and full descriptions.",
+      "validation": {
+        "exit_code": 0,
+        "checked_on": "2026-11-18",
+        "seconds": 20.8,
+        "status": "passed",
+        "jobs": 14,
+        "full_descriptions": true,
+        "explicit_publication_dates": 14,
+        "browser_mode": "headless",
+        "global_results": null,
+        "prior_attempt_errors": [],
+        "company": "Morgan Stanley",
+        "source_url": "https://morganstanley.eightfold.ai/careers",
+        "publication_dates": 14,
+        "source_note": "Officially linked Eightfold PCSx source, explicit India geography and full descriptions.",
+        "snapshot_file": "local_career_portals/data/morgan_stanley_jobs.json"
+      }
+    },
+    {
+      "company": "American Express",
+      "slug": "american_express",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_security_portals.py",
+      "url": "https://careers.americanexpress.com/en/sites/CX_1/jobs",
+      "args": [
+        "--source",
+        "american_express"
+      ],
+      "transport": "browser",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Explicit structured India geography; conservative engineering titles; sales/support excluded"
+      },
+      "note": "Verified 18 November 2026: 12 jobs, full descriptions, 12 explicit publication dates; headless Playwright. Official Oracle egug tenant and CX_1 site, confirmed native India country facet and full descriptions.",
+      "validation": {
+        "exit_code": 0,
+        "checked_on": "2026-11-18",
+        "seconds": 15.0,
+        "status": "passed",
+        "jobs": 12,
+        "full_descriptions": true,
+        "explicit_publication_dates": 12,
+        "browser_mode": "headless",
+        "global_results": 366,
+        "prior_attempt_errors": [],
+        "company": "American Express",
+        "source_url": "https://careers.americanexpress.com/en/sites/CX_1/jobs",
+        "publication_dates": 12,
+        "source_note": "Official Oracle egug tenant and CX_1 site, confirmed native India country facet and full descriptions.",
+        "snapshot_file": "local_career_portals/data/american_express_jobs.json"
+      }
+    },
+    {
+      "company": "Navi",
+      "slug": "navi",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_security_portals.py",
+      "url": "https://navi.turbohire.co/dashboardv2?orgId=3e818601-0baa-429c-b6f8-4b21903ae0e6&type=0",
+      "args": [
+        "--source",
+        "navi"
+      ],
+      "transport": "browser",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Explicit structured India geography; conservative engineering titles; sales/support excluded"
+      },
+      "note": "Verified 18 November 2026: 1 jobs, full descriptions, 1 explicit publication dates; headless Playwright. Official TurboHire source; all 46 postings scanned. SDE III - Mobile Security is retained after adding SDE variants to the shared engineering-title guard.",
+      "validation": {
+        "exit_code": 0,
+        "checked_on": "2026-11-18",
+        "seconds": 8.3,
+        "status": "passed",
+        "jobs": 1,
+        "full_descriptions": true,
+        "explicit_publication_dates": 1,
+        "browser_mode": "headless",
+        "global_results": 46,
+        "prior_attempt_errors": [],
+        "company": "Navi",
+        "source_url": "https://navi.turbohire.co/dashboardv2?orgId=3e818601-0baa-429c-b6f8-4b21903ae0e6&type=0",
+        "publication_dates": 1,
+        "source_note": "Official TurboHire source; all 46 postings scanned. SDE III - Mobile Security is retained after adding SDE variants to the shared engineering-title guard.",
+        "snapshot_file": "local_career_portals/data/navi_jobs.json"
+      }
+    },
+    {
+      "company": "Gojek",
+      "slug": "gojek",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_security_portals.py",
+      "url": "https://www.gojek.io/careers",
+      "args": [
+        "--source",
+        "gojek"
+      ],
+      "transport": "browser",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Explicit structured India geography; conservative engineering titles; sales/support excluded"
+      },
+      "note": "Verified 18 November 2026: 0 jobs, full descriptions, 0 explicit publication dates; headless Playwright. Official gojek.io links to GoToGroup Lever. India technical roles additionally require Gojek brand evidence. Current sole India listing is procurement, not engineering.",
+      "validation": {
+        "exit_code": 0,
+        "checked_on": "2026-11-18",
+        "seconds": 5.0,
+        "status": "verified_empty",
+        "jobs": 0,
+        "full_descriptions": true,
+        "explicit_publication_dates": 0,
+        "browser_mode": "headless",
+        "global_results": 34,
+        "prior_attempt_errors": [],
+        "company": "Gojek",
+        "source_url": "https://www.gojek.io/careers",
+        "publication_dates": 0,
+        "source_note": "Official gojek.io links to GoToGroup Lever. India technical roles additionally require Gojek brand evidence. Current sole India listing is procurement, not engineering.",
+        "snapshot_file": "local_career_portals/data/gojek_jobs.json"
+      }
+    },
+    {
+      "company": "Freshworks",
+      "slug": "freshworks",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_security_portals.py",
+      "url": "https://www.freshworks.com/company/careers/",
+      "args": [
+        "--source",
+        "freshworks"
+      ],
+      "transport": "browser",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Explicit structured India geography; conservative engineering titles; sales/support excluded"
+      },
+      "note": "Verified 18 November 2026: 7 jobs, full descriptions, 7 explicit publication dates; headless Playwright. Official SmartRecruiters Freshworks feed with country in, employer/country detail checks and full job-ad sections.",
+      "validation": {
+        "exit_code": 0,
+        "checked_on": "2026-11-18",
+        "seconds": 9.3,
+        "status": "passed",
+        "jobs": 7,
+        "full_descriptions": true,
+        "explicit_publication_dates": 7,
+        "browser_mode": "headless",
+        "global_results": null,
+        "prior_attempt_errors": [],
+        "company": "Freshworks",
+        "source_url": "https://www.freshworks.com/company/careers/",
+        "publication_dates": 7,
+        "source_note": "Official SmartRecruiters Freshworks feed with country in, employer/country detail checks and full job-ad sections.",
+        "snapshot_file": "local_career_portals/data/freshworks_jobs.json"
+      }
+    },
+    {
+      "company": "AMD",
+      "slug": "amd",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_security_portals.py",
+      "url": "https://careers.amd.com/jobs?country=India&categories=Engineering",
+      "args": [
+        "--source",
+        "amd"
+      ],
+      "transport": "browser",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Explicit structured India geography; conservative engineering titles; sales/support excluded"
+      },
+      "note": "Verified 18 November 2026: 50 jobs, full descriptions, 50 explicit publication dates; headed Playwright. Native AMD Jibe/iCIMS public browser API, country India and category Engineering; full descriptions and explicit posted_date. Normal 50-job cap applied after sorting.",
+      "validation": {
+        "exit_code": 0,
+        "checked_on": "2026-11-18",
+        "seconds": 16.3,
+        "status": "passed",
+        "jobs": 50,
+        "full_descriptions": true,
+        "explicit_publication_dates": 50,
+        "browser_mode": "headed",
+        "global_results": null,
+        "prior_attempt_errors": [
+          {
+            "mode": "headless",
+            "error": "RuntimeError: HTTP 403 at https://careers.amd.com/api/jobs?country=India&categories=Engineering&page=1&sortBy=posted_date&descending=true&internal=false; Retry-After=unspecified"
+          }
+        ],
+        "company": "AMD",
+        "source_url": "https://careers.amd.com/jobs?country=India&categories=Engineering",
+        "publication_dates": 50,
+        "source_note": "Native AMD Jibe/iCIMS public browser API, country India and category Engineering; full descriptions and explicit posted_date.",
+        "snapshot_file": "local_career_portals/data/amd_jobs.json"
+      }
+    },
+    {
+      "company": "Arm",
+      "slug": "arm",
+      "status": "validation_blocked",
+      "existing_script": "local_career_portals/fetch_security_portals.py",
+      "url": "https://careers.arm.com/search-jobs",
+      "args": [
+        "--source",
+        "arm"
+      ],
+      "transport": "browser",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Explicit structured India geography; conservative engineering titles; sales/support excluded"
+      },
+      "note": "Deferred after multiple unsuccessful UI approaches. India facet was verified at 111 listings, but the visible load-more control did not advance beyond the first 15. No complete filtered snapshot verified. Further retries stopped at user request.",
+      "validation": {
+        "exit_code": 1,
+        "checked_on": "2026-11-18",
+        "seconds": 79.7,
+        "status": "deferred",
+        "company": "Arm",
+        "source_url": "https://careers.arm.com/search-jobs",
+        "error": "Deferred after multiple unsuccessful UI approaches. India facet was verified at 111 listings, but the visible load-more control did not advance beyond the first 15. No complete filtered snapshot verified.",
+        "jobs": null
+      }
+    },
+    {
+      "company": "Clari",
+      "slug": "clari",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_security_portals.py",
+      "url": "https://www.clari.com/company/careers/",
+      "args": [
+        "--source",
+        "clari"
+      ],
+      "transport": "browser",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Explicit structured India geography; conservative engineering titles; sales/support excluded"
+      },
+      "note": "Verified 18 November 2026: 0 jobs, full descriptions, 0 explicit publication dates; headless Playwright. Clari official careers redirect to Salesloft. Only India technical roles with explicit Clari brand evidence qualify; unrelated Salesloft-only roles are excluded.",
+      "validation": {
+        "exit_code": 0,
+        "checked_on": "2026-11-18",
+        "seconds": 3.9,
+        "status": "verified_empty",
+        "jobs": 0,
+        "full_descriptions": true,
+        "explicit_publication_dates": 0,
+        "browser_mode": "headless",
+        "global_results": 24,
+        "prior_attempt_errors": [],
+        "company": "Clari",
+        "source_url": "https://www.clari.com/company/careers/",
+        "publication_dates": 0,
+        "source_note": "Clari official careers redirect to Salesloft. Only India technical roles with explicit Clari brand evidence qualify; unrelated Salesloft-only roles are excluded.",
+        "snapshot_file": "local_career_portals/data/clari_jobs.json"
+      }
+    },
+    {
+      "company": "Toast",
+      "slug": "toast",
+      "status": "validation_blocked",
+      "existing_script": "local_career_portals/fetch_security_portals.py",
+      "url": "https://careers.toasttab.com/jobs/search",
+      "args": [
+        "--source",
+        "toast"
+      ],
+      "transport": "browser",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Explicit structured India geography; conservative engineering titles; sales/support excluded"
+      },
+      "note": "Deferred after multiple unsuccessful pagination approaches. The global page advertised 330 entries but exposed 300 rows; the native India view reported 19 entries, but the complete filtered adapter run remains unverified. Further retries stopped at user request.",
+      "validation": {
+        "exit_code": 1,
+        "checked_on": "2026-11-18",
+        "seconds": 14.3,
+        "status": "deferred",
+        "company": "Toast",
+        "source_url": "https://careers.toasttab.com/jobs/search",
+        "error": "Deferred after multiple unsuccessful pagination approaches. The global page advertised 330 entries but exposed 300 rows; the native India view reported 19 entries, but the complete filtered adapter run remains unverified.",
+        "jobs": null
+      }
+    },
+    {
+      "company": "StockX",
+      "slug": "stockx",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_security_portals.py",
+      "url": "https://careers.stockx.com/",
+      "args": [
+        "--source",
+        "stockx"
+      ],
+      "transport": "browser",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Explicit structured India geography; conservative engineering titles; sales/support excluded"
+      },
+      "note": "Verified 18 November 2026: 6 jobs, full descriptions, 6 explicit publication dates; headless Playwright. Verified current StockX Greenhouse board.",
+      "validation": {
+        "exit_code": 0,
+        "checked_on": "2026-11-18",
+        "seconds": 4.5,
+        "status": "passed",
+        "jobs": 6,
+        "full_descriptions": true,
+        "explicit_publication_dates": 6,
+        "browser_mode": "headless",
+        "global_results": 37,
+        "prior_attempt_errors": [],
+        "company": "StockX",
+        "source_url": "https://careers.stockx.com/",
+        "publication_dates": 6,
+        "source_note": "Verified current StockX Greenhouse board.",
+        "snapshot_file": "local_career_portals/data/stockx_jobs.json"
+      }
+    },
+    {
+      "company": "Opendoor",
+      "slug": "opendoor",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_security_portals.py",
+      "url": "https://www.opendoor.com/careers/open-positions",
+      "args": [
+        "--source",
+        "opendoor"
+      ],
+      "transport": "browser",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Explicit structured India geography; conservative engineering titles; sales/support excluded"
+      },
+      "note": "Verified 18 November 2026: 0 jobs, full descriptions, 0 explicit publication dates; headless Playwright. Current official native careers listings; current locations are outside India. Old Lever board returns 404 and is not used.",
+      "validation": {
+        "exit_code": 0,
+        "checked_on": "2026-11-18",
+        "seconds": 4.4,
+        "status": "verified_empty",
+        "jobs": 0,
+        "full_descriptions": true,
+        "explicit_publication_dates": 0,
+        "browser_mode": "headless",
+        "global_results": 53,
+        "prior_attempt_errors": [],
+        "company": "Opendoor",
+        "source_url": "https://www.opendoor.com/careers/open-positions",
+        "publication_dates": 0,
+        "source_note": "Current official native careers listings; current locations are outside India. Old Lever board returns 404 and is not used.",
+        "snapshot_file": "local_career_portals/data/opendoor_jobs.json"
+      }
+    },
+    {
+      "company": "NetApp",
+      "slug": "netapp",
+      "status": "validation_blocked",
+      "existing_script": "local_career_portals/fetch_security_portals.py",
+      "url": "https://careers.netapp.com/search-jobs",
+      "args": [
+        "--source",
+        "netapp"
+      ],
+      "transport": "browser",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Explicit structured India geography; conservative engineering titles; sales/support excluded"
+      },
+      "note": "Deferred after multiple unsuccessful native filter/pagination approaches, including delayed cookie notice, explicit Go action and CSP-compatible waits. No complete filtered snapshot verified. Further retries stopped at user request.",
+      "validation": {
+        "exit_code": 1,
+        "checked_on": "2026-11-18",
+        "seconds": 19.1,
+        "status": "deferred",
+        "company": "NetApp",
+        "source_url": "https://careers.netapp.com/search-jobs",
+        "error": "Deferred after multiple unsuccessful native filter/pagination approaches, including delayed cookie notice, explicit Go action and CSP-compatible waits. No complete filtered snapshot verified.",
+        "jobs": null
+      }
+    },
+    {
+      "company": "Forward Networks",
+      "slug": "forward_networks",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_security_portals.py",
+      "url": "https://www.forwardnetworks.com/careers/",
+      "args": [
+        "--source",
+        "forward_networks"
+      ],
+      "transport": "browser",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Explicit structured India geography; conservative engineering titles; sales/support excluded"
+      },
+      "note": "Verified 18 November 2026: 2 jobs, full descriptions, 2 explicit publication dates; headless Playwright. Official Forward Networks Greenhouse board with actual structured locations and departments.",
+      "validation": {
+        "exit_code": 0,
+        "checked_on": "2026-11-18",
+        "seconds": 3.7,
+        "status": "passed",
+        "jobs": 2,
+        "full_descriptions": true,
+        "explicit_publication_dates": 2,
+        "browser_mode": "headless",
+        "global_results": 23,
+        "prior_attempt_errors": [],
+        "company": "Forward Networks",
+        "source_url": "https://www.forwardnetworks.com/careers/",
+        "publication_dates": 2,
+        "source_note": "Official Forward Networks Greenhouse board with actual structured locations and departments.",
+        "snapshot_file": "local_career_portals/data/forward_networks_jobs.json"
+      }
+    },
+    {
+      "company": "Autodesk",
+      "slug": "autodesk",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_security_portals.py",
+      "url": "https://jobs.autodesk.com/careers",
+      "args": [
+        "--source",
+        "autodesk"
+      ],
+      "transport": "browser",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Explicit structured India geography; conservative engineering titles; sales/support excluded"
+      },
+      "note": "Verified 18 November 2026: 12 jobs, full descriptions, 12 explicit publication dates; headless Playwright. Official jobs.autodesk.com Eightfold source, replacing the old corporate careers path.",
+      "validation": {
+        "exit_code": 0,
+        "checked_on": "2026-11-18",
+        "seconds": 14.2,
+        "status": "passed",
+        "jobs": 12,
+        "full_descriptions": true,
+        "explicit_publication_dates": 12,
+        "browser_mode": "headless",
+        "global_results": null,
+        "prior_attempt_errors": [],
+        "company": "Autodesk",
+        "source_url": "https://jobs.autodesk.com/careers",
+        "publication_dates": 12,
+        "source_note": "Official jobs.autodesk.com Eightfold source, replacing the old corporate careers path.",
+        "snapshot_file": "local_career_portals/data/autodesk_jobs.json"
+      }
+    },
+    {
+      "company": "Dream11",
+      "slug": "dream11",
+      "status": "source_unavailable",
+      "existing_script": "local_career_portals/fetch_security_portals.py",
+      "url": "https://www.dreamsports.group/lifeatdreamsports",
+      "args": [
+        "--source",
+        "dream11"
+      ],
+      "transport": "browser",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Explicit structured India geography; conservative engineering titles; sales/support excluded"
+      },
+      "note": "The official Dream Sports careers page links to jobs.lever.co/dreamsports, which returns 404. Its public feed also returned 404 in headless and headed Playwright. This is unavailable, not a verified zero-job result. Further retries stopped at user request.",
+      "validation": {
+        "exit_code": 1,
+        "checked_on": "2026-11-18",
+        "seconds": 9.5,
+        "status": "source_unavailable",
+        "error": "The official Dream Sports careers page links to jobs.lever.co/dreamsports, which returns 404. Its public feed also returned 404 in headless and headed Playwright. This is unavailable, not a verified zero-job result.",
+        "company": "Dream11",
+        "source_url": "https://www.dreamsports.group/lifeatdreamsports",
+        "jobs": null
+      }
+    },
+    {
+      "company": "ShareChat",
+      "slug": "sharechat",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_security_portals.py",
+      "url": "https://sharechat.com/careers",
+      "args": [
+        "--source",
+        "sharechat"
+      ],
+      "transport": "browser",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Explicit structured India geography; conservative engineering titles; sales/support excluded"
+      },
+      "note": "Verified 18 November 2026: 1 jobs, full descriptions, 0 explicit publication dates; headless Playwright. Official ShareChat careersList plus native MyNextHire full requisition. Creation/approval timestamps stay separate; no explicit publication date supplied.",
+      "validation": {
+        "exit_code": 0,
+        "checked_on": "2026-11-18",
+        "seconds": 10.2,
+        "status": "passed",
+        "jobs": 1,
+        "full_descriptions": true,
+        "explicit_publication_dates": 0,
+        "browser_mode": "headless",
+        "global_results": 11,
+        "prior_attempt_errors": [],
+        "company": "ShareChat",
+        "source_url": "https://sharechat.com/careers",
+        "publication_dates": 0,
+        "source_note": "Official ShareChat careersList plus native MyNextHire full requisition. Creation/approval timestamps stay separate; no explicit publication date supplied.",
+        "snapshot_file": "local_career_portals/data/sharechat_jobs.json"
+      }
+    },
+    {
+      "company": "Exaforce",
+      "slug": "exaforce",
+      "status": "implemented",
+      "existing_script": "local_career_portals/fetch_security_portals.py",
+      "url": "https://www.exaforce.com/careers",
+      "args": [
+        "--source",
+        "exaforce"
+      ],
+      "transport": "browser",
+      "filter_policy": {
+        "country": "India",
+        "engineering": "title",
+        "method": "Explicit structured India geography; conservative engineering titles; sales/support excluded"
+      },
+      "note": "Verified 18 November 2026: 1 jobs, full descriptions, 1 explicit publication dates; headless Playwright. Official native Exaforce job cards and full JobPosting schema; sales/solutions/support titles excluded.",
+      "validation": {
+        "exit_code": 0,
+        "checked_on": "2026-11-18",
+        "seconds": 12.6,
+        "status": "passed",
+        "jobs": 1,
+        "full_descriptions": true,
+        "explicit_publication_dates": 1,
+        "browser_mode": "headless",
+        "global_results": 8,
+        "prior_attempt_errors": [],
+        "company": "Exaforce",
+        "source_url": "https://www.exaforce.com/careers",
+        "publication_dates": 1,
+        "source_note": "Official native Exaforce job cards and full JobPosting schema; sales/solutions/support titles excluded.",
+        "snapshot_file": "local_career_portals/data/exaforce_jobs.json"
+      }
     }
   ],
   "scheduler_enabled": false,

@@ -58,7 +58,7 @@ def fetch(company, directory, limit, timeout):
         if code:
             report.update(error_type=classification(text), error=text[-2500:])
             return report
-        snapshot = json.loads(raw.read_text())
+        snapshot = json.loads(raw.read_text(encoding="utf-8"))
         candidates = snapshot.pop('jobs')
         jobs = newest_first(apply_policy(candidates, company['filter_policy']))[:limit]
         dated = sum(timestamp(job.get('posted_date') or job.get('updated_date')) != float('-inf') for job in jobs)

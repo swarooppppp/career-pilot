@@ -36,5 +36,5 @@ def write_snapshot(path, jobs, **metadata):
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(path.suffix + ".tmp")
-    temporary.write_text(json.dumps({**metadata, "jobs_fetched": len(jobs), "jobs": jobs}, indent=2, ensure_ascii=False) + "\n")
+    temporary.write_text(json.dumps({**metadata, "jobs_fetched": len(jobs), "jobs": jobs}, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     temporary.replace(path)

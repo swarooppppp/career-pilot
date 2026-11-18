@@ -550,3 +550,210 @@ unless invoked with the browser transport configured by the registry runner.
 MongoDB uses the shared page for both its feed and native UI filters, and Stripe
 uses the same session for its listings and detail pages. These avoid nesting
 Playwright runtimes or mixing browser requests with direct HTTP under the VPN.
+
+
+## Akamai (Oracle Candidate Experience)
+
+Akamai is registered as `akamai` using `fetch_oracle_india_jobs.py` and the
+Oracle tenant linked from its official careers site. The adapter scans every
+listing page, hydrates technical-title candidates (including those whose primary
+location is abroad), and checks primary/secondary geography before limiting.
+Engineering selection uses the collection's conservative title policy rather
+than claiming a native department filter. Descriptions retain the external
+body, responsibilities and qualifications. Explicit publication timestamps are
+sorted before the cap. Missing descriptions, repeated listings, malformed
+responses and incomplete pagination fail without replacing a previous snapshot.
+
+This entry uses direct HTTP: its public feed is reachable on this Windows
+machine, while Playwright startup in the Codex session encounters Windows
+`PermissionError: [WinError 5]` when creating its driver pipes. Playwright is
+already installed; installing another browser does not resolve that permission
+error. Other entries retain their configured transport.
+
+```powershell
+.venv\Scripts\python.exe local_career_portals/run.py akamai --max-jobs 50
+```
+
+Live validation on 17 November 2026 completed a 296-listing scan and saved 15
+India engineering-title matches, with unique IDs, full descriptions and explicit
+publication timestamps. Six Oracle regression tests and 24 existing collection
+regression tests passed.
+
+Cloudera is configured next using the existing Workday adapter. Its official
+careers page links to `https://cloudera.wd5.myworkdayjobs.com/External_Career`.
+The direct API returned HTTP 429 during validation; this is recorded as a failed
+live validation, not an empty result. No existing snapshot was replaced. Browser validation now runs outside the Codex sandbox through the approved
+execution path. The driver and Chrome launch successfully; Cloudera still
+returns HTTP 429, independently of the sandbox issue.
+
+
+## Windows / Codex browser execution and Cloudera
+
+The same minimal Python asyncio pipe test and Playwright Chrome launch failed
+inside the Codex sandbox with WinError 5 and succeeded outside it on 17 November
+2026. This isolates the startup restriction to the sandbox. Installing more
+browsers or running Python as administrator is unnecessary. For Codex browser
+validation, use its approved `require_escalated` execution path for the bounded
+company command. Repository scripts do not elevate themselves or change system
+security settings. Normal PowerShell runs use the usual user permissions:
+
+```powershell
+.venv\Scripts\python.exe local_career_portals/run.py cloudera --max-jobs 50
+```
+
+The dedicated `fetch_cloudera_jobs.py` entry point reuses the Workday adapter,
+selects browser transport, and searches all titles before the India/engineering
+checks. It supports the same `--max-jobs`, `--output`, timeout and pagination
+options as the shared adapter. The registry also selects browser transport.
+Workday native India and engineering facets are discovered from the tenant;
+hydrated primary/secondary locations and engineering titles are checked again.
+Descriptions and explicit start dates are retained and sorted before limiting.
+
+Cloudera's live API returned HTTP 429 even after Chrome started successfully
+outside the sandbox. A separate ordinary careers-page navigation also timed
+out. No successful job count is claimed. There is no automatic retry loop:
+retry later, respecting any server Retry-After response. The normal runner
+preserves existing snapshots on failure. Four Cloudera tests cover registry
+wiring, complete description/date retention, secondary India geography, and
+rate-limit propagation without writing an empty successful snapshot.
+
+
+### Cloudera native Playwright verification (17 November 2026)
+
+The normal localized page `/en-US/External_Career` and its native jobs POST
+returned HTTP 200 with 49 global listings. The page establishes an anonymous
+Workday session and supplies its own CSRF header. A synthetic fetch, even from
+the browser, still returned HTTP 429. Subsequent navigation showed Cloudflare's
+Security Check with HTTP 429, so live retries stopped. Full filtered output has
+not been verified; 49 is the global listing count, not matching India jobs.
+
+`fetch_cloudera_jobs.py` now uses Playwright page navigation and captures the
+site's native requests exclusively. It navigates to the tenant's native facet
+URLs, validates the emitted request's country filters, search and offset before
+accepting a response, and follows native pagination controls. Job details are
+captured from native detail-page requests in the same isolated browser. It does
+not use synthetic fetch, APIRequestContext, direct HTTP, or a fallback transport.
+A 429 or failed navigation stops the run and reports Retry-After when supplied;
+there are no immediate retries or challenge interactions. The usual runner
+preserves previous snapshots on failure. Browser sessions close in `finally`.
+
+Seven Cloudera regressions cover the wrapper, registry transport, full description
+and publication date preservation, secondary geography, native filter-request
+matching, absence of synthetic fetch, and early failure on 429/unrelated hosts.
+The native facet navigation and detail flow remain pending live verification
+once the portal is accessible again. Prior HTTP 429 observations above describe
+the earlier adapter; this is the current implementation and verification state.
+
+
+## Security and open-source batch (18 November 2026)
+
+Ten official sources are registered with the browser-only shared adapter
+`fetch_security_portals.py`. Each source runs in its own process. The adapter
+starts isolated headless Chrome through Playwright; if that attempt fails, it
+closes that browser and tries one fresh headed Chrome session. An explicit
+Retry-After suppresses the immediate fallback rather than shortening a server
+cooldown. No direct HTTP fallback, personal profile, login, challenge interaction
+or security-setting change is used. From Codex on this Windows machine, use the
+approved outside-sandbox execution path to permit Playwright driver pipes.
+
+| Company / slug | Official page and current source | Selection |
+| --- | --- | --- |
+| Fortinet / `fortinet` | https://www.fortinet.com/corporate/careers links to Oracle tenant `edel`, site `CX_2001` | Native Research/Development (`RD`) job-function facet, verified in the response; technical titles; hydrated primary/secondary India geography. The R&D scan is complete before limiting. |
+| Arctic Wolf / `arctic_wolf` | https://arcticwolf.com/company/hiring/ links to https://arcticwolf.wd1.myworkdayjobs.com/External | Discovered native Workday India and engineering facets where available; technical-title and hydrated geography guard. |
+| Rapid7 / `rapid7` | https://careers.rapid7.com/jobs/search | Actual table location and department fields; all native pagination; technical titles; India checked again against full JobPosting schema. |
+| Sophos / `sophos` | https://www.sophos.com/en-us/careers links to `jobs.ashbyhq.com/sophos` | Current Ashby feed, listed technical roles with explicit India primary/secondary location or country; sales/support department exclusion. The older Lever link is not used. |
+| Tenable / `tenable` | https://www.tenable.com/careers links to `tenableinc` Greenhouse jobs | Structured location/offices, technical titles and sales/support department exclusion. |
+| Qualys / `qualys` | https://www.qualys.com/careers links to https://qualys.wd5.myworkdayjobs.com/Careers | Discovered India/engineering native facets, complete pagination, technical titles and hydrated India geography. |
+| SUSE / `suse` | https://www.suse.com/careers/ links to https://suse.wd3.myworkdayjobs.com/Jobsatsuse | Discovered India facets, available native engineering facets, technical-title and hydrated geography guard. |
+| Mirantis / `mirantis` | https://www.mirantis.com/careers/ embeds SmartRecruiters | Mirantis public feed with country `in`, technical titles, full-detail employer/country checks, all job-ad sections. |
+| Canonical / `canonical` | https://canonical.com/careers/all links to the `canonical` Greenhouse board | Technical titles, excluding support/sales departments; explicit India or the official structured location `Home based - Worldwide`. Worldwide roles retain original source location and eligibility evidence and are not labelled India-specific. APAC/EMEA alone are excluded. |
+| Zapier / `zapier` | https://zapier.com/jobs links to `jobs.ashbyhq.com/zapier` | Listed technical jobs with explicit India primary/secondary location/country. APAC and generic Remote alone are insufficient. |
+
+Workday listings and details are captured from the site's own native browser
+requests. Native facet URLs and pagination controls are used; emitted request
+filters and offsets must match before responses are accepted. Repeated jobs,
+premature pagination, missing descriptions and source-shape changes fail rather
+than producing a verified empty result. An adapter failure preserves the prior
+snapshot. Greenhouse/Ashby return full content in their public feeds; these feeds
+are also loaded through Playwright's browser network stack.
+
+All matches are sorted before the normal 50-job cap. Explicit publication fields
+are retained (Oracle ExternalPostedStartDate, Workday startDate, Rapid7
+JobPosting.datePosted, Greenhouse first_published, Ashby publishedAt and
+SmartRecruiters releasedDate). Greenhouse update dates remain separate and may
+serve as the shared ordering fallback when publication dates are absent.
+
+A live Windows run exposed Unicode descriptions that the default Windows
+encoding could not save. The shared atomic snapshot writer, normal runner and
+sampler now explicitly write/read UTF-8. A regression preserves narrow no-break
+spaces and non-Latin descriptions.
+
+```powershell
+.venv\Scripts\python.exe local_career_portals/run.py fortinet arctic_wolf rapid7 sophos tenable qualys suse mirantis canonical zapier --max-jobs 50
+# Force a visible browser for a single standalone run:
+.venv\Scripts\python.exe local_career_portals/fetch_security_portals.py https://www.qualys.com/careers --source qualys --headed --max-jobs 50 --output local_career_portals/data/qualys_manual_jobs.json
+```
+
+The collection run is sequential. Results and browser mode are recorded in each
+snapshot; initial headless errors are retained when the headed fallback succeeds.
+
+
+Live validation passed for all ten sources on 18 November 2026. Saved counts: Fortinet 2, Arctic Wolf 20, Rapid7 4, Sophos 3, Tenable 0, Qualys 50, SUSE 0, Mirantis 3, Canonical 50, Zapier 0. Total: 132 full-description jobs, all with explicit publication dates. Qualys and Canonical reached the 50-job cap. Arctic Wolf, Qualys and SUSE used the headed fallback; the other seven succeeded headlessly. Tenable, SUSE and Zapier are verified filtered empty results. The report is `data/security_open_source_validation_20261118.json`. Eighty-eight relevant regression tests passed.
+
+
+## Travel, commerce and AI batch (18 November 2026)
+
+All ten live validations passed. 58 jobs saved with full descriptions; 57 have explicit publication dates. Eight sources succeeded headlessly; Zepto and Wayfair used the headed fallback.
+
+| Company | Current source and scope | Saved jobs | Browser |
+| --- | --- | ---: | --- |
+| Agoda | Official Greenhouse agoda board; current Gurugram engineering roles. | 4 | headless |
+| Twilio | Official current jobs.twilio.com Eightfold PCSx source, not the old Greenhouse board. Explicit efcustomTextPostDate retained; index creation kept separate. | 5 | headless |
+| Grab | Official SmartRecruiters Grab tenant, country in; detail employer and country verified. | 2 | headless |
+| Roku | Native Clinch job tables, all pages, full JobPosting descriptions and geography; actual source departments retained. | 2 | headless |
+| WisdomAI | Enterprise WisdomAI at wisdom.ai links to Ashby Wisdom-AI; similarly named wisdomai.com is not used. | 4 | headless |
+| Arcana Analytics | Arcana Analytics confirmed by user; arcana.io links to Greenhouse arcanaanalytics. | 12 | headless |
+| Spotnana | Current official careers listing uses the Gem spotnana feed. Previous Greenhouse boards return 404 and are not used. | 4 | headless |
+| Zepto | Official zepto.com careers link leads to Darwinbox. Its one listed job is delivery-hub operations and fails the engineering-title policy. | 0 | headed |
+| Coupang | Current Coupang Greenhouse feed. Complete lightweight listing scan; India or ambiguous-location engineering candidates hydrated and geography rechecked. Known foreign-labelled listings are not hydrated, so secondary locations absent from summaries can be missed. | 24 | headless |
+| Wayfair | Current native Wayfair job_search_data response, Engineering & Technology team and India, active public roles only. Full descriptions and Avature application URLs. Creation/update dates are not promoted to publication dates. | 1 | headed |
+
+These entries reuse `fetch_security_portals.py` with dedicated source policies. Full descriptions and original departments/locations are retained. Explicit publication fields remain separate from creation/update timestamps. The default 50-job cap applies after sorting; no company in this batch reached the cap. The detailed report is `data/travel_commerce_validation_20261118.json`. Ninety-four relevant regressions passed, including successor source identities, Gem publication dates, Twilio explicit post dates and incomplete pagination, Coupang detail identity checks, Wayfair public/active flags and date separation, Darwinbox full HTML descriptions and posted_on, and the existing browser fallback/UTF-8 guards.
+
+```powershell
+.venv\Scripts\python.exe local_career_portals/run.py agoda twilio grab roku wisdom_ai arcana spotnana zepto coupang wayfair --max-jobs 50
+```
+
+
+## Enterprise and finance batch (18 November 2026)
+
+18 sources passed live validation; 213 full-description jobs saved, 163 with explicit publication dates. JPMorgan Chase and AMD reached the 50-job cap. Headless Playwright is first; Expedia and AMD used headed fallback.
+
+| Company | Jobs / status | Source note |
+| --- | ---: | --- |
+| InMobi | 4 | Official InMobi Advertising Greenhouse board; Glance is a separate source. |
+| Deel | 4 | Current official careers embedded listings, with full JobPosting details from jobs.deel.com. Old Ashby detail URLs return 404 and are not used. |
+| Expedia Group | 0 | Current official Workday wd108/search tenant. Five India listings were also cross-checked on careers.expediagroup.com; none passed the engineering-title guard. |
+| JPMorgan Chase | 50 | Official Oracle CX_1001 site; discovered and confirmed native India country facet, full listing/detail checks. |
+| Goldman Sachs | 49 | Official Higher GraphQL API used through Playwright browser fetch, India location filter and full detail checks. Publication dates are not provided by the query; no creation dates invented. |
+| Morgan Stanley | 14 | Officially linked Eightfold PCSx source, explicit India geography and full descriptions. |
+| American Express | 12 | Official Oracle egug tenant and CX_1 site, confirmed native India country facet and full descriptions. |
+| Navi | 1 | Official TurboHire source; all 46 postings scanned. SDE III - Mobile Security is retained after adding SDE variants to the shared engineering-title guard. |
+| Gojek | 0 | Official gojek.io links to GoToGroup Lever. India technical roles additionally require Gojek brand evidence. Current sole India listing is procurement, not engineering. |
+| Freshworks | 7 | Official SmartRecruiters Freshworks feed with country in, employer/country detail checks and full job-ad sections. |
+| AMD | 50 | Native AMD Jibe/iCIMS public browser API, country India and category Engineering; full descriptions and explicit posted_date. |
+| Arm | deferred | Deferred after multiple unsuccessful UI approaches. India facet was verified at 111 listings, but the visible load-more control did not advance beyond the first 15. No complete filtered snapshot verified. |
+| Clari | 0 | Clari official careers redirect to Salesloft. Only India technical roles with explicit Clari brand evidence qualify; unrelated Salesloft-only roles are excluded. |
+| Toast | deferred | Deferred after multiple unsuccessful pagination approaches. The global page advertised 330 entries but exposed 300 rows; the native India view reported 19 entries, but the complete filtered adapter run remains unverified. |
+| StockX | 6 | Verified current StockX Greenhouse board. |
+| Opendoor | 0 | Current official native careers listings; current locations are outside India. Old Lever board returns 404 and is not used. |
+| NetApp | deferred | Deferred after multiple unsuccessful native filter/pagination approaches, including delayed cookie notice, explicit Go action and CSP-compatible waits. No complete filtered snapshot verified. |
+| Forward Networks | 2 | Official Forward Networks Greenhouse board with actual structured locations and departments. |
+| Autodesk | 12 | Official jobs.autodesk.com Eightfold source, replacing the old corporate careers path. |
+| Dream11 | source_unavailable | The official Dream Sports careers page links to jobs.lever.co/dreamsports, which returns 404. Its public feed also returned 404 in headless and headed Playwright. This is unavailable, not a verified zero-job result. |
+| ShareChat | 1 | Official ShareChat careersList plus native MyNextHire full requisition. Creation/approval timestamps stay separate; no explicit publication date supplied. |
+| Exaforce | 1 | Official native Exaforce job cards and full JobPosting schema; sales/solutions/support titles excluded. |
+
+Arm, Toast and NetApp remain `validation_blocked`; Dream11 is `source_unavailable`. They are excluded from default runs and must not be presented as verified empty results. Further live retries stopped at the user’s request. For future difficult sources, defer after three distinct unsuccessful approaches and finish the working sources.
+
+The new employer-specific adapters are in `fetch_enterprise_portals.py`, selected by the shared browser runner. The India/engineering policy now recognizes SDE variants while retaining sales/support exclusions. The detailed report is `data/enterprise_finance_validation_20261118.json`.

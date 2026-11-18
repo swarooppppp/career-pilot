@@ -71,7 +71,7 @@ def main():
                 raise
             if code:
                 raise subprocess.CalledProcessError(code, cmd)
-            snapshot = json.loads(pending.read_text())
+            snapshot = json.loads(pending.read_text(encoding="utf-8"))
             candidates = snapshot.pop("jobs")
             jobs = newest_first(apply_policy(candidates, company["filter_policy"]))
             if args.max_jobs:

@@ -3,7 +3,7 @@ import json
 import re
 
 INDIA = re.compile(r"\b(?:india|bengaluru|bangalore|hyderabad|pune|mumbai|chennai|gurugram|gurgaon|noida|new delhi|delhi|kolkata|ahmedabad|kochi|coimbatore|trivandrum|thiruvananthapuram|gift city|gandhinagar)\b", re.I)
-ENGINEERING = re.compile(r"\b(?:engineer(?:ing)?|developer|architect|sre|sdet|devops|mts|member(?:s)? of technical staff)\b", re.I)
+ENGINEERING = re.compile(r"\b(?:engineer(?:ing)?|developer|architect|sre|sdet|sde(?:[1-4]|[ivx]{1,3})?|devops|mts|member(?:s)? of technical staff)\b", re.I)
 NON_ENGINEERING = re.compile(r"\b(?:sales|presales|pre-sales|customer success|technical support|support engineer|solutions engineer|solution engineer|recruiter)\b", re.I)
 
 
